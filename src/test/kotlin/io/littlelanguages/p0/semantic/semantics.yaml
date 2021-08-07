@@ -1,0 +1,1015 @@
+- name: Hello World
+  input: |
+    fun main() {
+      println("Hello World");
+    }
+  output: |
+    Hello World
+- scenario:
+    name: Expressions
+    tests:
+      - scenario:
+          name: Literal Value
+          tests:
+            - name: Literal Bool
+              input: |
+                fun main() {
+                  println(true);
+                  println(false);
+                }
+              output: |
+                true
+                false
+            - name: Literal Int
+              input: |
+                fun main() {
+                  println(0);
+                  println(1);
+                  println(-1);
+                  println(2147483647);
+                  println(-2147483648);
+                }
+              output: |
+                0
+                1
+                -1
+                2147483647
+                -2147483648
+            - name: Literal Float
+              input: |
+                fun main() {
+                  println(0.0);
+                  println(1.0);
+                  println(-1.0);
+                }
+              output: |
+                0.000000
+                1.000000
+                -1.000000
+      - scenario:
+          name: Ternary Expression
+          tests:
+            - name: true value
+              input: |
+                fun main() {
+                  println(true ? "was true" : "was false");
+                }
+              output: |
+                was true
+            - name: false value
+              input: |
+                fun main() {
+                  println(false ? "was true" : "was false");
+                }
+              output: |
+                was false
+      - scenario:
+          name: Binary Expression
+          tests:
+            - scenario:
+                name: Boolean operators
+                tests:
+                  - name: "&&"
+                    input: |
+                      fun main() {
+                        println(true && true);
+                        println(true && false);
+                        println(false && true);
+                        println(false && false);
+                      }
+                    output: |
+                      true
+                      false
+                      false
+                      false
+                  - name: "||"
+                    input: |
+                      fun main() {
+                        println(true || true);
+                        println(true || false);
+                        println(false || true);
+                        println(false || false);
+                      }
+                    output: |
+                      true
+                      true
+                      true
+                      false
+            - scenario:
+                name: Equality operators
+                tests:
+                  - name: "=="
+                    input: |
+                      fun main() {
+                        println(true == true);
+                        println(true == false);
+                        println(1 == 1);
+                        println(1 == 2);
+                        println(1.0 == 1.0);
+                        println(1.0 == 2.0);
+                      }
+                    output: |
+                      true
+                      false
+                      true
+                      false
+                      true
+                      false
+                  - name: "not equal"
+                    input: |
+                      fun main() {
+                        println(true != true);
+                        println(true != false);
+                        println(1 != 1);
+                        println(1 != 2);
+                        println(1.0 != 1.0);
+                        println(1.0 != 2.0);
+                      }
+                    output: |
+                      false
+                      true
+                      false
+                      true
+                      false
+                      true
+            - scenario:
+                name: Relational operators
+                tests:
+                  - name: "<"
+                    input: |
+                      fun main() {
+                        println(1 < 1);
+                        println(0 < 1);
+                        println(2 < 1);
+                        println(1.0 < 1.0);
+                        println(0.0 < 1.0);
+                        println(2.0 < 1.0);
+                      }
+                    output: |
+                      false
+                      true
+                      false
+                      false
+                      true
+                      false
+                  - name: "<="
+                    input: |
+                      fun main() {
+                        println(1 <= 1);
+                        println(0 <= 1);
+                        println(2 <= 1);
+                        println(1.0 <= 1.0);
+                        println(0.0 <= 1.0);
+                        println(2.0 <= 1.0);
+                      }
+                    output: |
+                      true
+                      true
+                      false
+                      true
+                      true
+                      false
+                  - name: ">"
+                    input: |
+                      fun main() {
+                        println(1 > 1);
+                        println(0 > 1);
+                        println(2 > 1);
+                        println(1.0 > 1.0);
+                        println(0.0 > 1.0);
+                        println(2.0 > 1.0);
+                      }
+                    output: |
+                      false
+                      false
+                      true
+                      false
+                      false
+                      true
+                  - name: ">="
+                    input: |
+                      fun main() {
+                        println(1 >= 1);
+                        println(0 >= 1);
+                        println(2 >= 1);
+                        println(1.0 >= 1.0);
+                        println(0.0 >= 1.0);
+                        println(2.0 >= 1.0);
+                      }
+                    output: |
+                      true
+                      false
+                      true
+                      true
+                      false
+                      true
+            - scenario:
+                name: Arithmetic operators
+                tests:
+                  - name: "+"
+                    input: |
+                      fun main() {
+                        println(1 + 1);
+                        println(1.0 + 1.0);
+                      }
+                    output: |
+                      2
+                      2.000000
+                  - name: "-"
+                    input: |
+                      fun main() {
+                        println(2 - 1);
+                        println(2.0 - 1.0);
+                      }
+                    output: |
+                      1
+                      1.000000
+                  - name: "*"
+                    input: |
+                      fun main() {
+                        println(3 * 2);
+                        println(3.0 * 2.0);
+                      }
+                    output: |
+                      6
+                      6.000000
+                  - name: "/"
+                    input: |
+                      fun main() {
+                        println(6 / 2);
+                        println(5 / 2);
+                        println(6.0 / 2.0);
+                        println(5.0 / 2.0);
+                      }
+                    output: |
+                      3
+                      2
+                      3.000000
+                      2.500000
+      - scenario:
+          name: Unary Expression
+          tests:
+            - name: "+"
+              input: |
+                fun main() {
+                  const a = 1;
+                  const b = 1.0;
+
+                  println(+a);
+                  println(+b);
+                }
+              output: |
+                1
+                1.000000
+            - name: "-"
+              input: |
+                fun main() {
+                  const a = 1;
+                  const b = 1.0;
+
+                  println(-a);
+                  println(-b);
+                }
+              output: |
+                -1
+                -1.000000
+            - name: "not !"
+              input: |
+                fun main() {
+                  const a = true;
+                  const b = false;
+
+                  println(!a);
+                  println(!b);
+                }
+              output: |
+                false
+                true
+      - scenario:
+          name: Call Expression
+          tests:
+            - name: function without parameters returns Bool
+              input: |
+                fun t(): Bool {
+                  return true;
+                }
+
+                fun main() {
+                  println("Result: ", t());
+                }
+              output: |
+                Result: true
+            - name: function without parameters returns Int
+              input: |
+                fun t(): Int {
+                  return 123;
+                }
+
+                fun main() {
+                  println("Result: ", t());
+                }
+              output: |
+                Result: 123
+            - name: function without parameters returns Float
+              input: |
+                fun t(): Float {
+                  return 12.5;
+                }
+
+                fun main() {
+                  println("Result: ", t());
+                }
+              output: |
+                Result: 12.500000
+            - name: function with parameters returns Bool
+              input: |
+                fun t(a : Bool): Bool {
+                  return !a;
+                }
+
+                fun main() {
+                  println("Result: ", t(true));
+                }
+              output: |
+                Result: false
+            - name: function with parameters returns Int
+              input: |
+                fun t(a : Int): Int {
+                  return a * a;
+                }
+
+                fun main() {
+                  println("Result: ", t(10));
+                }
+              output: |
+                Result: 100
+            - name: function with parameters returns Float
+              input: |
+                fun t(a : Float): Float {
+                  return a * a;
+                }
+
+                fun main() {
+                  println("Result: ", t(10.0));
+                }
+              output: |
+                Result: 100.000000
+- scenario:
+    name: Statements
+    tests:
+      - scenario:
+          name: Assignment Statement
+          tests:
+            - name: toplevel Bool assignment
+              input: |
+                let value = false;
+
+                fun main() {
+                  value = !value;
+
+                  println(value);
+                }
+              output: |
+                true
+            - name: toplevel Int assignment
+              input: |
+                let value = 19;
+
+                fun main() {
+                  value = value * value;
+
+                  println(value);
+                }
+              output: |
+                361
+            - name: toplevel Float assignment
+              input: |
+                let value = 33.5;
+
+                fun main() {
+                  value = value * value;
+
+                  println(value);
+                }
+              output: |
+                1122.250000
+            - name: same lexical scope Bool assignment
+              input: |
+                fun main() {
+                  let value = false;
+
+                  value = !value;
+
+                  println(value);
+                }
+              output: |
+                true
+            - name: same lexical scope Int assignment
+              input: |
+                fun main() {
+                  let value = 5;
+
+                  value = value * value;
+
+                  println(value);
+                }
+              output: |
+                25
+            - name: same lexical scope Float assignment
+              input: |
+                fun main() {
+                  let value = 7.0;
+
+                  value = value * value;
+
+                  println(value);
+                }
+              output: |
+                49.000000
+            - name: outer lexical scope Bool assignment
+              input: |
+                fun main() {
+                  let value = false;
+
+                  {
+                    value = !value;
+                    println(value);
+                  }
+
+                  println(value);
+                }
+              output: |
+                true
+                true
+            - name: outer lexical scope Int assignment
+              input: |
+                fun main() {
+                  let value = 5;
+
+                  {
+                    value = value * value;
+                    println(value);
+                  }
+
+                  println(value);
+                }
+              output: |
+                25
+                25
+            - name: outer lexical scope Float assignment
+              input: |
+                fun main() {
+                  let value = 7.0;
+
+                  {
+                    value = value * value;
+                    println(value);
+                  }
+
+                  println(value);
+                }
+              output: |
+                49.000000
+                49.000000
+            - name: parameter Bool assignment
+              input: |
+                fun test(a: Bool): Bool {
+                  a = !a;
+                  return a;
+                }
+
+                fun main() {
+                  println(test(true));
+                }
+              output: |
+                false
+            - name: parameter Int assignment
+              input: |
+                fun test(a: Int): Int {
+                  a = a * a;
+                  return a * a;
+                }
+
+                fun main() {
+                  println(test(2));
+                }
+              output: |
+                16
+            - name: parameter Float assignment
+              input: |
+                fun test(a: Float): Float {
+                  a = a * a;
+                  return a * a;
+                }
+
+                fun main() {
+                  println(test(5.0));
+                }
+              output: |
+                625.000000
+      - scenario:
+          name: Variable Declaration Statement
+          tests:
+            - name: Boolean
+              input: |
+                fun main() {
+                  let value = true;
+
+                  println(value);
+                }
+              output: |
+                true
+            - name: Integer
+              input: |
+                fun main() {
+                  let value = 123;
+
+                  println(value);
+                }
+              output: |
+                123
+            - name: Float
+              input: |
+                fun main() {
+                  let value = 1.0;
+
+                  println(value);
+                }
+              output: |
+                1.000000
+      - scenario:
+          name: Constant Declaration Statement
+          tests:
+            - name: Boolean
+              input: |
+                fun main() {
+                  const value = true;
+
+                  println(value);
+                }
+              output: |
+                true
+            - name: Integer
+              input: |
+                fun main() {
+                  const value = 123;
+
+                  println(value);
+                }
+              output: |
+                123
+            - name: Float
+              input: |
+                fun main() {
+                  const value = 1.0;
+
+                  println(value);
+                }
+              output: |
+                1.000000
+      - scenario:
+          name: If Statement
+          tests:
+            - scenario:
+                name: No else
+                tests:
+                  - name: true branch side effect
+                    input: |
+                      fun main() {
+                        let x = 1;
+
+                        if (x == 1) {
+                          x = x + 1;
+                        }
+
+                        println(x);
+                      }
+                    output: |
+                      2
+                  - name: expression true so no side effect
+                    input: |
+                      fun main() {
+                        let x = 1;
+
+                        if (x == 0) {
+                          x = x + 1;
+                        }
+
+                        println(x);
+                      }
+                    output: |
+                      1
+            - scenario:
+                name: With else
+                tests:
+                  - name: true branch side effect
+                    input: |
+                      fun main() {
+                        let x = 1;
+
+                        if (x == 1) {
+                          x = x + 1;
+                        } else {
+                          x = x * 10;
+                        }
+
+                        println(x);
+                      }
+                    output: |
+                      2
+                  - name: else branch side effect
+                    input: |
+                      fun main() {
+                        let x = 1;
+
+                        if (x == 0) {
+                          x = x + 1;
+                        } else {
+                          x = x * 10;
+                        }
+
+                        println(x);
+                      }
+                    output: |
+                      10
+      - scenario:
+          name: While Statement
+          tests:
+            - name: falls through immediately
+              input: |
+                fun main() {
+                  let x = 1;
+
+                  while (x < 0) {
+                    x = x + 1;
+                  }
+
+                  println(x);
+                }
+              output: |
+                1
+            - name: iterates
+              input: |
+                fun main() {
+                  let x = 0;
+                  const n = 100;
+                  let result = 0;
+
+                  while (x <= n) {
+                    result = result + x;
+                    x = x + 1;
+                  }
+
+                  println(result);
+                }
+              output: |
+                5050
+      - scenario:
+          name: Call Statement
+          tests:
+            - name: println
+              input: |
+                fun main() {
+                  println("hello");
+                  println(true);
+                  println(1);
+                  println(2.0);
+                }
+              output: |
+                hello
+                true
+                1
+                2.000000
+            - name: print
+              input: |
+                fun main() {
+                  print("hello");
+                  print(true);
+                  print(1);
+                  print(2.0);
+                  println();
+                }
+              output: |
+                hellotrue12.000000
+            - name: toplevel unit function
+              input: |
+                fun test(a: Bool, b: Int, c: Float) {
+                  println("a: ", a);
+                  println("b: ", b);
+                  println("c: ", c);
+                }
+
+                fun main() {
+                  test(false, -120, -240.0);
+                }
+              output: |
+                a: false
+                b: -120
+                c: -240.000000
+- scenario:
+    name: Declarations
+    tests:
+      - scenario:
+          name: Unit Function
+          tests:
+            - name: without parameters
+              input: |
+                fun test() {
+                  println("hello world");
+                }
+
+                fun main() {
+                  test();
+                }
+              output: |
+                hello world
+            - name: with parameters
+              input: |
+                fun test(a: Bool, b: Int, c: Float) {
+                  println("a: ", a);
+                  println("b: ", b);
+                  println("c: ", c);
+                }
+
+                fun main() {
+                  test(false, -120, -240.0);
+                }
+              output: |
+                a: false
+                b: -120
+                c: -240.000000
+      - scenario:
+          name: Value Function
+          tests:
+            - name: without parameters
+              input: |
+                fun testB(): Bool {
+                  return false;
+                }
+
+                fun testI(): Int {
+                  return 1;
+                }
+
+                fun testF(): Float {
+                  return 2.0;
+                }
+
+                fun main() {
+                  println(testB());
+                  println(testI());
+                  println(testF());
+                }
+              output: |
+                false
+                1
+                2.000000
+            - name: with parameters
+              input: |
+                fun testB(b: Bool, i: Int, f: Float): Bool {
+                  return b;
+                }
+
+                fun testI(b: Bool, i: Int, f: Float): Int {
+                  return i;
+                }
+
+                fun testF(b: Bool, i: Int, f: Float): Float {
+                  return f;
+                }
+
+                fun main() {
+                  println(testB(false, 1, 2.0));
+                  println(testI(false, 1, 2.0));
+                  println(testF(false, 1, 2.0));
+                }
+              output: |
+                false
+                1
+                2.000000
+            - name: return expressions includes references to parameter and local variable
+              input: |
+                fun test(x: Int): Int {
+                  let result = 10;
+
+                  if (x == 0)  result = 11; else result = 12;
+
+                  return result + x;
+                }
+
+                fun main() {
+                  println("main.1: ", test(1));
+                }
+              output: |
+                main.1: 13
+      - scenario:
+          name: Variable
+          tests:
+            - name: Bool
+              input: |
+                let b = true;
+
+                fun main() {
+                  println(b);
+                }
+              output: |
+                true
+            - name: Int
+              input: |
+                let i = 1;
+
+                fun main() {
+                  println(i);
+                }
+              output: |
+                1
+            - name: Float
+              input: |
+                let f = -9.5;
+
+                fun main() {
+                  println(f);
+                }
+              output: |
+                -9.500000
+      - scenario:
+          name: Constant
+          tests:
+            - name: Bool
+              input: |
+                const b = true;
+
+                fun main() {
+                  println(b);
+                }
+              output: |
+                true
+            - name: Int
+              input: |
+                const i = 1;
+
+                fun main() {
+                  println(i);
+                }
+              output: |
+                1
+            - name: Float
+              input: |
+                const f = -9.5;
+
+                fun main() {
+                  println(f);
+                }
+              output: |
+                -9.500000
+      - scenario:
+          name: Combination of toplevel and statement declarations
+          tests:
+            - name: nested constant
+              input: |
+                const x = 1;
+
+                fun main() {
+                  println(x);
+
+                  const x = 2;
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+            - name: deep nested constant
+              input: |
+                const x = 1;
+
+                fun main() {
+                  println(x);
+
+                  const x = 2;
+                  println(x);
+
+                  {
+                    const x = 3;
+                    println(x);
+                  }
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+                3
+                2
+            - name: constants across declarations
+              input: |
+                const x = 1;
+
+                fun test() {
+                  const x = 2;
+
+                  println(x);
+                }
+
+                fun main() {
+                  println(x);
+
+                  test();
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+                1
+            - name: nested variables
+              input: |
+                let x = 1;
+
+                fun main() {
+                  println(x);
+
+                  let x = 2;
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+            - name: deep nested variables
+              input: |
+                let x = 1;
+
+                fun main() {
+                  println(x);
+
+                  let x = 2;
+                  println(x);
+
+                  {
+                    let x = 3;
+                    println(x);
+                  }
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+                3
+                2
+            - name: variables across declarations
+              input: |
+                let x = 1;
+
+                fun test() {
+                  let x = 2;
+
+                  println(x);
+                }
+
+                fun main() {
+                  println(x);
+
+                  test();
+
+                  println(x);
+                }
+              output: |
+                1
+                2
+                1
+            - name: combination of toplevel, parameters and deep nested variables
+              input: |
+                let x = 2;
+
+                fun test(x: Int) {
+                  println("test.1: ", x);
+
+                  {
+                    let x = x * x;
+                    println("test.2: ", x);
+                  }
+
+                  println("test.3: ", x);
+                }
+
+                fun main() {
+                  println("main.1: ", x);
+
+                  {
+                    let x = x * x;
+                    println("main.2: ", x);
+                    test(x*x);
+                    println("main.3: ", x);
+                  }
+                  println("main.4: ", x);
+                }
+              output: |
+                main.1: 2
+                main.2: 4
+                test.1: 16
+                test.2: 256
+                test.3: 16
+                main.3: 4
+                main.4: 2

@@ -1,23 +1,18 @@
-# Compiled class file
-*.class
+.idea/
+.kotlintest/
+.settings/
+.project
+.classpath
 
-# Log file
-*.log
+.gradle
+build
 
-# BlueJ files
-*.ctxt
+./samples/*.class
+./samples/*.yaml
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+/src/main/kotlin/io/littlelanguages/data/Tuple.kt
+/src/main/kotlin/io/littlelanguages/data/Union.kt
+/src/main/kotlin/io/littlelanguages/data/Yammable.kt
+/src/main/kotlin/io/littlelanguages/p0/static/Parser.kt
+/src/main/kotlin/io/littlelanguages/p0/static/Scanner.kt
+/src/main/kotlin/io/littlelanguages/scanpiler

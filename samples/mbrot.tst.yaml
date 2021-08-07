@@ -1,0 +1,365 @@
+Program:
+  d:
+  - ConstantDeclaration:
+      identifier: scale
+      e: {LiteralFloat: '1.5'}
+  - FunctionDeclaration:
+      identifier: printdensity
+      arguments:
+      - {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+      s:
+      - CallStatement:
+          identifier: print
+          parameters:
+          - IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+      - IfThenElseStatement:
+          e:
+            BinaryExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+              op: GreaterThan
+              e1:
+                IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+              e2:
+                LiteralValue: {LiteralInt: 8}
+          s1:
+            CallStatement:
+              identifier: print
+              parameters:
+              - LiteralValue: {LiteralString: '" "'}
+          s2:
+            IfThenElseStatement:
+              e:
+                BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                  op: GreaterThan
+                  e1:
+                    IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                  e2:
+                    LiteralValue: {LiteralInt: 4}
+              s1:
+                CallStatement:
+                  identifier: print
+                  parameters:
+                  - LiteralValue: {LiteralString: '"."'}
+              s2:
+                IfThenElseStatement:
+                  e:
+                    BinaryExpression:
+                      type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                      op: GreaterThan
+                      e1:
+                        IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                      e2:
+                        LiteralValue: {LiteralInt: 3}
+                  s1:
+                    CallStatement:
+                      identifier: print
+                      parameters:
+                      - LiteralValue: {LiteralString: '"-"'}
+                  s2:
+                    IfThenElseStatement:
+                      e:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                          op: GreaterThan
+                          e1:
+                            IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                          e2:
+                            LiteralValue: {LiteralInt: 2}
+                      s1:
+                        CallStatement:
+                          identifier: print
+                          parameters:
+                          - LiteralValue: {LiteralString: '"+"'}
+                      s2:
+                        IfThenElseStatement:
+                          e:
+                            BinaryExpression:
+                              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                              op: GreaterThan
+                              e1:
+                                IdentifierReference: {name: d, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                              e2:
+                                LiteralValue: {LiteralInt: 1}
+                          s1:
+                            CallStatement:
+                              identifier: print
+                              parameters:
+                              - LiteralValue: {LiteralString: '"*"'}
+                          s2:
+                            CallStatement:
+                              identifier: print
+                              parameters:
+                              - LiteralValue: {LiteralString: '"#"'}
+  - FunctionDeclaration:
+      identifier: mandelconverger
+      arguments:
+      - {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: iters, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+      - {name: creal, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: cimag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      s: []
+      e:
+        TernaryExpression:
+          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'
+          e1:
+            BinaryExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+              op: Or
+              e1:
+                BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                  op: GreaterThan
+                  e1:
+                    IdentifierReference: {name: iters, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                  e2:
+                    LiteralValue: {LiteralInt: 255}
+              e2:
+                BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                  op: GreaterThan
+                  e1:
+                    BinaryExpression:
+                      type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                      op: Plus
+                      e1:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Times
+                          e1:
+                            IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          e2:
+                            IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                      e2:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Times
+                          e1:
+                            IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          e2:
+                            IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  e2:
+                    LiteralValue: {LiteralFloat: '4.0'}
+          e2:
+            IdentifierReference: {name: iters, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+          e3:
+            CallExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'
+              name: mandelconverger
+              parameters:
+              - BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                  op: Plus
+                  e1:
+                    BinaryExpression:
+                      type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                      op: Minus
+                      e1:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Times
+                          e1:
+                            IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          e2:
+                            IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                      e2:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Times
+                          e1:
+                            IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          e2:
+                            IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  e2:
+                    IdentifierReference: {name: creal, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              - BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                  op: Plus
+                  e1:
+                    BinaryExpression:
+                      type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                      op: Times
+                      e1:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Times
+                          e1:
+                            LiteralValue: {LiteralFloat: '2.0'}
+                          e2:
+                            IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                      e2:
+                        IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  e2:
+                    IdentifierReference: {name: cimag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              - BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'
+                  op: Plus
+                  e1:
+                    IdentifierReference: {name: iters, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'}
+                  e2:
+                    LiteralValue: {LiteralInt: 1}
+              - IdentifierReference: {name: creal, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              - IdentifierReference: {name: cimag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+  - FunctionDeclaration:
+      identifier: mandelconverge
+      arguments:
+      - {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      s: []
+      e:
+        CallExpression:
+          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'
+          name: mandelconverger
+          parameters:
+          - IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - LiteralValue: {LiteralInt: 0}
+          - IdentifierReference: {name: real, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - IdentifierReference: {name: imag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+  - FunctionDeclaration:
+      identifier: mandelhelp
+      arguments:
+      - {name: xmin, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: xmax, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: xstep, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: ymin, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: ymax, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: ystep, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      s:
+      - VariableDeclarationStatement:
+          identifier: y
+          e:
+            IdentifierReference: {name: ymin, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - WhileStatement:
+          e:
+            BinaryExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+              op: LessThan
+              e1:
+                IdentifierReference: {name: y, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              e2:
+                IdentifierReference: {name: ymax, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          s:
+            BlockStatement:
+            - VariableDeclarationStatement:
+                identifier: x
+                e:
+                  IdentifierReference: {name: xmin, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+            - WhileStatement:
+                e:
+                  BinaryExpression:
+                    type: !!io.littlelanguages.p0.dynamic.tst.Type 'Bool'
+                    op: LessThan
+                    e1:
+                      IdentifierReference: {name: x, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                    e2:
+                      IdentifierReference: {name: xmax, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                s:
+                  BlockStatement:
+                  - CallStatement:
+                      identifier: printdensity
+                      parameters:
+                      - CallExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Int'
+                          name: mandelconverge
+                          parameters:
+                          - IdentifierReference: {name: x, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          - IdentifierReference: {name: y, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  - AssignmentStatement:
+                      identifier: x
+                      e:
+                        BinaryExpression:
+                          type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                          op: Plus
+                          e1:
+                            IdentifierReference: {name: x, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                          e2:
+                            BinaryExpression:
+                              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                              op: Divide
+                              e1:
+                                IdentifierReference: {name: xstep, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                              e2:
+                                IdentifierReference: {name: scale, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+            - CallStatement:
+                identifier: println
+                parameters: []
+            - AssignmentStatement:
+                identifier: y
+                e:
+                  BinaryExpression:
+                    type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                    op: Plus
+                    e1:
+                      IdentifierReference: {name: y, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                    e2:
+                      BinaryExpression:
+                        type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                        op: Divide
+                        e1:
+                          IdentifierReference: {name: ystep, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                        e2:
+                          IdentifierReference: {name: scale, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+  - FunctionDeclaration:
+      identifier: mandel
+      arguments:
+      - {name: realstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: imagstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: realmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      - {name: imagmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+      s:
+      - CallStatement:
+          identifier: mandelhelp
+          parameters:
+          - IdentifierReference: {name: realstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - BinaryExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+              op: Plus
+              e1:
+                IdentifierReference: {name: realstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              e2:
+                BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                  op: Times
+                  e1:
+                    IdentifierReference: {name: realmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  e2:
+                    LiteralValue: {LiteralFloat: '78.0'}
+          - IdentifierReference: {name: realmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - IdentifierReference: {name: imagstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+          - BinaryExpression:
+              type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+              op: Plus
+              e1:
+                IdentifierReference: {name: imagstart, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+              e2:
+                BinaryExpression:
+                  type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+                  op: Times
+                  e1:
+                    IdentifierReference: {name: imagmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+                  e2:
+                    LiteralValue: {LiteralFloat: '40.0'}
+          - IdentifierReference: {name: imagmag, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+  s:
+    BlockStatement:
+    - CallStatement:
+        identifier: println
+        parameters:
+        - IdentifierReference: {name: scale, type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'}
+    - CallStatement:
+        identifier: mandel
+        parameters:
+        - UnaryExpression:
+            type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+            op: UnaryMinus
+            e:
+              LiteralValue: {LiteralFloat: '2.3'}
+        - UnaryExpression:
+            type: !!io.littlelanguages.p0.dynamic.tst.Type 'Float'
+            op: UnaryMinus
+            e:
+              LiteralValue: {LiteralFloat: '1.3'}
+        - LiteralValue: {LiteralFloat: '5.0e-2'}
+        - LiteralValue: {LiteralFloat: '7.0e-2'}

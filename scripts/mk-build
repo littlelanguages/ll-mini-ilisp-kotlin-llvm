@@ -1,0 +1,10 @@
+#!/bin/sh
+
+./gradlew build || exit
+
+
+mkdir dist
+mkdir dist/bin
+mkdir dist/lib
+
+

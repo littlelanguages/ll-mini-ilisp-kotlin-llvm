@@ -1,0 +1,34 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.5.21'
+    id 'application'
+}
+
+application {
+    mainClass.set("io.littlelanguage.p0.bin.CLIKt")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+ext {
+    vKotlin = '1.5.21'
+    vASM = '9.2'
+    vKotest = '4.6.1'
+    vSnakeYAML = '1.29'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$vKotlin"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$vKotlin"
+    implementation "org.ow2.asm:asm:$vASM"
+    implementation "org.yaml:snakeyaml:$vSnakeYAML"
+
+    testImplementation "org.ow2.asm:asm-util:$vASM"
+    testImplementation "io.kotest:kotest-runner-junit5-jvm:$vKotest"
+    testImplementation "io.kotest:kotest-assertions-core-jvm:$vKotest"
+}
+
+repositories {
+    mavenCentral()
+}

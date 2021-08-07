@@ -1,0 +1,21 @@
+tokens
+    Identifier = alpha {digit | alpha};
+    LiteralInt = digits;
+    LiteralFloat =
+      (digits "." digits [("e" | "E") ["+" | "-"] digits]) |
+      (digits ("e" | "E") ["+" | "-"] digits) |
+      ("." digits [("e" | "E") ["+" | "-"] digits]);
+    LiteralString = '"' {!('"' + cr) | "\" '"'}  '"';
+
+comments
+   "/*" to "*/" nested;
+   "//" {!cr};
+
+whitespace
+  chr(0)-' ';
+
+fragments
+  digit = '0'-'9';
+  digits = digit {digit};
+  alpha = 'a'-'z' + 'A'-'Z';
+  cr = chr(10);

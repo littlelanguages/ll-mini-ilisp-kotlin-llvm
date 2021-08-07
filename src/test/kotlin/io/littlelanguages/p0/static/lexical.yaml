@@ -1,0 +1,140 @@
+- name: Blank
+  input: ""
+  output:
+    - EOS 0:1:1 []
+- name: "Whitespace only"
+  input: "      "
+  output:
+    - EOS 6:1:7 []
+- name: Keywords
+  input: const else false fun if let return true while Bool Float Int
+  output:
+    - Const 0:1:1-4:1:5 [const]
+    - Else 6:1:7-9:1:10 [else]
+    - False 11:1:12-15:1:16 [false]
+    - Fun 17:1:18-19:1:20 [fun]
+    - If 21:1:22-22:1:23 [if]
+    - Let 24:1:25-26:1:27 [let]
+    - Return 28:1:29-33:1:34 [return]
+    - True 35:1:36-38:1:39 [true]
+    - While 40:1:41-44:1:45 [while]
+    - Bool 46:1:47-49:1:50 [Bool]
+    - Float 51:1:52-55:1:56 [Float]
+    - Int 57:1:58-59:1:60 [Int]
+    - EOS 60:1:61 []
+- name: Symbols
+  input: "&& || ? : ! != = == >= > { <= < ( - + } ) ; / * ,"
+  output:
+    - AmpersandAmpersand 0:1:1-1:1:2 [&&]
+    - BarBar 3:1:4-4:1:5 [||]
+    - Question 6:1:7 [?]
+    - Colon 8:1:9 [:]
+    - Bang 10:1:11 [!]
+    - BangEqual 12:1:13-13:1:14 [!=]
+    - Equal 15:1:16 [=]
+    - EqualEqual 17:1:18-18:1:19 [==]
+    - GreaterThanEqual 20:1:21-21:1:22 [>=]
+    - GreaterThan 23:1:24 [>]
+    - LCurly 25:1:26 [{]
+    - LessThanEqual 27:1:28-28:1:29 [<=]
+    - LessThan 30:1:31 [<]
+    - LParen 32:1:33 [(]
+    - Dash 34:1:35 [-]
+    - Plus 36:1:37 [+]
+    - RCurly 38:1:39 [}]
+    - RParen 40:1:41 [)]
+    - Semicolon 42:1:43 [;]
+    - Slash 44:1:45 [/]
+    - Star 46:1:47 [*]
+    - Comma 48:1:49 [,]
+    - EOS 49:1:50 []
+- name: Literal Integers
+  input: 1 12 123
+  output:
+    - LiteralInt 0:1:1 [1]
+    - LiteralInt 2:1:3-3:1:4 [12]
+    - LiteralInt 5:1:6-7:1:8 [123]
+    - EOS 8:1:9 []
+- scenario:
+    name: Literal Float
+    tests:
+      - name: xxx.xxx
+        input: 1.0 12.34 123.456
+        output:
+          - LiteralFloat 0:1:1-2:1:3 [1.0]
+          - LiteralFloat 4:1:5-8:1:9 [12.34]
+          - LiteralFloat 10:1:11-16:1:17 [123.456]
+          - EOS 17:1:18 []
+      - name: .xxx
+        input: .0 .34 .456
+        output:
+          - LiteralFloat 0:1:1-1:1:2 [.0]
+          - LiteralFloat 3:1:4-5:1:6 [.34]
+          - LiteralFloat 7:1:8-10:1:11 [.456]
+          - EOS 11:1:12 []
+      - name: xxx.xxxExxx
+        input: 1.0e5 1.0E5 1.0e+5 1.0E+5 1.0e-5 1.0E-5
+        output:
+          - LiteralFloat 0:1:1-4:1:5 [1.0e5]
+          - LiteralFloat 6:1:7-10:1:11 [1.0E5]
+          - LiteralFloat 12:1:13-17:1:18 [1.0e+5]
+          - LiteralFloat 19:1:20-24:1:25 [1.0E+5]
+          - LiteralFloat 26:1:27-31:1:32 [1.0e-5]
+          - LiteralFloat 33:1:34-38:1:39 [1.0E-5]
+          - EOS 39:1:40 []
+      - name: xxxExxx
+        input: 1e5 1E5 1e+5 1E+5 1e-5 1E-5
+        output:
+          - LiteralFloat 0:1:1-2:1:3 [1e5]
+          - LiteralFloat 4:1:5-6:1:7 [1E5]
+          - LiteralFloat 8:1:9-11:1:12 [1e+5]
+          - LiteralFloat 13:1:14-16:1:17 [1E+5]
+          - LiteralFloat 18:1:19-21:1:22 [1e-5]
+          - LiteralFloat 23:1:24-26:1:27 [1E-5]
+          - EOS 27:1:28 []
+      - name: .xxxExxx
+        input: .0e5 .0E5 .0e+5 .0E+5 .0e-5 .0E-5
+        output:
+          - LiteralFloat 0:1:1-3:1:4 [.0e5]
+          - LiteralFloat 5:1:6-8:1:9 [.0E5]
+          - LiteralFloat 10:1:11-14:1:15 [.0e+5]
+          - LiteralFloat 16:1:17-20:1:21 [.0E+5]
+          - LiteralFloat 22:1:23-26:1:27 [.0e-5]
+          - LiteralFloat 28:1:29-32:1:33 [.0E-5]
+          - EOS 33:1:34 []
+- name: Literal Strings
+  input: '"" "hello world" "hello \"world\"" "hello \\world\\"'
+  output:
+    - LiteralString 0:1:1-1:1:2 [""]
+    - LiteralString 3:1:4-15:1:16 ["hello world"]
+    - LiteralString 17:1:18-33:1:34 ["hello \"world\""]
+    - LiteralString 35:1:36-51:1:52 ["hello \\world\\"]
+    - EOS 52:1:53 []
+- scenario:
+    name: Comments
+    tests:
+      - name: Single-line
+        input: |
+          abc // some or other comment
+          def
+        output:
+          - Identifier 0:1:1-2:1:3 [abc]
+          - Identifier 29:2:1-31:2:3 [def]
+          - EOS 33:3:1 []
+      - name: Multi-line non-nested
+        input: |
+          abc /* some or
+          other non-nested comments */ def
+        output:
+          - Identifier 0:1:1-2:1:3 [abc]
+          - Identifier 44:2:30-46:2:32 [def]
+          - EOS 48:3:1 []
+      - name: Multi-line nested
+        input: |
+          abc /* some or
+          other /* nested */
+           comments */ def
+        output:
+          - Identifier 0:1:1-2:1:3 [abc]
+          - Identifier 47:3:14-49:3:16 [def]
+          - EOS 51:4:1 []

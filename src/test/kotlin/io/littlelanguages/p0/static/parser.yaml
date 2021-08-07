@@ -1,0 +1,1653 @@
+- name: Hello World
+  input: |
+    fun main() {
+      println("Hello world");
+    }
+  output:
+    Program:
+      - FunctionDeclaration:
+          identifier:
+            value: main
+            position: 4:1:5-7:1:8
+          arguments: []
+          s:
+            - CallStatement:
+                identifier:
+                  value: println
+                  position: 15:2:3-21:2:9
+                parameters:
+                  - LiteralString:
+                      value: '"Hello world"'
+                      position: 23:2:11-35:2:23
+- scenario:
+    name: Expressions
+    tests:
+      - scenario:
+          name: Literal Boolean
+          tests:
+            - name: "true"
+              input: |
+                fun test(): Bool {
+                  return true;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        LiteralBool:
+                          value: 'True'
+                          position: 28:2:10-31:2:13
+            - name: "false"
+              input: |
+                fun test(): Bool {
+                  return false;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        LiteralBool:
+                          value: 'False'
+                          position: 28:2:10-32:2:14
+      - name: LiteralFloat
+        input: |
+          fun test(): Float {
+            return 1.23;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: test
+                  position: 4:1:5-7:1:8
+                arguments: []
+                result: Float
+                s: []
+                e:
+                  LiteralFloat:
+                    value: '1.23'
+                    position: 29:2:10-32:2:13
+      - name: LiteralInt
+        input: |
+          fun test(): Int {
+            return 1234;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: test
+                  position: 4:1:5-7:1:8
+                arguments: []
+                result: Int
+                s: []
+                e:
+                  LiteralInt:
+                    value: '1234'
+                    position: 27:2:10-30:2:13
+      - name: LiteralString
+        input: |
+          fun test() {
+            println("hello");
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: test
+                  position: 4:1:5-7:1:8
+                arguments: []
+                s:
+                  - CallStatement:
+                      identifier:
+                        value: println
+                        position: 15:2:3-21:2:9
+                      parameters:
+                        - LiteralString:
+                            value: '"hello"'
+                            position: 23:2:11-29:2:17
+      - name: Parenthesis
+        input: |
+          fun test(): Int {
+            return (12);
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: test
+                  position: 4:1:5-7:1:8
+                arguments: []
+                result: Int
+                s: []
+                e:
+                  Parenthesis:
+                    e:
+                      LiteralInt:
+                        value: '12'
+                        position: 28:2:11-29:2:12
+                    position: 27:2:10-30:2:13
+      - name: Ternary expression
+        input: |
+          fun test(): Int {
+            return b ? 1 : 0;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: test
+                  position: 4:1:5-7:1:8
+                arguments: []
+                result: Int
+                s: []
+                e:
+                  TernaryExpression:
+                    e1:
+                      IdentifierReference:
+                        value: b
+                        position: '27:2:10'
+                    e2:
+                      LiteralInt:
+                        value: '1'
+                        position: '31:2:14'
+                    e3:
+                      LiteralInt:
+                        value: '0'
+                        position: '35:2:18'
+      - scenario:
+          name: Binary Expression
+          tests:
+            - scenario:
+                name: Boolean && and ||
+                tests:
+                  - name: a || b || c
+                    input: |
+                      fun test(): Bool {
+                        return a || b || c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Or
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '33:2:15'
+                                op: Or
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '38:2:20'
+                  - name: a && b && c
+                    input: |
+                      fun test(): Bool {
+                        return a && b && c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: And
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '33:2:15'
+                                op: And
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '38:2:20'
+                  - name: a && b || c
+                    input: |
+                      fun test(): Bool {
+                        return a && b || c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: And
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '33:2:15'
+                                op: Or
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '38:2:20'
+                  - name: a || b && c
+                    input: |
+                      fun test(): Bool {
+                        return a || b && c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Or
+                                e2:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '33:2:15'
+                                    op: And
+                                    e2:
+                                      IdentifierReference:
+                                        value: c
+                                        position: '38:2:20'
+            - scenario:
+                name: Relational operators
+                tests:
+                  - name: a == b
+                    input: |
+                      fun test(): Bool {
+                        return a == b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Equal
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '33:2:15'
+                  - name: a != b
+                    input: |
+                      fun test(): Bool {
+                        return a != b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: NotEqual
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '33:2:15'
+                  - name: a <= b
+                    input: |
+                      fun test(): Bool {
+                        return a <= b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: LessEqual
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '33:2:15'
+                  - name: a < b
+                    input: |
+                      fun test(): Bool {
+                        return a < b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: LessThan
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '32:2:14'
+                  - name: a >= b
+                    input: |
+                      fun test(): Bool {
+                        return a >= b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: GreaterEqual
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '33:2:15'
+                  - name: a > b
+                    input: |
+                      fun test(): Bool {
+                        return a > b;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: GreaterThan
+                                e2:
+                                  IdentifierReference:
+                                    value: b
+                                    position: '32:2:14'
+            - scenario:
+                name: Numeric operators
+                tests:
+                  - name: a + b + c
+                    input: |
+                      fun test(): Bool {
+                        return a + b + c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Plus
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Plus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a + b - c
+                    input: |
+                      fun test(): Bool {
+                        return a + b - c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Plus
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Minus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a + b * c
+                    input: |
+                      fun test(): Bool {
+                        return a + b * c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Plus
+                                e2:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: c
+                                        position: '36:2:18'
+                  - name: a + b / c
+                    input: |
+                      fun test(): Bool {
+                        return a + b / c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Plus
+                                e2:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: c
+                                        position: '36:2:18'
+                  - name: a - b + c
+                    input: |
+                      fun test(): Bool {
+                        return a - b + c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Minus
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Plus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a - b - c
+                    input: |
+                      fun test(): Bool {
+                        return a - b - c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Minus
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Minus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a - b * c
+                    input: |
+                      fun test(): Bool {
+                        return a - b * c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Minus
+                                e2:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: c
+                                        position: '36:2:18'
+                  - name: a - b / c
+                    input: |
+                      fun test(): Bool {
+                        return a - b / c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  IdentifierReference:
+                                    value: a
+                                    position: '28:2:10'
+                                op: Minus
+                                e2:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: c
+                                        position: '36:2:18'
+                  - name: a * b + c
+                    input: |
+                      fun test(): Bool {
+                        return a * b + c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Plus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a * b - c
+                    input: |
+                      fun test(): Bool {
+                        return a * b - c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Minus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a * b * c
+                    input: |
+                      fun test(): Bool {
+                        return a * b * c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Times
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a * b / c
+                    input: |
+                      fun test(): Bool {
+                        return a * b / c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Times
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Divide
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a / b + c
+                    input: |
+                      fun test(): Bool {
+                        return a / b + c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Plus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a / b - c
+                    input: |
+                      fun test(): Bool {
+                        return a / b - c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Minus
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a / b * c
+                    input: |
+                      fun test(): Bool {
+                        return a / b * c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Times
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+                  - name: a / b / c
+                    input: |
+                      fun test(): Bool {
+                        return a / b / c;
+                      }
+                    output:
+                      Program:
+                        - FunctionDeclaration:
+                            identifier:
+                              value: test
+                              position: 4:1:5-7:1:8
+                            arguments: []
+                            result: Bool
+                            s: []
+                            e:
+                              BinaryExpression:
+                                e1:
+                                  BinaryExpression:
+                                    e1:
+                                      IdentifierReference:
+                                        value: a
+                                        position: '28:2:10'
+                                    op: Divide
+                                    e2:
+                                      IdentifierReference:
+                                        value: b
+                                        position: '32:2:14'
+                                op: Divide
+                                e2:
+                                  IdentifierReference:
+                                    value: c
+                                    position: '36:2:18'
+      - scenario:
+          name: Unary Expression
+          tests:
+            - name: "+a"
+              input: |
+                fun test(): Bool {
+                  return +a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        UnaryExpression:
+                          position: '28:2:10'
+                          op: UnaryPlus
+                          e:
+                            IdentifierReference:
+                              value: a
+                              position: '29:2:11'
+            - name: a + +a
+              input: |
+                fun test(): Bool {
+                  return a + +a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        BinaryExpression:
+                          e1:
+                            IdentifierReference:
+                              value: a
+                              position: '28:2:10'
+                          op: Plus
+                          e2:
+                            UnaryExpression:
+                              position: '32:2:14'
+                              op: UnaryPlus
+                              e:
+                                IdentifierReference:
+                                  value: a
+                                  position: '33:2:15'
+            - name: -a
+              input: |
+                fun test(): Bool {
+                  return -a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        UnaryExpression:
+                          position: '28:2:10'
+                          op: UnaryMinus
+                          e:
+                            IdentifierReference:
+                              value: a
+                              position: '29:2:11'
+            - name: a + -a
+              input: |
+                fun test(): Bool {
+                  return a + -a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        BinaryExpression:
+                          e1:
+                            IdentifierReference:
+                              value: a
+                              position: '28:2:10'
+                          op: Plus
+                          e2:
+                            UnaryExpression:
+                              position: '32:2:14'
+                              op: UnaryMinus
+                              e:
+                                IdentifierReference:
+                                  value: a
+                                  position: '33:2:15'
+            - name: '(unary not) !a'
+              input: |
+                fun test(): Bool {
+                  return !a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Bool
+                      s: []
+                      e:
+                        UnaryExpression:
+                          position: '28:2:10'
+                          op: UnaryNot
+                          e:
+                            IdentifierReference:
+                              value: a
+                              position: '29:2:11'
+      - scenario:
+          name: Call Expression
+          tests:
+            - name: random()
+              input: |
+                fun test(): Float {
+                  return random();
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Float
+                      s: []
+                      e:
+                        CallExpression:
+                          name:
+                            value: random
+                            position: 29:2:10-34:2:15
+                          parameters: []
+            - name: random(1, 2, 3)
+              input: |
+                fun test(): Float {
+                  return random(1, 2, 3);
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: test
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      result: Float
+                      s: []
+                      e:
+                        CallExpression:
+                          name:
+                            value: random
+                            position: 29:2:10-34:2:15
+                          parameters:
+                            - LiteralInt:
+                                value: '1'
+                                position: '36:2:17'
+                            - LiteralInt:
+                                value: '2'
+                                position: '39:2:20'
+                            - LiteralInt:
+                                value: '3'
+                                position: '42:2:23'
+- scenario:
+    name: Declarations
+    tests:
+      - name: Constant
+        input: |
+          const x = true;
+        output:
+          Program:
+            - VariableDeclaration:
+                access: ReadOnly
+                identifier:
+                  value: x
+                  position: '6:1:7'
+                e:
+                  LiteralBool:
+                    value: 'True'
+                    position: 10:1:11-13:1:14
+      - name: Let
+        input: |
+          let x = true;
+        output:
+          Program:
+            - VariableDeclaration:
+                access: ReadWrite
+                identifier:
+                  value: x
+                  position: '4:1:5'
+                e:
+                  LiteralBool:
+                    value: 'True'
+                    position: 8:1:9-11:1:12
+      - scenario:
+          name: Declaration Expressions
+          tests:
+            - name: Constant Int
+              input: |
+                const x = 1234;
+              output:
+                Program:
+                  - VariableDeclaration:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: '6:1:7'
+                      e:
+                        LiteralInt:
+                          value: '1234'
+                          position: 10:1:11-13:1:14
+            - name: Constant Float
+              input: |
+                const x = 1.23;
+              output:
+                Program:
+                  - VariableDeclaration:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: '6:1:7'
+                      e:
+                        LiteralFloat:
+                          value: '1.23'
+                          position: 10:1:11-13:1:14
+            - name: Constant +constant
+              input: |
+                const x = +123;
+              output:
+                Program:
+                  - VariableDeclaration:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: '6:1:7'
+                      e:
+                        LiteralExpressionUnaryValue:
+                          position: '10:1:11'
+                          op: UnaryPlus
+                          value:
+                            LiteralInt:
+                              value: '123'
+                              position: 11:1:12-13:1:14
+            - name: Constant -constant
+              input: |
+                const x = -123;
+              output:
+                Program:
+                  - VariableDeclaration:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: '6:1:7'
+                      e:
+                        LiteralExpressionUnaryValue:
+                          position: '10:1:11'
+                          op: UnaryMinus
+                          value:
+                            LiteralInt:
+                              value: '123'
+                              position: 11:1:12-13:1:14
+            - name: Constant Bool
+              input: |
+                const x = true;
+              output:
+                Program:
+                  - VariableDeclaration:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: '6:1:7'
+                      e:
+                        LiteralBool:
+                          value: 'True'
+                          position: 10:1:11-13:1:14
+      - name: Function without return type
+        input: |
+          fun add(a: Int, b: Int) {
+            c = a + b;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: add
+                  position: 4:1:5-6:1:7
+                arguments:
+                  - name:
+                      value: a
+                      position: '8:1:9'
+                    type: Int
+                  - name:
+                      value: b
+                      position: '16:1:17'
+                    type: Int
+                s:
+                  - AssignmentStatement:
+                      identifier:
+                        value: c
+                        position: '28:2:3'
+                      e:
+                        BinaryExpression:
+                          e1:
+                            IdentifierReference:
+                              value: a
+                              position: "32:2:7"
+                          op: Plus
+                          e2:
+                            IdentifierReference:
+                              value: b
+                              position: "36:2:11"
+      - name: Function with return type
+        input: |
+          fun add(a: Int, b: Int): Int {
+            return a + b;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: add
+                  position: 4:1:5-6:1:7
+                arguments:
+                  - name:
+                      value: a
+                      position: "8:1:9"
+                    type: Int
+                  - name:
+                      value: b
+                      position: "16:1:17"
+                    type: Int
+                result: Int
+                s: []
+                e:
+                  BinaryExpression:
+                    e1:
+                      IdentifierReference:
+                        value: a
+                        position: "40:2:10"
+                    op: Plus
+                    e2:
+                      IdentifierReference:
+                        value: b
+                        position: "44:2:14"
+- scenario:
+    name: Statements
+    tests:
+      - name: Assignment
+        input: |
+          fun main() {
+            x = 10;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: main
+                  position: 4:1:5-7:1:8
+                arguments: []
+                s:
+                  - AssignmentStatement:
+                      identifier:
+                        value: x
+                        position: "15:2:3"
+                      e:
+                        LiteralInt:
+                          value: '10'
+                          position: 19:2:7-20:2:8
+      - name: Variable declaration
+        input: |
+          fun main() {
+            let x = 10;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: main
+                  position: 4:1:5-7:1:8
+                arguments: []
+                s:
+                  - VariableDeclarationStatement:
+                      access: ReadWrite
+                      identifier:
+                        value: x
+                        position: "19:2:7"
+                      e:
+                        LiteralInt:
+                          value: '10'
+                          position: 23:2:11-24:2:12
+      - name: Constant declaration
+        input: |
+          fun main() {
+            const x = 10;
+          }
+        output:
+          Program:
+            - FunctionDeclaration:
+                identifier:
+                  value: main
+                  position: 4:1:5-7:1:8
+                arguments: []
+                s:
+                  - VariableDeclarationStatement:
+                      access: ReadOnly
+                      identifier:
+                        value: x
+                        position: "21:2:9"
+                      e:
+                        LiteralInt:
+                          value: '10'
+                          position: 25:2:13-26:2:14
+      - scenario:
+          name: If statement
+          tests:
+            - name: Without else
+              input: |
+                fun main() {
+                  if a
+                    b = c;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - IfThenElseStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "18:2:6"
+                            s1:
+                              AssignmentStatement:
+                                identifier:
+                                  value: b
+                                  position: "24:3:5"
+                                e:
+                                  IdentifierReference:
+                                    value: c
+                                    position: "28:3:9"
+            - name: With else
+              input: |
+                fun main() {
+                  if a
+                    b = c;
+                  else
+                    d = e;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - IfThenElseStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "18:2:6"
+                            s1:
+                              AssignmentStatement:
+                                identifier:
+                                  value: b
+                                  position: "24:3:5"
+                                e:
+                                  IdentifierReference:
+                                    value: c
+                                    position: "28:3:9"
+                            s2:
+                              AssignmentStatement:
+                                identifier:
+                                  value: d
+                                  position: "42:5:5"
+                                e:
+                                  IdentifierReference:
+                                    value: e
+                                    position: "46:5:9"
+            - name: Nested with dangling else
+              input: |
+                fun main() {
+                  if a
+                    if d
+                      d = e;
+                    else
+                      f = g;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - IfThenElseStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "18:2:6"
+                            s1:
+                              IfThenElseStatement:
+                                e:
+                                  IdentifierReference:
+                                    value: d
+                                    position: "27:3:8"
+                                s1:
+                                  AssignmentStatement:
+                                    identifier:
+                                      value: d
+                                      position: "35:4:7"
+                                    e:
+                                      IdentifierReference:
+                                        value: e
+                                        position: "39:4:11"
+                                s2:
+                                  AssignmentStatement:
+                                    identifier:
+                                      value: f
+                                      position: "57:6:7"
+                                    e:
+                                      IdentifierReference:
+                                        value: g
+                                        position: "61:6:11"
+      - scenario:
+          name: While statement
+          tests:
+            - name: With single statement
+              input: |
+                fun main() {
+                  while a
+                    b = c;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - WhileStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "21:2:9"
+                            s:
+                              AssignmentStatement:
+                                identifier:
+                                  value: b
+                                  position: "27:3:5"
+                                e:
+                                  IdentifierReference:
+                                    value: c
+                                    position: "31:3:9"
+            - name: Without any statement
+              input: |
+                fun main() {
+                  while a;
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - WhileStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "21:2:9"
+                            s:
+                              EmptyStatement: {}
+            - name: Multiple statement block
+              input: |
+                fun main() {
+                  while a {
+                    b = 10;
+                    c = 1;
+                  }
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - WhileStatement:
+                            e:
+                              IdentifierReference:
+                                value: a
+                                position: "21:2:9"
+                            s:
+                              BlockStatement:
+                                - AssignmentStatement:
+                                    identifier:
+                                      value: b
+                                      position: "29:3:5"
+                                    e:
+                                      LiteralInt:
+                                        value: '10'
+                                        position: 33:3:9-34:3:10
+                                - AssignmentStatement:
+                                    identifier:
+                                      value: c
+                                      position: "41:4:5"
+                                    e:
+                                      LiteralInt:
+                                        value: '1'
+                                        position: "45:4:9"
+      - scenario:
+          name: Call statement
+          tests:
+            - name: Without parameters
+              input: |
+                fun main() {
+                  println();
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - CallStatement:
+                            identifier:
+                              value: println
+                              position: 15:2:3-21:2:9
+                            parameters: []
+            - name: With parameters
+              input: |
+                fun main() {
+                  println("Hello World: ", a, b);
+                }
+              output:
+                Program:
+                  - FunctionDeclaration:
+                      identifier:
+                        value: main
+                        position: 4:1:5-7:1:8
+                      arguments: []
+                      s:
+                        - CallStatement:
+                            identifier:
+                              value: println
+                              position: 15:2:3-21:2:9
+                            parameters:
+                              - LiteralString:
+                                  value: '"Hello World: "'
+                                  position: 23:2:11-37:2:25
+                              - IdentifierReference:
+                                  value: a
+                                  position: "40:2:28"
+                              - IdentifierReference:
+                                  value: b
+                                  position: "43:2:31"
