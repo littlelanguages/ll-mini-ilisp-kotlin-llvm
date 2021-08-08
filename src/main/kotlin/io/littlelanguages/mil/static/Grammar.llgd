@@ -1,62 +1,12 @@
 uses "./Scanner.llld";
 
-Program: {VariableDeclaration | FunctionDeclaration};
+Program: {Expression};
 
-VariableDeclaration: ("const" | "let") Identifier "=" LiteralExpression ";";
-
-LiteralExpression
-  : "true"
-  | "false"
-  | ["+" | "-"] (LiteralInt | LiteralFloat)
-  ;
-
-FunctionDeclaration: "fun" Identifier "(" [TypedIdentifier {"," TypedIdentifier}] ")" FunctionDeclarationSuffix;
-
-FunctionDeclarationSuffix
-  : ":" Type "{" {Statement} "return" Expression ";" "}"
-  | "{" {Statement} "}"
-  ;
-
-Type: "Int" | "Float" | "Bool";
-
-TypedIdentifier: Identifier ":" Type;
-
-Statement
-  : ("const" | "let") Identifier "=" Expression ";"
-  | "if" Expression Statement ["else" Statement]
-  | "while" Expression Statement
-  | "{" {Statement} "}"
-  | Identifier ("(" [Expression {"," Expression}] ")" | "=" Expression) ";"
-  | ";"
-  ;
-
-Expression: OrExpression ["?" Expression ":" Expression];
-
-OrExpression: AndExpression {"||" AndExpression};
-
-AndExpression: RelationalExpression {"&&" RelationalExpression};
-
-RelationalExpression: AdditiveExpression [RelationalOp AdditiveExpression];
-
-RelationalOp: "==" | "!=" | "<=" | "<" | ">=" | ">";
-
-AdditiveExpression: MultiplicativeExpression {AdditiveOp MultiplicativeExpression};
-
-AdditiveOp: "+" | "-";
-
-MultiplicativeExpression: Factor {MultiplicativeOp Factor};
-
-MultiplicativeOp: "*" | "/";
-
-Factor
-  : LiteralInt
-  | LiteralFloat
+Expression
+  : "(" {Expression} ")"
+  | Symbol
+  | LiteralInt
   | LiteralString
-  | "true"
-  | "false"
-  | UnaryOp Factor
-  | "(" Expression ")"
-  | Identifier ["(" [Expression {"," Expression}] ")"]
+  | "#t"
+  | "#f"
   ;
-
-UnaryOp: "!" | "-" | "+";

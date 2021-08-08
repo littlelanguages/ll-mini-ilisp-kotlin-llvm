@@ -13,6 +13,6 @@ build
 /src/main/kotlin/io/littlelanguages/data/Tuple.kt
 /src/main/kotlin/io/littlelanguages/data/Union.kt
 /src/main/kotlin/io/littlelanguages/data/Yammable.kt
-/src/main/kotlin/io/littlelanguages/p0/static/Parser.kt
-/src/main/kotlin/io/littlelanguages/p0/static/Scanner.kt
+/src/main/kotlin/io/littlelanguages/mil/static/Parser.kt
+/src/main/kotlin/io/littlelanguages/mil/static/Scanner.kt
 /src/main/kotlin/io/littlelanguages/scanpiler

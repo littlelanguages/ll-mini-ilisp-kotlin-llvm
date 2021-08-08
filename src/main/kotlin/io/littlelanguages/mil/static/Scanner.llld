@@ -1,15 +1,10 @@
 tokens
-    Identifier = alpha {digit | alpha};
-    LiteralInt = digits;
-    LiteralFloat =
-      (digits "." digits [("e" | "E") ["+" | "-"] digits]) |
-      (digits ("e" | "E") ["+" | "-"] digits) |
-      ("." digits [("e" | "E") ["+" | "-"] digits]);
-    LiteralString = '"' {!('"' + cr) | "\" '"'}  '"';
+    Symbol = (id \ '-') {digit | id};
+    LiteralInt = ['-'] digits;
+    LiteralString = '"' {!('"' + cr) | "\" ('"' + '\' + 't' + 'n' + 'r' | "\x" hexDigits)} '"';
 
 comments
-   "/*" to "*/" nested;
-   "//" {!cr};
+   ";" {!cr};
 
 whitespace
   chr(0)-' ';
@@ -17,5 +12,8 @@ whitespace
 fragments
   digit = '0'-'9';
   digits = digit {digit};
+  hexDigit = digit + 'a'-'f' + 'A'-'F';
+  hexDigits = hexDigit {hexDigit};
   alpha = 'a'-'z' + 'A'-'Z';
+  id = '!'-'}' \ ('0'-'9' + '"' + '(' + ')' + ';' + '#');
   cr = chr(10);
