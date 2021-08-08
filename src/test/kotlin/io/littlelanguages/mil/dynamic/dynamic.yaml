@@ -1,0 +1,7 @@
+- name: Hello World
+  input: |
+    (println "Hello world")
+  output:
+    Program:
+      names: [ ]
+      procedures: [ ]
