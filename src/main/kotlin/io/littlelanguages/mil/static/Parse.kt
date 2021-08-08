@@ -1,9 +1,9 @@
-package io.littlelanguages.p0.static
+package io.littlelanguages.mil.static
 
 import io.littlelanguages.data.*
-import io.littlelanguages.p0.Errors
-import io.littlelanguages.p0.ParseError
-import io.littlelanguages.p0.static.ast.*
+import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.ParseError
+import io.littlelanguages.mil.static.ast.*
 import io.littlelanguages.scanpiler.Location
 
 fun parse(scanner: Scanner): Either<Errors, Program> =

@@ -1,4 +1,4 @@
-package io.littlelanguages.p0.static
+package io.littlelanguages.mil.static
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.FunSpecContainerContext
@@ -9,7 +9,7 @@ import java.io.StringReader
 
 class ScannerTests : FunSpec({
     context("Conformance Tests") {
-        val content = File("./src/test/kotlin/io/littlelanguages/p0/static/lexical.yaml").readText()
+        val content = File("./src/test/kotlin/io/littlelanguages/mil/static/lexical.yaml").readText()
 
         val yaml = Yaml()
         val scenarios: Any = yaml.load(content)
