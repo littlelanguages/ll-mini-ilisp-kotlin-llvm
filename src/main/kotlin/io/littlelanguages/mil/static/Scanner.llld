@@ -14,6 +14,5 @@ fragments
   digits = digit {digit};
   hexDigit = digit + 'a'-'f' + 'A'-'F';
   hexDigits = hexDigit {hexDigit};
-  alpha = 'a'-'z' + 'A'-'Z';
   id = '!'-'}' \ ('0'-'9' + '"' + '(' + ')' + ';' + '#');
   cr = chr(10);
