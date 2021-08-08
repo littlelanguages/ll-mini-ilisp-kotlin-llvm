@@ -46,3 +46,42 @@ The following is not part of `mini-iLisp`:
 
 Each of these can be added without too much complexity however they would distract from the simplicity of the implementation.
 
+## Syntax
+
+The following EBNF grammar defines the syntax of a `mini-iLisp` programme using [`parspiler`](https://github.com/littlelanguages/parspiler):
+
+```
+Program: {Expression};
+
+Expression
+  : "(" {Expression} ")"
+  | Symbol
+  | LiteralInt
+  | LiteralString
+  | "#t"
+  | "#f"
+  ;
+```
+
+Using this grammar `mini-iLisp`'s lexical structure is defined using [`scanpiler`](https://github.com/littlelanguages/scanpiler) as follows:
+
+```
+tokens
+    Symbol = (id \ '-') {digit | id};
+    LiteralInt = ['-'] digits;
+    LiteralString = '"' {!('"' + cr) | "\" ('"' + '\' + 't' + 'n' + 'r' | "\x" hexDigits)} '"';
+
+comments
+   ";" {!cr};
+
+whitespace
+  chr(0)-' ';
+
+fragments
+  digit = '0'-'9';
+  digits = digit {digit};
+  hexDigit = digit + 'a'-'f' + 'A'-'F';
+  hexDigits = hexDigit {hexDigit};
+  id = '!'-'}' \ ('0'-'9' + '"' + '(' + ')' + ';' + '#');
+  cr = chr(10);
+```
