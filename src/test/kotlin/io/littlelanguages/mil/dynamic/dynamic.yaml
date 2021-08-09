@@ -3,5 +3,9 @@
     (println "Hello world")
   output:
     Program:
-      names: [ ]
-      procedures: [ ]
+      - Procedure:
+          name: _main
+          arguments: []
+          es:
+            - Println:
+                - '"Hello world"'
