@@ -12,10 +12,7 @@ import io.littlelanguages.mil.static.Scanner
 import io.littlelanguages.mil.static.parse
 import org.bytedeco.llvm.global.LLVM
 import org.yaml.snakeyaml.Yaml
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStreamReader
-import java.io.StringReader
+import java.io.*
 
 
 private val yaml = Yaml()
@@ -86,25 +83,20 @@ private fun runCommand(commands: Array<String>): String {
     val rt = Runtime.getRuntime()
     val proc = rt.exec(commands)
 
-    val stdInput = BufferedReader(InputStreamReader(proc.inputStream))
-    val stdError = BufferedReader(InputStreamReader(proc.errorStream))
+    val sb = StringBuffer()
 
-    try {
-        val sb = StringBuffer()
-        var s: String?
-        while (stdInput.readLine().also { s = it } != null) {
-            sb.append(s)
-            sb.append("\n")
+    fun readInputStream(input: InputStream) {
+        BufferedReader(InputStreamReader(input)).use { reader ->
+            var s: String?
+            while (reader.readLine().also { s = it } != null) {
+                sb.append(s)
+                sb.append("\n")
+            }
         }
-
-        while (stdError.readLine().also { s = it } != null) {
-            sb.append(s)
-            sb.append("\n")
-        }
-
-        return sb.toString().trim()
-    } finally {
-        stdInput.close()
-        stdError.close()
     }
+
+    readInputStream(proc.inputStream)
+    readInputStream(proc.errorStream)
+
+    return sb.toString().trim()
 }
