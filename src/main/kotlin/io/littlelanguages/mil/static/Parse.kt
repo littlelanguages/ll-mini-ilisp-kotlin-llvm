@@ -23,7 +23,7 @@ class ParseVisitor : Visitor<
         SExpression(a2)
 
     override fun visitExpression2(a: Token): Expression =
-        SymbolExpression(a.location, a.lexeme)
+        Symbol(a.location, a.lexeme)
 
     override fun visitExpression3(a: Token): Expression =
         LiteralInt(a.location, a.lexeme)

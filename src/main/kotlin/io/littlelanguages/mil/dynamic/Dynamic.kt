@@ -45,7 +45,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                 else {
                     val first = e.expressions[0]
 
-                    if (first is io.littlelanguages.mil.static.ast.SymbolExpression) {
+                    if (first is io.littlelanguages.mil.static.ast.Symbol) {
                         when (first.name) {
                             "println" ->
                                 PrintlnExpression(e.expressions.drop(1).map { expressionToTST(it) })
@@ -59,7 +59,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
             is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
             is io.littlelanguages.mil.static.ast.LiteralInt -> TODO()
             is io.littlelanguages.mil.static.ast.LiteralString -> LiteralString(e.value)
-            is io.littlelanguages.mil.static.ast.SymbolExpression -> TODO()
+            is io.littlelanguages.mil.static.ast.Symbol -> TODO()
         }
 
     private fun reportError(error: Errors) {

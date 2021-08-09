@@ -13,7 +13,7 @@ data class Program(
 
 sealed class Expression : Yamlable
 
-data class SymbolExpression(
+data class Symbol(
     val position: Location,
     val name: String
 ) : Expression() {
