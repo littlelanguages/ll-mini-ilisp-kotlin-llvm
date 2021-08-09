@@ -46,11 +46,15 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                     val first = e.expressions[0]
 
                     if (first is io.littlelanguages.mil.static.ast.Symbol) {
+                        val arguments = e.expressions.drop(1).map { expressionToTST(it) }
+
                         when (first.name) {
+                            "print" ->
+                                PrintExpression(arguments)
                             "println" ->
-                                PrintlnExpression(e.expressions.drop(1).map { expressionToTST(it) })
+                                PrintlnExpression(arguments)
                             else ->
-                                TODO()
+                                CallExpression(first.name, arguments)
                         }
                     } else
                         TODO()
