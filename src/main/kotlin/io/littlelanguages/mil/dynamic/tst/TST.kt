@@ -57,6 +57,11 @@ enum class LiteralBool : Expression {
     }
 }
 
+data class LiteralInt(val value: Int) : Expression {
+    override fun yaml(): Any =
+        value
+}
+
 data class LiteralString(val value: String) : Expression {
     override fun yaml(): Any =
         value

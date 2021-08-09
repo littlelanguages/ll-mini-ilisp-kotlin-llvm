@@ -1,0 +1,5 @@
+- name: Hello World
+  input: |
+    (println 42)
+  output: |
+    42

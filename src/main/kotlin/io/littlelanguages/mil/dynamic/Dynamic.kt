@@ -61,7 +61,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                 }
             }
             is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
-            is io.littlelanguages.mil.static.ast.LiteralInt -> TODO()
+            is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
             is io.littlelanguages.mil.static.ast.LiteralString -> LiteralString(e.value)
             is io.littlelanguages.mil.static.ast.Symbol -> TODO()
         }

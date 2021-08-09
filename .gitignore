@@ -16,3 +16,6 @@ build
 /src/main/kotlin/io/littlelanguages/mil/static/Parser.kt
 /src/main/kotlin/io/littlelanguages/mil/static/Scanner.kt
 /src/main/kotlin/io/littlelanguages/scanpiler
+
+/src/main/c/*.o
+/test.*
