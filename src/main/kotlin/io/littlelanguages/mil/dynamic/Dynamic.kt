@@ -49,6 +49,8 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                         val arguments = e.expressions.drop(1).map { expressionToTST(it) }
 
                         when (first.name) {
+                            "-" ->
+                                MinusExpression(arguments)
                             "+" ->
                                 PlusExpression(arguments)
                             "print" ->
