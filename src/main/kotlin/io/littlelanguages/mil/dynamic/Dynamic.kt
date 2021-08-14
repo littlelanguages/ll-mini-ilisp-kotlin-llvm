@@ -62,11 +62,30 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
             }
             is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
             is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
-            is io.littlelanguages.mil.static.ast.LiteralString -> LiteralString(e.value)
+            is io.littlelanguages.mil.static.ast.LiteralString -> translateLiteralString(e)
             is io.littlelanguages.mil.static.ast.Symbol -> TODO()
         }
 
     private fun reportError(error: Errors) {
         errors.add(error)
+    }
+}
+
+fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString {
+    val sb = StringBuilder()
+    val eValue = e.value
+    val eLength = eValue.length
+    var lp = 1
+
+    while (true) {
+        when {
+            lp >= eLength || eValue[lp] == '"' ->
+                return LiteralString(sb.toString())
+
+            else -> {
+                sb.append(eValue[lp])
+                lp += 1
+            }
+        }
     }
 }

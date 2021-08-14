@@ -8,4 +8,4 @@
           arguments: []
           es:
             - Println:
-                - '"Hello world"'
+                - 'Hello world'

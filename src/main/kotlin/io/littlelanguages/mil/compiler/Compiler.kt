@@ -56,11 +56,13 @@ private class Compiler(
     val void = LLVM.LLVMVoidTypeInContext(context)!!
     val i8 = LLVM.LLVMInt8TypeInContext(context)!!
     val i32 = LLVM.LLVMInt32TypeInContext(context)!!
+    val i64 = LLVM.LLVMInt64TypeInContext(context)!!
     val i8P = LLVM.LLVMPointerType(i8, 0)!!
 
     val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))
     val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))
     val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))
+    val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))
 
     init {
         LLVM.LLVMStructSetBody(
@@ -159,34 +161,15 @@ private class Compiler(
         val entry = LLVM.LLVMAppendBasicBlockInContext(context, procedure, "entry")
         LLVM.LLVMPositionBuilderAtEnd(builder, entry)
 
-        expressionName = 0
         for (e in declaration.es) {
             compileE(e)
         }
-
-//        val op = LLVM.LLVMConstStringInContext(context, BytePointer("Hello world"), 12, 0)
-//        println(op.toString())
-
-//        val v42 = LLVM.LLVMConstInt(i32, 42, 0)
-//        val o1 = LLVM.LLVMBuildCall(
-//            builder, _from_literal_int, PointerPointer<Pointer>(1)
-//                .put(0, v42), 1, "o1"
-//        )
-//        LLVM.LLVMBuildCall(builder, _print_value, PointerPointer<Pointer>(1).put(0, o1), 1, "")
-//
-//        LLVM.LLVMBuildCall(builder, _print_newline, PointerPointer<Pointer>(0), 0, "")
 
         LLVM.LLVMBuildRet(builder, LLVM.LLVMConstInt(i32, 0, 0))
     }
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
-            is LiteralInt -> {
-                val v = LLVM.LLVMConstInt(i32, e.value.toLong(), 0)
-                val name = nextName()
-                return LLVM.LLVMBuildCall(builder, _from_literal_int, PointerPointer<Pointer>(1).put(0, v), 1, name)
-            }
-
             is PrintlnExpression -> {
                 for (it in e.es) {
                     val op = compileE(it)
@@ -199,6 +182,29 @@ private class Compiler(
                 LLVM.LLVMBuildCall(builder, _print_newline, PointerPointer<Pointer>(0), 0, "")
 
                 return null
+            }
+
+            is LiteralInt -> {
+                val v = LLVM.LLVMConstInt(i32, e.value.toLong(), 0)
+                val name = nextName()
+                return LLVM.LLVMBuildCall(builder, _from_literal_int, PointerPointer<Pointer>(1).put(0, v), 1, name)
+            }
+
+            is LiteralString -> {
+                val globalStringName = LLVM.LLVMAddGlobal(module, LLVM.LLVMArrayType(i8, e.value.length + 1), nextName())
+                LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
+
+                val indexes = PointerPointer<Pointer>(2)
+                    .put(0, LLVM.LLVMConstInt(i64, 0, 0))
+                    .put(1, LLVM.LLVMConstInt(i64, 0, 0))
+
+                return LLVM.LLVMBuildCall(
+                    builder,
+                    _from_literal_string,
+                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInBoundsGEP(globalStringName, indexes, 2)),
+                    1,
+                    nextName()
+                )
             }
 
             else ->
