@@ -1,7 +1,7 @@
 tokens
-    Symbol = (id \ '-') {digit | id};
     LiteralInt = ['-'] digits;
     LiteralString = '"' {!('"' + cr) | "\" ('"' + '\' + 't' + 'n' + 'r' | "\x" hexDigits)} '"';
+    Symbol = id {digit | id};
 
 comments
    ";" {!cr};

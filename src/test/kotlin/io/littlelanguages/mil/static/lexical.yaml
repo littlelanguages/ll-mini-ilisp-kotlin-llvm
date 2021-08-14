@@ -7,13 +7,15 @@
   output:
     - EOS 6:1:7 []
 - name: Symbols
-  input: hello if string? some-exciting-name'
+  input: hello if string? some-exciting-name' - -123a
   output:
     - Symbol 0:1:1-4:1:5 [hello]
     - Symbol 6:1:7-7:1:8 [if]
     - Symbol 9:1:10-15:1:16 [string?]
     - Symbol 17:1:18-35:1:36 [some-exciting-name']
-    - EOS 36:1:37 []
+    - Symbol 37:1:38 [-]
+    - Symbol 39:1:40-43:1:44 [-123a]
+    - EOS 44:1:45 []
 - name: Literal Integers
   input: 1 12 123
   output:
