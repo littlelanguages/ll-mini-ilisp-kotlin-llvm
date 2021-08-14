@@ -27,5 +27,3 @@ jobs:
           java-version: 1.15
       - name: Build p0-kotlin
         run: .bin/build.sh
-      - name: Test p0-kotlin
-        run: .bin/test.sh
