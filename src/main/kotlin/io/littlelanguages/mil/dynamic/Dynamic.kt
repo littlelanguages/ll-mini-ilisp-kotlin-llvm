@@ -83,7 +83,21 @@ fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): 
                 return LiteralString(sb.toString())
 
             eValue[lp] == '\\' -> {
-                sb.append(eValue[lp + 1])
+                when (val c = eValue[lp + 1]) {
+                    'n' -> sb.append('\n')
+                    'r' -> sb.append('\r')
+                    't' -> sb.append('\t')
+                    'x' -> {
+                        lp += 2
+                        var elp = lp
+                        while (elp < eLength && eValue[elp].isHexDigit()) {
+                            elp += 1
+                        }
+                        sb.append(eValue.subSequence(lp, elp).toString().toInt(16).toChar())
+                        lp = elp - 2
+                    }
+                    else -> sb.append(c)
+                }
                 lp += 2
             }
 
@@ -94,3 +108,6 @@ fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): 
         }
     }
 }
+
+private fun Char.isHexDigit(): Boolean =
+    this.isDigit() || this.uppercaseChar() in 'A'..'F'

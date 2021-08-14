@@ -17,4 +17,22 @@ class LiteralStringTests : FunSpec({
             io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"\\\"\"")
         ) shouldBe LiteralString("\"")
     }
+
+    test("\"\\\"") {
+        translateLiteralString(
+            io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"\\\"")
+        ) shouldBe LiteralString("\"")
+    }
+
+    test("\"\\\" \\\\ \\t \\n \\r\"") {
+        translateLiteralString(
+            io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"\\\" \\\\ \\t \\n \\r\"")
+        ) shouldBe LiteralString("\" \\ \t \n \r")
+    }
+
+    test("\"\\x21\\x20\"") {
+        translateLiteralString(
+            io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"\\x21\\x20\"")
+        ) shouldBe LiteralString("! ")
+    }
 })
