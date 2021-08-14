@@ -38,4 +38,8 @@
                 Bye
                 bye
                 love
-
+            - name: ()
+              input: |
+                (println ())
+              output: |
+                ()

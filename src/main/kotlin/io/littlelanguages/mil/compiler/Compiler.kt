@@ -129,6 +129,10 @@ private class Compiler(
             3,
             0
         )
+
+        LLVM.LLVMSetGlobalConstant(_VTrue, 1)
+        LLVM.LLVMSetGlobalConstant(_VFalse, 1)
+        LLVM.LLVMSetGlobalConstant(_VNull, 1)
     }
 
     override fun dispose() {
@@ -218,6 +222,13 @@ private class Compiler(
                     nextName()
                 )
             }
+
+            is LiteralUnit ->
+                return LLVM.LLVMBuildLoad(
+                    builder,
+                    _VNull,
+                    nextName()
+                )
 
             else ->
                 TODO(e.toString())
