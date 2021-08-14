@@ -21,4 +21,11 @@
               output: |
                 #t
                 #f
+            - name: Integer
+              input: |
+                (println 123)
+                (println -987)
+              output: |
+                123
+                -987
 
