@@ -28,4 +28,14 @@
               output: |
                 123
                 -987
+            - name: String
+              input: |
+                (println "Hello\nWorld")
+                (println "Bye\nbye\nlove")
+              output: |
+                Hello
+                World
+                Bye
+                bye
+                love
 
