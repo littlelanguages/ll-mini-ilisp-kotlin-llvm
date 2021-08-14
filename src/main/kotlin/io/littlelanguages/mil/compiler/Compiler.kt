@@ -61,10 +61,12 @@ private class Compiler(
 
     val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
 
-    val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
-    val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))!!
     val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))!!
     val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))!!
+    val _plus =
+        LLVM.LLVMAddFunction(module, "_plus", LLVM.LLVMFunctionType(structValueP, PointerPointer<LLVMTypeRef>(structValueP, structValueP), 2, 0))!!
+    val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
+    val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))!!
 
     val _VTrue = LLVM.LLVMAddGlobal(module, structValueP, "_VTrue")!!
     val _VFalse = LLVM.LLVMAddGlobal(module, structValueP, "_VFalse")!!
@@ -180,6 +182,16 @@ private class Compiler(
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
+            is PlusExpression -> {
+                val ops = e.es.mapNotNull { compileE(it) }
+
+                return if (ops.isEmpty())
+                    compileE(LiteralInt(0))
+                else
+                    ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _plus, PointerPointer(op1, op2), 2, nextName()) }
+
+            }
+
             is PrintlnExpression -> {
                 for (it in e.es) {
                     val op = compileE(it)

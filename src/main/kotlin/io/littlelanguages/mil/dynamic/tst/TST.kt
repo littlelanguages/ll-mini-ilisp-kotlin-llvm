@@ -36,6 +36,11 @@ data class CallExpression(val name: String, val es: Expressions) : Expression {
         )
 }
 
+data class PlusExpression(val es: Expressions) : Expression {
+    override fun yaml(): Any =
+        singletonMap("+", es.map { it.yaml() })
+}
+
 data class PrintExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("Print", es.map { it.yaml() })
