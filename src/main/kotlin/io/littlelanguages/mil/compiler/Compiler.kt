@@ -61,10 +61,14 @@ private class Compiler(
 
     val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
 
-    val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))
-    val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))
-    val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))
-    val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))
+    val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
+    val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))!!
+    val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))!!
+    val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))!!
+
+    val _VTrue = LLVM.LLVMAddGlobal(module, structValueP, "_VTrue")!!
+    val _VFalse = LLVM.LLVMAddGlobal(module, structValueP, "_VFalse")!!
+    val _VNull = LLVM.LLVMAddGlobal(module, structValueP, "_VNull")!!
 
     init {
         LLVM.LLVMStructSetBody(
@@ -185,6 +189,13 @@ private class Compiler(
 
                 return null
             }
+
+            is LiteralBool ->
+                return LLVM.LLVMBuildLoad(
+                    builder,
+                    if (e == LiteralBool.TRUE) _VTrue else _VFalse,
+                    nextName()
+                )
 
             is LiteralInt ->
                 return LLVM.LLVMBuildCall(

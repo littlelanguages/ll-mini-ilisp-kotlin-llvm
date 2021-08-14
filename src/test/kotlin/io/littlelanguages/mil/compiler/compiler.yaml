@@ -8,3 +8,17 @@
     (println "Hello World")
   output: |
     Hello World
+- scenario:
+    name: Expressions
+    tests:
+      - scenario:
+          name: Literal Value
+          tests:
+            - name: Boolean
+              input: |
+                (println #t)
+                (println #f)
+              output: |
+                #t
+                #f
+
