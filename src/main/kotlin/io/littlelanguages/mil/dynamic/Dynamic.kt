@@ -82,6 +82,11 @@ fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): 
             lp >= eLength || eValue[lp] == '"' ->
                 return LiteralString(sb.toString())
 
+            eValue[lp] == '\\' -> {
+                sb.append(eValue[lp + 1])
+                lp += 2
+            }
+
             else -> {
                 sb.append(eValue[lp])
                 lp += 1

@@ -11,4 +11,10 @@ class LiteralStringTests : FunSpec({
             io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"Hello World\"")
         ) shouldBe LiteralString("Hello World")
     }
+
+    test("\"\\\"\"") {
+        translateLiteralString(
+            io.littlelanguages.mil.static.ast.LiteralString(LocationCoordinate(0, 0, 0), "\"\\\"\"")
+        ) shouldBe LiteralString("\"")
+    }
 })
