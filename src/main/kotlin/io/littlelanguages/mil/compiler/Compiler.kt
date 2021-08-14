@@ -59,6 +59,8 @@ private class Compiler(
     val i64 = LLVM.LLVMInt64TypeInContext(context)!!
     val i8P = LLVM.LLVMPointerType(i8, 0)!!
 
+    val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
+
     val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))
     val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))
     val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))
@@ -184,24 +186,23 @@ private class Compiler(
                 return null
             }
 
-            is LiteralInt -> {
-                val v = LLVM.LLVMConstInt(i32, e.value.toLong(), 0)
-                val name = nextName()
-                return LLVM.LLVMBuildCall(builder, _from_literal_int, PointerPointer<Pointer>(1).put(0, v), 1, name)
-            }
+            is LiteralInt ->
+                return LLVM.LLVMBuildCall(
+                    builder,
+                    _from_literal_int,
+                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInt(i32, e.value.toLong(), 0)),
+                    1,
+                    nextName()
+                )
 
             is LiteralString -> {
                 val globalStringName = LLVM.LLVMAddGlobal(module, LLVM.LLVMArrayType(i8, e.value.length + 1), nextName())
                 LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
 
-                val indexes = PointerPointer<Pointer>(2)
-                    .put(0, LLVM.LLVMConstInt(i64, 0, 0))
-                    .put(1, LLVM.LLVMConstInt(i64, 0, 0))
-
                 return LLVM.LLVMBuildCall(
                     builder,
                     _from_literal_string,
-                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInBoundsGEP(globalStringName, indexes, 2)),
+                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(c0i64, c0i64), 2)),
                     1,
                     nextName()
                 )
