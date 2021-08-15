@@ -181,6 +181,9 @@ private class Compiler(
             is CdrExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), nextName())
 
+            is EqualsExpression ->
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.EQUALS, listOf(compileEForce(e.e1), compileEForce(e.e2)), nextName())
+
             is IntegerPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
@@ -272,7 +275,7 @@ private class Compiler(
 }
 
 private enum class BuiltinDeclarationEnum {
-    BOOLEANP, CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    BOOLEANP, CAR, CDR, DIVIDE, EQUALS, FROM_LITERAL_INT, FROM_LITERAL_STRING,
     INTEGERP, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
     V_FALSE, V_NULL
@@ -284,6 +287,7 @@ private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMT
         Pair(BuiltinDeclarationEnum.CAR, BuiltinDeclaration("_pair_car", listOf(structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.CDR, BuiltinDeclaration("_pair_cdr", listOf(structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.DIVIDE, BuiltinDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.EQUALS, BuiltinDeclaration("_equals", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.FROM_LITERAL_INT, BuiltinDeclaration("_from_literal_int", listOf(i32), structValueP)),
         Pair(BuiltinDeclarationEnum.FROM_LITERAL_STRING, BuiltinDeclaration("_from_literal_string", listOf(i8P), structValueP)),
         Pair(BuiltinDeclarationEnum.INTEGERP, BuiltinDeclaration("_integerp", listOf(structValueP), structValueP)),

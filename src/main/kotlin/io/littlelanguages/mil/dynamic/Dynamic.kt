@@ -65,6 +65,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     CdrExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
+                            "=" ->
+                                if (arguments.size == 2)
+                                    EqualsExpression(arguments[0], arguments[1])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "integer?" ->
                                 if (arguments.size == 1)
                                     IntegerPExpression(arguments[0])

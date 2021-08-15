@@ -51,6 +51,16 @@ data class CdrExpression(val es: Expression) : Expression {
         singletonMap("cdr", es.yaml())
 }
 
+data class EqualsExpression(val e1: Expression, val e2: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "=", mapOf(
+                Pair("e1", e1.yaml()),
+                Pair("e2", e2.yaml())
+            )
+        )
+}
+
 data class IntegerPExpression(val es: Expression) : Expression {
     override fun yaml(): Any =
         singletonMap("integer?", es.yaml())
