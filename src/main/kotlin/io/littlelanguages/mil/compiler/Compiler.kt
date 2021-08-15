@@ -184,32 +184,6 @@ private class Compiler(
             is IntegerPExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
-            is MinusExpression ->
-                return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
-
-            is NullPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.NULLP, listOf(compileEForce(e.es)), nextName())
-
-            is PairPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIRP, listOf(compileEForce(e.es)), nextName())
-
-            is PlusExpression ->
-                return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
-
-            is PrintlnExpression -> {
-                for (it in e.es) {
-                    val op = compileE(it)
-
-                    if (op != null) {
-                        builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_VALUE, listOf(op), "")
-                    }
-                }
-
-                builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_NEWLINE, listOf(), "")
-
-                return null
-            }
-
             is LiteralBool ->
                 return builtinProcedures.invoke(builder, if (e == LiteralBool.TRUE) BuiltinProcedure.V_TRUE else BuiltinProcedure.V_FALSE, nextName())
 
@@ -236,8 +210,34 @@ private class Compiler(
             is LiteralUnit ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.V_NULL, nextName())
 
+            is MinusExpression ->
+                return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
+
+            is NullPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.NULLP, listOf(compileEForce(e.es)), nextName())
+
             is PairExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.PAIR, listOf(compileEForce(e.car), compileEForce(e.cdr)), nextName())
+
+            is PairPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIRP, listOf(compileEForce(e.es)), nextName())
+
+            is PlusExpression ->
+                return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
+
+            is PrintlnExpression -> {
+                for (it in e.es) {
+                    val op = compileE(it)
+
+                    if (op != null) {
+                        builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_VALUE, listOf(op), "")
+                    }
+                }
+
+                builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_NEWLINE, listOf(), "")
+
+                return null
+            }
 
             is SlashExpression ->
                 return compileOperator(e.es, 1, BuiltinProcedure.DIVIDE, true)
