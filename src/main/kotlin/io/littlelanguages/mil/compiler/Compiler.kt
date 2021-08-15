@@ -192,26 +192,11 @@ private class Compiler(
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
-            is MinusExpression -> {
-                val ops = e.es.mapNotNull { compileE(it) }
+            is MinusExpression ->
+                return compileOperator(e.es, 0, _minus, true)
 
-                return when (ops.size) {
-                    0 -> compileE(LiteralInt(0))
-                    1 -> LLVM.LLVMBuildCall(builder, _minus, PointerPointer(compileE(LiteralInt(0)), ops[0]), 2, nextName())
-                    else ->
-                        ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _minus, PointerPointer(op1, op2), 2, nextName()) }
-                }
-
-            }
-
-            is PlusExpression -> {
-                val ops = e.es.mapNotNull { compileE(it) }
-
-                return if (ops.isEmpty())
-                    compileE(LiteralInt(0))
-                else
-                    ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _plus, PointerPointer(op1, op2), 2, nextName()) }
-            }
+            is PlusExpression ->
+                return compileOperator(e.es, 0, _plus, false)
 
             is PrintlnExpression -> {
                 for (it in e.es) {
@@ -263,23 +248,11 @@ private class Compiler(
                     nextName()
                 )
 
-            is SlashExpression -> {
-                val ops = e.es.mapNotNull { compileE(it) }
+            is SlashExpression ->
+                return compileOperator(e.es, 1, _divide, true)
 
-                return if (ops.isEmpty())
-                    compileE(LiteralInt(1))
-                else
-                    ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _divide, PointerPointer(op1, op2), 2, nextName()) }
-            }
-
-            is StarExpression -> {
-                val ops = e.es.mapNotNull { compileE(it) }
-
-                return if (ops.isEmpty())
-                    compileE(LiteralInt(1))
-                else
-                    ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _multiply, PointerPointer(op1, op2), 2, nextName()) }
-            }
+            is StarExpression ->
+                return compileOperator(e.es, 1, _multiply, false)
 
             else ->
                 TODO(e.toString())
@@ -290,5 +263,16 @@ private class Compiler(
         val result = "v$expressionName"
         expressionName += 1
         return result
+    }
+
+    private fun compileOperator(es: Expressions, unitValue: Int, operator: LLVMValueRef, explicitFirst: Boolean): LLVMValueRef? {
+        val ops = es.mapNotNull { compileE(it) }
+
+        return if (ops.isEmpty())
+            compileE(LiteralInt(unitValue))
+        else if (explicitFirst && ops.size == 1)
+            LLVM.LLVMBuildCall(builder, operator, PointerPointer(compileE(LiteralInt(unitValue)), ops[0]), 2, nextName())
+        else
+            ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, operator, PointerPointer(op1, op2), 2, nextName()) }
     }
 }
