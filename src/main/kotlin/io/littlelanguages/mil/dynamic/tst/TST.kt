@@ -26,6 +26,11 @@ typealias  Expressions = List<Expression>
 
 interface Expression : Yamlable
 
+data class BooleanPExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("boolean?", es.yaml())
+}
+
 data class CallExpression(val name: String, val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap(

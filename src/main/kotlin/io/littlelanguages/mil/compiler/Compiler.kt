@@ -172,6 +172,9 @@ private class Compiler(
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
+            is BooleanPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.BOOLEANP, listOf(compileEForce(e.es)), nextName())
+
             is CarExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.CAR, listOf(compileEForce(e.es)), nextName())
 
@@ -260,7 +263,7 @@ private class Compiler(
 }
 
 private enum class BuiltinProcedure {
-    CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    BOOLEANP, CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
     MINUS, MULTIPLY, NULLP, PAIR, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
     V_FALSE, V_NULL
@@ -268,6 +271,7 @@ private enum class BuiltinProcedure {
 
 private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
     private val declarations = mapOf(
+        Pair(BuiltinProcedure.BOOLEANP, ProcedureDeclaration("_booleanp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.CAR, ProcedureDeclaration("_pair_car", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.CDR, ProcedureDeclaration("_pair_cdr", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),

@@ -131,3 +131,16 @@
                 #f
                 #f
                 #f
+            - name: boolean?
+              input: |
+                (println (boolean? ()))
+                (println (boolean? #t))
+                (println (boolean? 123))
+                (println (boolean? "hello"))
+                (println (boolean? (pair 1 2)))
+              output: |
+                #f
+                #t
+                #f
+                #f
+                #f
