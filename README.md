@@ -85,3 +85,19 @@ fragments
   id = '!'-'}' \ ('0'-'9' + '"' + '(' + ')' + ';' + '#');
   cr = chr(10);
 ```
+
+## Builtin Procedures
+
+| Name | Description |
+|------|-------------|
+| `(+ v1` ... `vn)` | Performs the calculate ( ... ((`v1` + `v2`) + `v3`) + ...) + `vn`).  If the form `(+)` is used then returns 0.  If the form `(+ v1)` is used then returns `v1`.|
+| `(- v1` ... `vn)` | Performs the calculate ( ... ((`v1` - `v2`) - `v3`) - ...) - `vn`).  If the form `(-)` is used then returns 0.  If the form `(- v1)` is used then returns -`v1`. |
+| `(* v1` ... `vn)` | Performs the calculate ( ... ((`v1` * `v2`) * `v3`) * ...) * `vn`).  If the form `(*)` is used then returns 1.  If the form `(* v1)` is used then returns `v1`. |
+| `(/ v1` ... `vn)` | Performs the calculate ( ... ((`v1` / `v2`) / `v3`) - ...) - `vn`).  If the form `(/)` is used then returns 1.  If the form `(/ v1)` is used then returns 1 / `v1`. |
+| `(boolean? v)` | Should `v` refer to either `#t` or `#f` then returns `#t` otherwise returns `#f`. |
+| `(car v)` | Should `v` refer to a pair node then returns the first (or car) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |
+| `(cdr v)` | Should `v` refer to a pair node then returns the second (or cdr) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |
+| `(null? v)` | Should `v` refer to the `()` value then returns `#t` otherwise returns `#f`. |
+| `(pair a b)` | Composes a pair node where the `car` of that node equals `a` and the `cdr` equals `b`. | 
+| `(print v1 ... vn)` | Writes the values `v1` to `vn` out to the console.  This procedure does not place a space between the printed values and does not terminate with a newline. |
+| `(println v1 ... vn)` | Writes the values `v1` to `vn` out to the console followed by a newline.  This procedure does not place a space between the printed values. |
