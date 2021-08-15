@@ -80,3 +80,14 @@
                 2
                 12
                 720
+            - name: slash
+              input: |
+                (println (/))
+                (println (/ 1))
+                (println (/ 4 2))
+                (println (/ 500 50 2))
+              output: |
+                1
+                1
+                2
+                5
