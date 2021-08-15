@@ -51,6 +51,11 @@ data class MinusExpression(val es: Expressions) : Expression {
         singletonMap("-", es.map { it.yaml() })
 }
 
+data class NullPExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("null?", es.yaml())
+}
+
 data class PlusExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("+", es.map { it.yaml() })

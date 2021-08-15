@@ -181,6 +181,9 @@ private class Compiler(
             is MinusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
 
+            is NullPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.NULLP, listOf(compileEForce(e.es)), nextName())
+
             is PlusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
 
@@ -258,7 +261,7 @@ private class Compiler(
 
 private enum class BuiltinProcedure {
     CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
-    MINUS, MULTIPLY, PAIR, PLUS,
+    MINUS, MULTIPLY, NULLP, PAIR, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
     V_FALSE, V_NULL
 }
@@ -272,6 +275,7 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
         Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
         Pair(BuiltinProcedure.MINUS, ProcedureDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.MULTIPLY, ProcedureDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.NULLP, ProcedureDeclaration("_nullp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.PAIR, ProcedureDeclaration("_mk_pair", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.PLUS, ProcedureDeclaration("_plus", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.PRINT_VALUE, ProcedureDeclaration("_print_value", listOf(structValueP), void)),

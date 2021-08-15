@@ -62,6 +62,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "-" ->
                                 MinusExpression(arguments)
+                            "null?" ->
+                                if (arguments.size == 1)
+                                    NullPExpression(arguments[0])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "pair" ->
                                 if (arguments.size == 2)
                                     PairExpression(arguments[0], arguments[1])
