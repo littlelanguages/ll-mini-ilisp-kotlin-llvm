@@ -36,6 +36,11 @@ data class CallExpression(val name: String, val es: Expressions) : Expression {
         )
 }
 
+data class CarExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("car", es.yaml())
+}
+
 data class MinusExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("-", es.map { it.yaml() })

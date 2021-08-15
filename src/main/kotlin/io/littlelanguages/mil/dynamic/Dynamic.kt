@@ -50,6 +50,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                         val arguments = e.expressions.drop(1).map { expressionToTST(it) }
 
                         when (first.name) {
+                            "car" ->
+                                if (arguments.size == 1)
+                                    CarExpression(arguments[0])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "-" ->
                                 MinusExpression(arguments)
                             "pair" ->

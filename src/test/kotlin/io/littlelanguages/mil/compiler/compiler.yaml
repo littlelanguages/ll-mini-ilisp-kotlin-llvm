@@ -102,3 +102,11 @@
               output: |
                 (1 . 2)
                 (1 2 3)
+            - name: car
+              input: |
+                (println (car (pair 1 2)))
+                (println (car (pair 1 (pair 2 (pair 3 ())))))
+              output: |
+                1
+                1
+                

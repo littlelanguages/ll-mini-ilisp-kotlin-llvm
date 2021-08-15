@@ -172,6 +172,9 @@ private class Compiler(
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
+            is CarExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.CAR, listOf(compileEForce(e.es)), nextName())
+
             is MinusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
 
@@ -251,7 +254,7 @@ private class Compiler(
 }
 
 private enum class BuiltinProcedure {
-    DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    CAR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
     MINUS, MULTIPLY, PAIR, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
     V_FALSE, V_NULL
@@ -259,6 +262,7 @@ private enum class BuiltinProcedure {
 
 private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
     private val declarations = mapOf(
+        Pair(BuiltinProcedure.CAR, ProcedureDeclaration("_pair_car", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_INT, ProcedureDeclaration("_from_literal_int", listOf(i32), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
