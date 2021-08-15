@@ -55,6 +55,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     CarExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
+                            "cdr" ->
+                                if (arguments.size == 1)
+                                    CdrExpression(arguments[0])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "-" ->
                                 MinusExpression(arguments)
                             "pair" ->

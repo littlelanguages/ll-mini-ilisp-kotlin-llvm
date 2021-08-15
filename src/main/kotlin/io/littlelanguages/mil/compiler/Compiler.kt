@@ -175,6 +175,9 @@ private class Compiler(
             is CarExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.CAR, listOf(compileEForce(e.es)), nextName())
 
+            is CdrExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.CDR, listOf(compileEForce(e.es)), nextName())
+
             is MinusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
 
@@ -254,7 +257,7 @@ private class Compiler(
 }
 
 private enum class BuiltinProcedure {
-    CAR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
     MINUS, MULTIPLY, PAIR, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
     V_FALSE, V_NULL
@@ -263,6 +266,7 @@ private enum class BuiltinProcedure {
 private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
     private val declarations = mapOf(
         Pair(BuiltinProcedure.CAR, ProcedureDeclaration("_pair_car", listOf(structValueP), structValueP)),
+        Pair(BuiltinProcedure.CDR, ProcedureDeclaration("_pair_cdr", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_INT, ProcedureDeclaration("_from_literal_int", listOf(i32), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
@@ -279,16 +283,15 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
 
     fun get(bip: BuiltinProcedure): LLVMValueRef {
         val declaration = declarations[bip]!!
-        val namedFunction: LLVMValueRef? = LLVM.LLVMGetNamedFunction(module, declaration.name)
+        val namedFunction: LLVMValueRef? =
+            if (declaration.isProcedure())
+                LLVM.LLVMGetNamedFunction(module, declaration.name)
+            else
+                LLVM.LLVMGetNamedGlobal(module, declaration.name)
 
-        return if (namedFunction == null) {
-            val parameters = declaration.parameters
-
-            if (parameters == null) {
-                val result = LLVM.LLVMAddGlobal(module, declaration.returnType, declaration.name)!!
-                LLVM.LLVMSetGlobalConstant(result, 1)
-                result
-            } else {
+        return namedFunction
+            ?: if (declaration.isProcedure()) {
+                val parameters = declaration.parameters!!
                 val parameterTypes = declaration.parameters.foldIndexed(PointerPointer<LLVMTypeRef>(parameters.size.toLong())) { idx, acc, item ->
                     acc.put(idx.toLong(), item)
                 }
@@ -298,9 +301,11 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
                     declaration.name,
                     LLVM.LLVMFunctionType(declaration.returnType, parameterTypes, declaration.parameters.size, 0)
                 )!!
+            } else {
+                val result = LLVM.LLVMAddGlobal(module, declaration.returnType, declaration.name)!!
+                LLVM.LLVMSetGlobalConstant(result, 1)
+                result
             }
-        } else
-            namedFunction
     }
 
     fun invoke(builder: LLVMBuilderRef, bip: BuiltinProcedure, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
@@ -314,4 +319,7 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
         LLVM.LLVMBuildLoad(builder, get(bip), name)
 }
 
-private data class ProcedureDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef)
+private data class ProcedureDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef) {
+    fun isProcedure() =
+        parameters != null
+}

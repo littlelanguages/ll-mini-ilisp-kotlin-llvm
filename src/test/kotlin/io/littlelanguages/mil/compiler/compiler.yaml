@@ -109,4 +109,12 @@
               output: |
                 1
                 1
-                
+            - name: cdr
+              input: |
+                (println (cdr (pair 1 2)))
+                (println (cdr (pair 1 (pair 2 ()))))
+                (println (cdr (pair 1 (pair 2 (pair 3 ())))))
+              output: |
+                2
+                (2)
+                (2 3)
