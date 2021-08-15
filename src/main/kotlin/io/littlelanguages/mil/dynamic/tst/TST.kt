@@ -80,3 +80,9 @@ data class LiteralString(val value: String) : Expression {
 object LiteralUnit : Expression {
     override fun yaml(): Any = "()"
 }
+
+data class StarExpression(val es: Expressions) : Expression {
+    override fun yaml(): Any =
+        singletonMap("*", es.map { it.yaml() })
+}
+

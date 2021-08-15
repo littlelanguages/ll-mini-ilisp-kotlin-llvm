@@ -57,6 +57,8 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                 PrintExpression(arguments)
                             "println" ->
                                 PrintlnExpression(arguments)
+                            "*" ->
+                                StarExpression(arguments)
                             else ->
                                 CallExpression(first.name, arguments)
                         }

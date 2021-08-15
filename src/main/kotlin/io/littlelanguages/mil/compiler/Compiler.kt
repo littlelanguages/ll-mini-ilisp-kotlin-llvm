@@ -65,6 +65,12 @@ private class Compiler(
     val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))!!
     val _minus =
         LLVM.LLVMAddFunction(module, "_minus", LLVM.LLVMFunctionType(structValueP, PointerPointer<LLVMTypeRef>(structValueP, structValueP), 2, 0))!!
+    val _multiply =
+        LLVM.LLVMAddFunction(
+            module,
+            "_multiply",
+            LLVM.LLVMFunctionType(structValueP, PointerPointer<LLVMTypeRef>(structValueP, structValueP), 2, 0)
+        )!!
     val _plus =
         LLVM.LLVMAddFunction(module, "_plus", LLVM.LLVMFunctionType(structValueP, PointerPointer<LLVMTypeRef>(structValueP, structValueP), 2, 0))!!
     val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
@@ -254,6 +260,15 @@ private class Compiler(
                     _VNull,
                     nextName()
                 )
+
+            is StarExpression -> {
+                val ops = e.es.mapNotNull { compileE(it) }
+
+                return if (ops.isEmpty())
+                    compileE(LiteralInt(1))
+                else
+                    ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, _multiply, PointerPointer(op1, op2), 2, nextName()) }
+            }
 
             else ->
                 TODO(e.toString())
