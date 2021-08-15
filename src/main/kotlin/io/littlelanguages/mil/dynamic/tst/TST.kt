@@ -51,6 +51,11 @@ data class CdrExpression(val es: Expression) : Expression {
         singletonMap("cdr", es.yaml())
 }
 
+data class IntegerPExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("integer?", es.yaml())
+}
+
 data class MinusExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("-", es.map { it.yaml() })
@@ -59,6 +64,11 @@ data class MinusExpression(val es: Expressions) : Expression {
 data class NullPExpression(val es: Expression) : Expression {
     override fun yaml(): Any =
         singletonMap("null?", es.yaml())
+}
+
+data class PairPExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("pair?", es.yaml())
 }
 
 data class PlusExpression(val es: Expressions) : Expression {
@@ -74,6 +84,11 @@ data class PrintExpression(val es: Expressions) : Expression {
 data class PrintlnExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("Println", es.map { it.yaml() })
+}
+
+data class StringPExpression(val es: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap("string?", es.yaml())
 }
 
 enum class LiteralBool : Expression {

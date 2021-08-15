@@ -181,11 +181,17 @@ private class Compiler(
             is CdrExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.CDR, listOf(compileEForce(e.es)), nextName())
 
+            is IntegerPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.INTEGERP, listOf(compileEForce(e.es)), nextName())
+
             is MinusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
 
             is NullPExpression ->
                 return builtinProcedures.invoke(builder, BuiltinProcedure.NULLP, listOf(compileEForce(e.es)), nextName())
+
+            is PairPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIRP, listOf(compileEForce(e.es)), nextName())
 
             is PlusExpression ->
                 return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
@@ -239,6 +245,9 @@ private class Compiler(
             is StarExpression ->
                 return compileOperator(e.es, 1, BuiltinProcedure.MULTIPLY, false)
 
+            is StringPExpression ->
+                return builtinProcedures.invoke(builder, BuiltinProcedure.STRINGP, listOf(compileEForce(e.es)), nextName())
+
             else ->
                 TODO(e.toString())
         }
@@ -264,8 +273,8 @@ private class Compiler(
 
 private enum class BuiltinProcedure {
     BOOLEANP, CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
-    MINUS, MULTIPLY, NULLP, PAIR, PLUS,
-    PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
+    INTEGERP, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
+    PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
     V_FALSE, V_NULL
 }
 
@@ -277,13 +286,16 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
         Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_INT, ProcedureDeclaration("_from_literal_int", listOf(i32), structValueP)),
         Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
+        Pair(BuiltinProcedure.INTEGERP, ProcedureDeclaration("_integerp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.MINUS, ProcedureDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.MULTIPLY, ProcedureDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.NULLP, ProcedureDeclaration("_nullp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.PAIR, ProcedureDeclaration("_mk_pair", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.PAIRP, ProcedureDeclaration("_pairp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.PLUS, ProcedureDeclaration("_plus", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinProcedure.PRINT_VALUE, ProcedureDeclaration("_print_value", listOf(structValueP), void)),
         Pair(BuiltinProcedure.PRINT_NEWLINE, ProcedureDeclaration("_print_newline", listOf(), void)),
+        Pair(BuiltinProcedure.STRINGP, ProcedureDeclaration("_stringp", listOf(structValueP), structValueP)),
         Pair(BuiltinProcedure.V_TRUE, ProcedureDeclaration("_VTrue", null, structValueP)),
         Pair(BuiltinProcedure.V_FALSE, ProcedureDeclaration("_VFalse", null, structValueP)),
         Pair(BuiltinProcedure.V_NULL, ProcedureDeclaration("_VNull", null, structValueP))

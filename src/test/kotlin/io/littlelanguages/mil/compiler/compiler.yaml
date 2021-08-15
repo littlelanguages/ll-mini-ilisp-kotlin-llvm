@@ -144,3 +144,42 @@
                 #f
                 #f
                 #f
+            - name: integer?
+              input: |
+                (println (integer? ()))
+                (println (integer? #t))
+                (println (integer? 123))
+                (println (integer? "hello"))
+                (println (integer? (pair 1 2)))
+              output: |
+                #f
+                #f
+                #t
+                #f
+                #f
+            - name: string?
+              input: |
+                (println (string? ()))
+                (println (string? #t))
+                (println (string? 123))
+                (println (string? "hello"))
+                (println (string? (pair 1 2)))
+              output: |
+                #f
+                #f
+                #f
+                #t
+                #f
+            - name: pair?
+              input: |
+                (println (pair? ()))
+                (println (pair? #t))
+                (println (pair? 123))
+                (println (pair? "hello"))
+                (println (pair? (pair 1 2)))
+              output: |
+                #f
+                #f
+                #f
+                #f
+                #t
