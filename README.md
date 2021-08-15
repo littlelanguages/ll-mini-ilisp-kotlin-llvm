@@ -97,7 +97,10 @@ fragments
 | `(boolean? v)` | Should `v` refer to either `#t` or `#f` then returns `#t` otherwise returns `#f`. |
 | `(car v)` | Should `v` refer to a pair node then returns the first (or car) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |
 | `(cdr v)` | Should `v` refer to a pair node then returns the second (or cdr) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |
+| `(integer? v)` | Should `v` refer to an integer value then returns `#t` otherwise returns `#f`. |
 | `(null? v)` | Should `v` refer to the `()` value then returns `#t` otherwise returns `#f`. |
 | `(pair a b)` | Composes a pair node where the `car` of that node equals `a` and the `cdr` equals `b`. | 
+| `(pair? v)` | Should `v` refer to a pair node then returns `#t` otherwise returns `#f`. |
 | `(print v1 ... vn)` | Writes the values `v1` to `vn` out to the console.  This procedure does not place a space between the printed values and does not terminate with a newline. |
 | `(println v1 ... vn)` | Writes the values `v1` to `vn` out to the console followed by a newline.  This procedure does not place a space between the printed values. |
+| `(string? v)` | Should `v` refer to a string value then returns `#t` otherwise returns `#f`. |
