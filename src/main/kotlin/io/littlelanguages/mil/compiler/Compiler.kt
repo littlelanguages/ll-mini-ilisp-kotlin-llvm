@@ -61,28 +61,7 @@ private class Compiler(
 
     val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
 
-    val _divide =
-        LLVM.LLVMAddFunction(module, "_divide", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
-    val _from_literal_int = LLVM.LLVMAddFunction(module, "_from_literal_int", LLVM.LLVMFunctionType(structValueP, i32, 1, 0))!!
-    val _from_literal_string = LLVM.LLVMAddFunction(module, "_from_literal_string", LLVM.LLVMFunctionType(structValueP, i8P, 1, 0))!!
-    val _minus =
-        LLVM.LLVMAddFunction(module, "_minus", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
-    val _multiply =
-        LLVM.LLVMAddFunction(
-            module,
-            "_multiply",
-            LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0)
-        )!!
-    val _pair =
-        LLVM.LLVMAddFunction(module, "_mk_pair", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
-    val _plus =
-        LLVM.LLVMAddFunction(module, "_plus", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
-    val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
-    val _print_newline = LLVM.LLVMAddFunction(module, "_print_newline", LLVM.LLVMFunctionType(void, PointerPointer<LLVMTypeRef>(), 0, 0))!!
-
-    val _VTrue = LLVM.LLVMAddGlobal(module, structValueP, "_VTrue")!!
-    val _VFalse = LLVM.LLVMAddGlobal(module, structValueP, "_VFalse")!!
-    val _VNull = LLVM.LLVMAddGlobal(module, structValueP, "_VNull")!!
+    val builtinProcedures = Procedures(module, structValueP, i32, i8P, void)
 
     init {
         LLVM.LLVMStructSetBody(
@@ -143,10 +122,6 @@ private class Compiler(
             3,
             0
         )
-
-        LLVM.LLVMSetGlobalConstant(_VTrue, 1)
-        LLVM.LLVMSetGlobalConstant(_VFalse, 1)
-        LLVM.LLVMSetGlobalConstant(_VNull, 1)
     }
 
     override fun dispose() {
@@ -193,47 +168,38 @@ private class Compiler(
     }
 
     private fun compileEForce(e: Expression): LLVMValueRef =
-        compileE(e) ?: LLVM.LLVMBuildLoad(
-            builder,
-            _VNull,
-            nextName()
-        )
+        compileE(e) ?: builtinProcedures.invoke(builder, BuiltinProcedure.V_NULL, nextName())
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
             is MinusExpression ->
-                return compileOperator(e.es, 0, _minus, true)
+                return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
 
             is PlusExpression ->
-                return compileOperator(e.es, 0, _plus, false)
+                return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
 
             is PrintlnExpression -> {
                 for (it in e.es) {
                     val op = compileE(it)
 
                     if (op != null) {
-                        LLVM.LLVMBuildCall(builder, _print_value, PointerPointer<Pointer>(1).put(0, op), 1, "")
+                        builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_VALUE, listOf(op), "")
                     }
                 }
 
-                LLVM.LLVMBuildCall(builder, _print_newline, PointerPointer<Pointer>(0), 0, "")
+                builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_NEWLINE, listOf(), "")
 
                 return null
             }
 
             is LiteralBool ->
-                return LLVM.LLVMBuildLoad(
-                    builder,
-                    if (e == LiteralBool.TRUE) _VTrue else _VFalse,
-                    nextName()
-                )
+                return builtinProcedures.invoke(builder, if (e == LiteralBool.TRUE) BuiltinProcedure.V_TRUE else BuiltinProcedure.V_FALSE, nextName())
 
             is LiteralInt ->
-                return LLVM.LLVMBuildCall(
+                return builtinProcedures.invoke(
                     builder,
-                    _from_literal_int,
-                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInt(i32, e.value.toLong(), 0)),
-                    1,
+                    BuiltinProcedure.FROM_LITERAL_INT,
+                    listOf(LLVM.LLVMConstInt(i32, e.value.toLong(), 0)),
                     nextName()
                 )
 
@@ -241,36 +207,25 @@ private class Compiler(
                 val globalStringName = LLVM.LLVMAddGlobal(module, LLVM.LLVMArrayType(i8, e.value.length + 1), nextName())
                 LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
 
-                return LLVM.LLVMBuildCall(
+                return builtinProcedures.invoke(
                     builder,
-                    _from_literal_string,
-                    PointerPointer<Pointer>(1).put(0, LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(c0i64, c0i64), 2)),
-                    1,
+                    BuiltinProcedure.FROM_LITERAL_STRING,
+                    listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(c0i64, c0i64), 2)),
                     nextName()
                 )
             }
 
             is LiteralUnit ->
-                return LLVM.LLVMBuildLoad(
-                    builder,
-                    _VNull,
-                    nextName()
-                )
+                return builtinProcedures.invoke(builder, BuiltinProcedure.V_NULL, nextName())
 
             is PairExpression ->
-                return LLVM.LLVMBuildCall(
-                    builder,
-                    _pair,
-                    PointerPointer<Pointer>(compileEForce(e.car), compileEForce(e.cdr)),
-                    2,
-                    nextName()
-                )
+                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIR, listOf(compileEForce(e.car), compileEForce(e.cdr)), nextName())
 
             is SlashExpression ->
-                return compileOperator(e.es, 1, _divide, true)
+                return compileOperator(e.es, 1, BuiltinProcedure.DIVIDE, true)
 
             is StarExpression ->
-                return compileOperator(e.es, 1, _multiply, false)
+                return compileOperator(e.es, 1, BuiltinProcedure.MULTIPLY, false)
 
             else ->
                 TODO(e.toString())
@@ -283,14 +238,76 @@ private class Compiler(
         return result
     }
 
-    private fun compileOperator(es: Expressions, unitValue: Int, operator: LLVMValueRef, explicitFirst: Boolean): LLVMValueRef? {
+    private fun compileOperator(es: Expressions, unitValue: Int, operator: BuiltinProcedure, explicitFirst: Boolean): LLVMValueRef? {
         val ops = es.mapNotNull { compileE(it) }
 
         return if (ops.isEmpty())
             compileE(LiteralInt(unitValue))
         else if (explicitFirst && ops.size == 1)
-            LLVM.LLVMBuildCall(builder, operator, PointerPointer(compileE(LiteralInt(unitValue)), ops[0]), 2, nextName())
+            builtinProcedures.invoke(builder, operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]), nextName())
         else
-            ops.drop(1).fold(ops[0]) { op1, op2 -> LLVM.LLVMBuildCall(builder, operator, PointerPointer(op1, op2), 2, nextName()) }
+            ops.drop(1).fold(ops[0]) { op1, op2 -> builtinProcedures.invoke(builder, operator, listOf(op1, op2), nextName()) }
     }
 }
+
+private enum class BuiltinProcedure {
+    DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    MINUS, MULTIPLY, PAIR, PLUS,
+    PRINT_VALUE, PRINT_NEWLINE, V_TRUE,
+    V_FALSE, V_NULL
+}
+
+private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
+    private val declarations = mapOf(
+        Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.FROM_LITERAL_INT, ProcedureDeclaration("_from_literal_int", listOf(i32), structValueP)),
+        Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
+        Pair(BuiltinProcedure.MINUS, ProcedureDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.MULTIPLY, ProcedureDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.PAIR, ProcedureDeclaration("_mk_pair", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.PLUS, ProcedureDeclaration("_plus", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinProcedure.PRINT_VALUE, ProcedureDeclaration("_print_value", listOf(structValueP), void)),
+        Pair(BuiltinProcedure.PRINT_NEWLINE, ProcedureDeclaration("_print_newline", listOf(), void)),
+        Pair(BuiltinProcedure.V_TRUE, ProcedureDeclaration("_VTrue", null, structValueP)),
+        Pair(BuiltinProcedure.V_FALSE, ProcedureDeclaration("_VFalse", null, structValueP)),
+        Pair(BuiltinProcedure.V_NULL, ProcedureDeclaration("_VNull", null, structValueP))
+    )
+
+    fun get(bip: BuiltinProcedure): LLVMValueRef {
+        val declaration = declarations[bip]!!
+        val namedFunction: LLVMValueRef? = LLVM.LLVMGetNamedFunction(module, declaration.name)
+
+        return if (namedFunction == null) {
+            val parameters = declaration.parameters
+
+            if (parameters == null) {
+                val result = LLVM.LLVMAddGlobal(module, declaration.returnType, declaration.name)!!
+                LLVM.LLVMSetGlobalConstant(result, 1)
+                result
+            } else {
+                val parameterTypes = declaration.parameters.foldIndexed(PointerPointer<LLVMTypeRef>(parameters.size.toLong())) { idx, acc, item ->
+                    acc.put(idx.toLong(), item)
+                }
+
+                LLVM.LLVMAddFunction(
+                    module,
+                    declaration.name,
+                    LLVM.LLVMFunctionType(declaration.returnType, parameterTypes, declaration.parameters.size, 0)
+                )!!
+            }
+        } else
+            namedFunction
+    }
+
+    fun invoke(builder: LLVMBuilderRef, bip: BuiltinProcedure, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
+        LLVM.LLVMBuildCall(
+            builder, get(bip),
+            arguments.foldIndexed(PointerPointer<Pointer>(arguments.size.toLong())) { idx, acc, op -> acc.put(idx.toLong(), op) },
+            arguments.size, name
+        )
+
+    fun invoke(builder: LLVMBuilderRef, bip: BuiltinProcedure, name: String): LLVMValueRef =
+        LLVM.LLVMBuildLoad(builder, get(bip), name)
+}
+
+private data class ProcedureDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef)
