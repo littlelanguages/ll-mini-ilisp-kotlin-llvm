@@ -61,7 +61,7 @@ private class Compiler(
 
     val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
 
-    val builtinProcedures = Procedures(module, structValueP, i32, i8P, void)
+    val builtinBuiltinDeclarations = BuiltinDeclarations(module, structValueP, i32, i8P, void)
 
     init {
         LLVM.LLVMStructSetBody(
@@ -168,29 +168,29 @@ private class Compiler(
     }
 
     private fun compileEForce(e: Expression): LLVMValueRef =
-        compileE(e) ?: builtinProcedures.invoke(builder, BuiltinProcedure.V_NULL, nextName())
+        compileE(e) ?: builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
             is BooleanPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.BOOLEANP, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), nextName())
 
             is CarExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.CAR, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CAR, listOf(compileEForce(e.es)), nextName())
 
             is CdrExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.CDR, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), nextName())
 
             is IntegerPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.INTEGERP, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
             is LiteralBool ->
-                return builtinProcedures.invoke(builder, if (e == LiteralBool.TRUE) BuiltinProcedure.V_TRUE else BuiltinProcedure.V_FALSE, nextName())
+                return builtinBuiltinDeclarations.invoke(builder, if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE, nextName())
 
             is LiteralInt ->
-                return builtinProcedures.invoke(
+                return builtinBuiltinDeclarations.invoke(
                     builder,
-                    BuiltinProcedure.FROM_LITERAL_INT,
+                    BuiltinDeclarationEnum.FROM_LITERAL_INT,
                     listOf(LLVM.LLVMConstInt(i32, e.value.toLong(), 0)),
                     nextName()
                 )
@@ -199,54 +199,54 @@ private class Compiler(
                 val globalStringName = LLVM.LLVMAddGlobal(module, LLVM.LLVMArrayType(i8, e.value.length + 1), nextName())
                 LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
 
-                return builtinProcedures.invoke(
+                return builtinBuiltinDeclarations.invoke(
                     builder,
-                    BuiltinProcedure.FROM_LITERAL_STRING,
+                    BuiltinDeclarationEnum.FROM_LITERAL_STRING,
                     listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(c0i64, c0i64), 2)),
                     nextName()
                 )
             }
 
             is LiteralUnit ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.V_NULL, nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
 
             is MinusExpression ->
-                return compileOperator(e.es, 0, BuiltinProcedure.MINUS, true)
+                return compileOperator(e.es, 0, BuiltinDeclarationEnum.MINUS, true)
 
             is NullPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.NULLP, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), nextName())
 
             is PairExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIR, listOf(compileEForce(e.car), compileEForce(e.cdr)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIR, listOf(compileEForce(e.car), compileEForce(e.cdr)), nextName())
 
             is PairPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.PAIRP, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), nextName())
 
             is PlusExpression ->
-                return compileOperator(e.es, 0, BuiltinProcedure.PLUS, false)
+                return compileOperator(e.es, 0, BuiltinDeclarationEnum.PLUS, false)
 
             is PrintlnExpression -> {
                 for (it in e.es) {
                     val op = compileE(it)
 
                     if (op != null) {
-                        builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_VALUE, listOf(op), "")
+                        builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
                     }
                 }
 
-                builtinProcedures.invoke(builder, BuiltinProcedure.PRINT_NEWLINE, listOf(), "")
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
 
                 return null
             }
 
             is SlashExpression ->
-                return compileOperator(e.es, 1, BuiltinProcedure.DIVIDE, true)
+                return compileOperator(e.es, 1, BuiltinDeclarationEnum.DIVIDE, true)
 
             is StarExpression ->
-                return compileOperator(e.es, 1, BuiltinProcedure.MULTIPLY, false)
+                return compileOperator(e.es, 1, BuiltinDeclarationEnum.MULTIPLY, false)
 
             is StringPExpression ->
-                return builtinProcedures.invoke(builder, BuiltinProcedure.STRINGP, listOf(compileEForce(e.es)), nextName())
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), nextName())
 
             else ->
                 TODO(e.toString())
@@ -259,49 +259,49 @@ private class Compiler(
         return result
     }
 
-    private fun compileOperator(es: Expressions, unitValue: Int, operator: BuiltinProcedure, explicitFirst: Boolean): LLVMValueRef? {
+    private fun compileOperator(es: Expressions, unitValue: Int, operator: BuiltinDeclarationEnum, explicitFirst: Boolean): LLVMValueRef? {
         val ops = es.mapNotNull { compileE(it) }
 
         return if (ops.isEmpty())
             compileE(LiteralInt(unitValue))
         else if (explicitFirst && ops.size == 1)
-            builtinProcedures.invoke(builder, operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]), nextName())
+            builtinBuiltinDeclarations.invoke(builder, operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]), nextName())
         else
-            ops.drop(1).fold(ops[0]) { op1, op2 -> builtinProcedures.invoke(builder, operator, listOf(op1, op2), nextName()) }
+            ops.drop(1).fold(ops[0]) { op1, op2 -> builtinBuiltinDeclarations.invoke(builder, operator, listOf(op1, op2), nextName()) }
     }
 }
 
-private enum class BuiltinProcedure {
+private enum class BuiltinDeclarationEnum {
     BOOLEANP, CAR, CDR, DIVIDE, FROM_LITERAL_INT, FROM_LITERAL_STRING,
     INTEGERP, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
     V_FALSE, V_NULL
 }
 
-private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
+private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
     private val declarations = mapOf(
-        Pair(BuiltinProcedure.BOOLEANP, ProcedureDeclaration("_booleanp", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.CAR, ProcedureDeclaration("_pair_car", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.CDR, ProcedureDeclaration("_pair_cdr", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.DIVIDE, ProcedureDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
-        Pair(BuiltinProcedure.FROM_LITERAL_INT, ProcedureDeclaration("_from_literal_int", listOf(i32), structValueP)),
-        Pair(BuiltinProcedure.FROM_LITERAL_STRING, ProcedureDeclaration("_from_literal_string", listOf(i8P), structValueP)),
-        Pair(BuiltinProcedure.INTEGERP, ProcedureDeclaration("_integerp", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.MINUS, ProcedureDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
-        Pair(BuiltinProcedure.MULTIPLY, ProcedureDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
-        Pair(BuiltinProcedure.NULLP, ProcedureDeclaration("_nullp", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.PAIR, ProcedureDeclaration("_mk_pair", listOf(structValueP, structValueP), structValueP)),
-        Pair(BuiltinProcedure.PAIRP, ProcedureDeclaration("_pairp", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.PLUS, ProcedureDeclaration("_plus", listOf(structValueP, structValueP), structValueP)),
-        Pair(BuiltinProcedure.PRINT_VALUE, ProcedureDeclaration("_print_value", listOf(structValueP), void)),
-        Pair(BuiltinProcedure.PRINT_NEWLINE, ProcedureDeclaration("_print_newline", listOf(), void)),
-        Pair(BuiltinProcedure.STRINGP, ProcedureDeclaration("_stringp", listOf(structValueP), structValueP)),
-        Pair(BuiltinProcedure.V_TRUE, ProcedureDeclaration("_VTrue", null, structValueP)),
-        Pair(BuiltinProcedure.V_FALSE, ProcedureDeclaration("_VFalse", null, structValueP)),
-        Pair(BuiltinProcedure.V_NULL, ProcedureDeclaration("_VNull", null, structValueP))
+        Pair(BuiltinDeclarationEnum.BOOLEANP, BuiltinDeclaration("_booleanp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.CAR, BuiltinDeclaration("_pair_car", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.CDR, BuiltinDeclaration("_pair_cdr", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.DIVIDE, BuiltinDeclaration("_divide", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.FROM_LITERAL_INT, BuiltinDeclaration("_from_literal_int", listOf(i32), structValueP)),
+        Pair(BuiltinDeclarationEnum.FROM_LITERAL_STRING, BuiltinDeclaration("_from_literal_string", listOf(i8P), structValueP)),
+        Pair(BuiltinDeclarationEnum.INTEGERP, BuiltinDeclaration("_integerp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.MINUS, BuiltinDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.MULTIPLY, BuiltinDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.NULLP, BuiltinDeclaration("_nullp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.PAIR, BuiltinDeclaration("_mk_pair", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.PAIRP, BuiltinDeclaration("_pairp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.PLUS, BuiltinDeclaration("_plus", listOf(structValueP, structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.PRINT_VALUE, BuiltinDeclaration("_print_value", listOf(structValueP), void)),
+        Pair(BuiltinDeclarationEnum.PRINT_NEWLINE, BuiltinDeclaration("_print_newline", listOf(), void)),
+        Pair(BuiltinDeclarationEnum.STRINGP, BuiltinDeclaration("_stringp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.V_TRUE, BuiltinDeclaration("_VTrue", null, structValueP)),
+        Pair(BuiltinDeclarationEnum.V_FALSE, BuiltinDeclaration("_VFalse", null, structValueP)),
+        Pair(BuiltinDeclarationEnum.V_NULL, BuiltinDeclaration("_VNull", null, structValueP))
     )
 
-    fun get(bip: BuiltinProcedure): LLVMValueRef {
+    fun get(bip: BuiltinDeclarationEnum): LLVMValueRef {
         val declaration = declarations[bip]!!
         val namedFunction: LLVMValueRef? =
             if (declaration.isProcedure())
@@ -328,18 +328,18 @@ private class Procedures(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i
             }
     }
 
-    fun invoke(builder: LLVMBuilderRef, bip: BuiltinProcedure, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
+    fun invoke(builder: LLVMBuilderRef, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
         LLVM.LLVMBuildCall(
             builder, get(bip),
             arguments.foldIndexed(PointerPointer<Pointer>(arguments.size.toLong())) { idx, acc, op -> acc.put(idx.toLong(), op) },
             arguments.size, name
         )
 
-    fun invoke(builder: LLVMBuilderRef, bip: BuiltinProcedure, name: String): LLVMValueRef =
+    fun invoke(builder: LLVMBuilderRef, bip: BuiltinDeclarationEnum, name: String): LLVMValueRef =
         LLVM.LLVMBuildLoad(builder, get(bip), name)
 }
 
-private data class ProcedureDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef) {
+private data class BuiltinDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef) {
     fun isProcedure() =
         parameters != null
 }
