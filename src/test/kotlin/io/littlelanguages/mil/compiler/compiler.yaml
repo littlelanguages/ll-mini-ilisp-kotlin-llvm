@@ -91,3 +91,14 @@
                 1
                 2
                 5
+
+      - scenario:
+          name: Procedures
+          tests:
+            - name: pair
+              input: |
+                (println (pair 1 2))
+                (println (pair 1 (pair 2 (pair 3 ()))))
+              output: |
+                (1 . 2)
+                (1 2 3)

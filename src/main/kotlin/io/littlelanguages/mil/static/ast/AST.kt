@@ -2,6 +2,7 @@ package io.littlelanguages.mil.static.ast
 
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.scanpiler.Location
+import io.littlelanguages.scanpiler.Locationable
 
 
 data class Program(
@@ -11,12 +12,14 @@ data class Program(
         expressions.map { it.yaml() }
 }
 
-sealed class Expression : Yamlable
+sealed class Expression(open val position: Location) : Yamlable, Locationable {
+    override fun position(): Location = position
+}
 
 data class Symbol(
-    val position: Location,
+    override val position: Location,
     val name: String
-) : Expression() {
+) : Expression(position) {
     override fun yaml(): Any =
         singletonMap(
             "Symbol",
@@ -28,8 +31,9 @@ data class Symbol(
 }
 
 data class SExpression(
+    override val position: Location,
     val expressions: List<Expression>
-) : Expression() {
+) : Expression(position) {
     override fun yaml(): Any =
         singletonMap(
             "SExpression", expressions.map { it.yaml() }
@@ -37,9 +41,9 @@ data class SExpression(
 }
 
 data class LiteralBool(
-    val position: Location,
+    override val position: Location,
     val value: Boolean
-) : Expression() {
+) : Expression(position) {
     override fun yaml(): Any =
         singletonMap(
             "LiteralBool", mapOf(
@@ -50,9 +54,9 @@ data class LiteralBool(
 }
 
 data class LiteralInt(
-    val position: Location,
+    override val position: Location,
     val value: String
-) : Expression() {
+) : Expression(position) {
     override fun yaml(): Any =
         singletonMap(
             "LiteralInt", mapOf(
@@ -63,9 +67,9 @@ data class LiteralInt(
 }
 
 data class LiteralString(
-    val position: Location,
+    override val position: Location,
     val value: String
-) : Expression() {
+) : Expression(position) {
     override fun yaml(): Any =
         singletonMap(
             "LiteralString", mapOf(

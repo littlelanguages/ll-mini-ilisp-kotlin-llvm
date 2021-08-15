@@ -3,6 +3,7 @@ package io.littlelanguages.mil.dynamic
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
+import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.dynamic.tst.*
 
@@ -51,6 +52,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                         when (first.name) {
                             "-" ->
                                 MinusExpression(arguments)
+                            "pair" ->
+                                if (arguments.size == 2)
+                                    PairExpression(arguments[0], arguments[1])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "+" ->
                                 PlusExpression(arguments)
                             "print" ->
@@ -74,8 +80,9 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
             is io.littlelanguages.mil.static.ast.Symbol -> TODO()
         }
 
-    private fun reportError(error: Errors) {
+    private fun reportError(error: Errors): Expression {
         errors.add(error)
+        return LiteralUnit
     }
 }
 

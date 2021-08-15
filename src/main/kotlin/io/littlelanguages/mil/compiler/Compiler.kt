@@ -44,6 +44,12 @@ private class Compiler(
     override val declarations = mutableMapOf<String, LLVMValueRef>()
     var expressionName = 0
 
+    val void = LLVM.LLVMVoidTypeInContext(context)!!
+    val i8 = LLVM.LLVMInt8TypeInContext(context)!!
+    val i32 = LLVM.LLVMInt32TypeInContext(context)!!
+    val i64 = LLVM.LLVMInt64TypeInContext(context)!!
+    val i8P = LLVM.LLVMPointerType(i8, 0)!!
+
     val structValue = LLVM.LLVMStructCreateNamed(context, "struct.Value")!!
     val structValueP = LLVM.LLVMPointerType(structValue, 0)!!
     val structValuePP = LLVM.LLVMPointerType(structValueP, 0)!!
@@ -52,12 +58,6 @@ private class Compiler(
     val structVector = LLVM.LLVMStructCreateNamed(context, "struct.Vector")!!
     val structNativeClosure = LLVM.LLVMStructCreateNamed(context, "struct.NativeClosure")!!
     val structDynamicClosure = LLVM.LLVMStructCreateNamed(context, "struct.DynamicClosure")!!
-
-    val void = LLVM.LLVMVoidTypeInContext(context)!!
-    val i8 = LLVM.LLVMInt8TypeInContext(context)!!
-    val i32 = LLVM.LLVMInt32TypeInContext(context)!!
-    val i64 = LLVM.LLVMInt64TypeInContext(context)!!
-    val i8P = LLVM.LLVMPointerType(i8, 0)!!
 
     val c0i64 = LLVM.LLVMConstInt(i64, 0, 0)!!
 
@@ -73,6 +73,8 @@ private class Compiler(
             "_multiply",
             LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0)
         )!!
+    val _pair =
+        LLVM.LLVMAddFunction(module, "_mk_pair", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
     val _plus =
         LLVM.LLVMAddFunction(module, "_plus", LLVM.LLVMFunctionType(structValueP, PointerPointer(structValueP, structValueP), 2, 0))!!
     val _print_value = LLVM.LLVMAddFunction(module, "_print_value", LLVM.LLVMFunctionType(void, structValueP, 1, 0))!!
@@ -190,6 +192,13 @@ private class Compiler(
         LLVM.LLVMBuildRet(builder, LLVM.LLVMConstInt(i32, 0, 0))
     }
 
+    private fun compileEForce(e: Expression): LLVMValueRef =
+        compileE(e) ?: LLVM.LLVMBuildLoad(
+            builder,
+            _VNull,
+            nextName()
+        )
+
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
             is MinusExpression ->
@@ -245,6 +254,15 @@ private class Compiler(
                 return LLVM.LLVMBuildLoad(
                     builder,
                     _VNull,
+                    nextName()
+                )
+
+            is PairExpression ->
+                return LLVM.LLVMBuildCall(
+                    builder,
+                    _pair,
+                    PointerPointer<Pointer>(compileEForce(e.car), compileEForce(e.cdr)),
+                    2,
                     nextName()
                 )
 

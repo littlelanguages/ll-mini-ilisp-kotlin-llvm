@@ -81,6 +81,16 @@ object LiteralUnit : Expression {
     override fun yaml(): Any = "()"
 }
 
+data class PairExpression(val car: Expression, val cdr: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "pair", mapOf(
+                Pair("car", car.yaml()),
+                Pair("cdr", cdr.yaml())
+            )
+        )
+}
+
 data class SlashExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("/", es.map { it.yaml() })
