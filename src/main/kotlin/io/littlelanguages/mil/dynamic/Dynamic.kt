@@ -75,6 +75,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     IntegerPExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
+                            "<" ->
+                                if (arguments.size == 2)
+                                    LessThanExpression(arguments[0], arguments[1])
+                                else
+                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "-" ->
                                 MinusExpression(arguments)
                             "null?" ->

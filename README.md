@@ -94,6 +94,8 @@ fragments
 | `(- v1` ... `vn)` | Performs the calculation ( ... ((`v1` - `v2`) - `v3`) - ...) - `vn`).  If the form `(-)` is used then returns 0.  If the form `(- v1)` is used then returns -`v1`. |
 | `(* v1` ... `vn)` | Performs the calculation ( ... ((`v1` * `v2`) * `v3`) * ...) * `vn`).  If the form `(*)` is used then returns 1.  If the form `(* v1)` is used then returns `v1`. |
 | `(/ v1` ... `vn)` | Performs the calculation ( ... ((`v1` / `v2`) / `v3`) - ...) - `vn`).  If the form `(/)` is used then returns 1.  If the form `(/ v1)` is used then returns 1 / `v1`. |
+| `(= v1 v2)` | Should `v1` refer to the same value as `v2` then returns `#t` otherwise returns `#f` |
+| `(< v1 v2)` | Should `v1` refer to a value which is less than the value that `v2` refers to then returns `#t` otherwise returns `#f`. This procedure operates over integer, boolean and string values.  All other values will cause the procedure to return `#f`. |
 | `(boolean? v)` | Should `v` refer to either `#t` or `#f` then returns `#t` otherwise returns `#f`. |
 | `(car v)` | Should `v` refer to a pair node then returns the first (or car) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |
 | `(cdr v)` | Should `v` refer to a pair node then returns the second (or cdr) element of that node.  Should `v` not refer to a pair node then raises the signal `ValueNotPair`. |

@@ -167,6 +167,38 @@
                       #f
                       #t
                       #f
+            - scenario:
+                name: less than
+                tests:
+                  - name: boolean
+                    input: |
+                      (println (< #f #f))
+                      (println (< #f #t))
+                      (println (< #t #f))
+                      (println (< #t #t))
+                    output: |
+                      #f
+                      #t
+                      #f
+                      #f
+                  - name: integer
+                    input: |
+                      (println (< 1 1))
+                      (println (< 1 2))
+                      (println (< 2 1))
+                    output: |
+                      #f
+                      #t
+                      #f
+                  - name: string
+                    input: |
+                      (println (< "a" "a"))
+                      (println (< "a" "b"))
+                      (println (< "b" "a"))
+                    output: |
+                      #f
+                      #t
+                      #f
       - scenario:
           name: Procedures
           tests:

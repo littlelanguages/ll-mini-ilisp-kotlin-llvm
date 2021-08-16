@@ -187,6 +187,9 @@ private class Compiler(
             is IntegerPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
+            is LessThanExpression ->
+                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.LESS_THAN, listOf(compileEForce(e.e1), compileEForce(e.e2)), nextName())
+
             is LiteralBool ->
                 return builtinBuiltinDeclarations.invoke(builder, if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE, nextName())
 
@@ -276,7 +279,7 @@ private class Compiler(
 
 private enum class BuiltinDeclarationEnum {
     BOOLEANP, CAR, CDR, DIVIDE, EQUALS, FROM_LITERAL_INT, FROM_LITERAL_STRING,
-    INTEGERP, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
+    INTEGERP, LESS_THAN, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
     V_FALSE, V_NULL
 }
@@ -291,6 +294,7 @@ private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMT
         Pair(BuiltinDeclarationEnum.FROM_LITERAL_INT, BuiltinDeclaration("_from_literal_int", listOf(i32), structValueP)),
         Pair(BuiltinDeclarationEnum.FROM_LITERAL_STRING, BuiltinDeclaration("_from_literal_string", listOf(i8P), structValueP)),
         Pair(BuiltinDeclarationEnum.INTEGERP, BuiltinDeclaration("_integerp", listOf(structValueP), structValueP)),
+        Pair(BuiltinDeclarationEnum.LESS_THAN, BuiltinDeclaration("_less_than", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.MINUS, BuiltinDeclaration("_minus", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.MULTIPLY, BuiltinDeclaration("_multiply", listOf(structValueP, structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.NULLP, BuiltinDeclaration("_nullp", listOf(structValueP), structValueP)),

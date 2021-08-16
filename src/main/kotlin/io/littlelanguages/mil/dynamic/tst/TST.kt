@@ -66,6 +66,16 @@ data class IntegerPExpression(val es: Expression) : Expression {
         singletonMap("integer?", es.yaml())
 }
 
+data class LessThanExpression(val e1: Expression, val e2: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "<", mapOf(
+                Pair("e1", e1.yaml()),
+                Pair("e2", e2.yaml())
+            )
+        )
+}
+
 data class MinusExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap("-", es.map { it.yaml() })
