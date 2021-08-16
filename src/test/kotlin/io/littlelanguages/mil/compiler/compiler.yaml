@@ -200,6 +200,17 @@
                       #t
                       #f
       - scenario:
+          name: Forms
+          tests:
+            - scenario:
+                name: if
+                tests:
+                  - name: (if)
+                    input: |
+                      (println (if))
+                    output: |
+                      ()
+      - scenario:
           name: Procedures
           tests:
             - name: pair

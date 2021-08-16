@@ -61,6 +61,17 @@ data class EqualsExpression(val e1: Expression, val e2: Expression) : Expression
         )
 }
 
+data class IfExpression(val e1: Expression, val e2: Expression, val e3: Expression) : Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "if", mapOf(
+                Pair("e1", e1.yaml()),
+                Pair("e2", e2.yaml()),
+                Pair("e3", e3.yaml())
+            )
+        )
+}
+
 data class IntegerPExpression(val es: Expression) : Expression {
     override fun yaml(): Any =
         singletonMap("integer?", es.yaml())
