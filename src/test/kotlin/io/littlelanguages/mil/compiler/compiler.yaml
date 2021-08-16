@@ -210,6 +210,11 @@
                       (println (if))
                     output: |
                       ()
+                  - name: (if 1)
+                    input: |
+                      (println (if 1))
+                    output: |
+                      1
       - scenario:
           name: Procedures
           tests:
