@@ -53,8 +53,8 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
                         val module = llvmState.right.module
 
 //                        LLVM.LLVMDumpModule(module)
-                        System.err.println(LLVM.LLVMPrintModuleToString(module).string)
-                        LLVM.LLVMWriteBitcodeToFile(module, "test.bc")
+//                        System.err.println(LLVM.LLVMPrintModuleToString(module).string)
+                        module.writeBitcodeToFile("test.bc")
                         runCommand(arrayOf("clang", "test.bc", "src/main/c/lib.o", "./src/main/c/main.o", "-o", "test.bin"))
                         val commandOutput = runCommand(arrayOf("./test.bin"))
 

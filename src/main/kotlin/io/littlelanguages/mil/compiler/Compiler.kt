@@ -4,6 +4,7 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.Pointer
@@ -13,8 +14,7 @@ import org.bytedeco.llvm.global.LLVM
 
 interface LLVMState {
     val context: LLVMContextRef
-    val module: LLVMModuleRef
-    val declarations: Map<String, LLVMValueRef>
+    val module: Module
 
     fun dispose()
 }
@@ -27,7 +27,7 @@ fun compile(moduleID: String, program: Program): Either<List<Errors>, LLVMState>
     LLVM.LLVMInitializeNativeTarget()
 
     val context: LLVMContextRef = LLVM.LLVMContextCreate()
-    val module: LLVMModuleRef = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context)
+    val module = Module(moduleID, context)
 
     val compiler = Compiler(context, module)
     compiler.compile(program)
@@ -37,11 +37,11 @@ fun compile(moduleID: String, program: Program): Either<List<Errors>, LLVMState>
 
 private class Compiler(
     override val context: LLVMContextRef,
-    override val module: LLVMModuleRef
+    override val module: Module
 ) : LLVMState {
     val builder: LLVMBuilderRef = LLVM.LLVMCreateBuilderInContext(context)
+    var procedure: LLVMValueRef? = null
 
-    override val declarations = mutableMapOf<String, LLVMValueRef>()
     var expressionName = 0
 
     val void = LLVM.LLVMVoidTypeInContext(context)!!
@@ -134,11 +134,10 @@ private class Compiler(
             compile(declaration)
         }
 
-        val error = BytePointer()
-        if (LLVM.LLVMVerifyModule(module, LLVM.LLVMPrintMessageAction, error) != 0) {
-            val message = error.string
-            LLVM.LLVMDisposeMessage(error)
-            throw CompilationError(message)
+        System.err.println(module.toString())
+
+        when(val result = module.verify()) {
+            is io.littlelanguages.mil.compiler.llvm.VerifyError -> throw CompilationError(result.message)
         }
     }
 
@@ -151,9 +150,8 @@ private class Compiler(
 
     private fun compileProcedure(declaration: Procedure) {
         val procedureType = LLVM.LLVMFunctionType(i32, PointerPointer<LLVMTypeRef>(), 0, 0)
-        val procedure = LLVM.LLVMAddFunction(module, declaration.name, procedureType)
 
-        declarations[declaration.name] = procedure
+        procedure = module.addFunction(declaration.name, procedureType)
 
         LLVM.LLVMSetFunctionCallConv(procedure, LLVM.LLVMCCallConv)
 
@@ -182,16 +180,64 @@ private class Compiler(
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), nextName())
 
             is EqualsExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.EQUALS, listOf(compileEForce(e.e1), compileEForce(e.e2)), nextName())
+                return builtinBuiltinDeclarations.invoke(
+                    builder,
+                    BuiltinDeclarationEnum.EQUALS,
+                    listOf(compileEForce(e.e1), compileEForce(e.e2)),
+                    nextName()
+                )
+
+            is IfExpression -> {
+                val e1op = compileEForce(e.e1)
+                val falseOp = builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_FALSE, nextName())
+
+                val e1Compare = LLVM.LLVMBuildICmp(builder, LLVM.LLVMIntNE, e1op, falseOp, nextName())
+
+                val ifThen = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
+                val ifElse = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
+                val ifEnd = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
+
+                LLVM.LLVMBuildCondBr(builder, e1Compare, ifThen, ifElse)
+
+                LLVM.LLVMPositionBuilderAtEnd(builder, ifThen)
+                val e2op = compileEForce(e.e2)
+                LLVM.LLVMBuildBr(builder, ifEnd)
+
+                LLVM.LLVMPositionBuilderAtEnd(builder, ifElse)
+                val e3op = compileEForce(e.e3)
+                LLVM.LLVMBuildBr(builder, ifEnd)
+
+                LLVM.LLVMPositionBuilderAtEnd(builder, ifEnd)
+                val phi = LLVM.LLVMBuildPhi(builder, structValueP, nextName())
+                val phiValues = PointerPointer<Pointer>(2)
+                    .put(0, e2op)
+                    .put(1, e3op)
+
+                val phiBlocks = PointerPointer<Pointer>(2)
+                    .put(0, ifThen)
+                    .put(1, ifElse)
+                LLVM.LLVMAddIncoming(phi, phiValues, phiBlocks,  /* pairCount */2)
+
+                return phi
+            }
 
             is IntegerPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
             is LessThanExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.LESS_THAN, listOf(compileEForce(e.e1), compileEForce(e.e2)), nextName())
+                return builtinBuiltinDeclarations.invoke(
+                    builder,
+                    BuiltinDeclarationEnum.LESS_THAN,
+                    listOf(compileEForce(e.e1), compileEForce(e.e2)),
+                    nextName()
+                )
 
             is LiteralBool ->
-                return builtinBuiltinDeclarations.invoke(builder, if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE, nextName())
+                return builtinBuiltinDeclarations.invoke(
+                    builder,
+                    if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE,
+                    nextName()
+                )
 
             is LiteralInt ->
                 return builtinBuiltinDeclarations.invoke(
@@ -202,7 +248,7 @@ private class Compiler(
                 )
 
             is LiteralString -> {
-                val globalStringName = LLVM.LLVMAddGlobal(module, LLVM.LLVMArrayType(i8, e.value.length + 1), nextName())
+                val globalStringName = module.addGlobal(nextName(), LLVM.LLVMArrayType(i8, e.value.length + 1))
                 LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
 
                 return builtinBuiltinDeclarations.invoke(
@@ -223,7 +269,12 @@ private class Compiler(
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), nextName())
 
             is PairExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIR, listOf(compileEForce(e.car), compileEForce(e.cdr)), nextName())
+                return builtinBuiltinDeclarations.invoke(
+                    builder,
+                    BuiltinDeclarationEnum.PAIR,
+                    listOf(compileEForce(e.car), compileEForce(e.cdr)),
+                    nextName()
+                )
 
             is PairPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), nextName())
@@ -284,7 +335,7 @@ private enum class BuiltinDeclarationEnum {
     V_FALSE, V_NULL
 }
 
-private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
+private class BuiltinDeclarations(val module: Module, structValueP: LLVMTypeRef, i32: LLVMTypeRef, i8P: LLVMTypeRef, void: LLVMTypeRef) {
     private val declarations = mapOf(
         Pair(BuiltinDeclarationEnum.BOOLEANP, BuiltinDeclaration("_booleanp", listOf(structValueP), structValueP)),
         Pair(BuiltinDeclarationEnum.CAR, BuiltinDeclaration("_pair_car", listOf(structValueP), structValueP)),
@@ -313,9 +364,9 @@ private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMT
         val declaration = declarations[bip]!!
         val namedFunction: LLVMValueRef? =
             if (declaration.isProcedure())
-                LLVM.LLVMGetNamedFunction(module, declaration.name)
+                module.getNamedFunction(declaration.name)
             else
-                LLVM.LLVMGetNamedGlobal(module, declaration.name)
+                module.getNamedGlobal(declaration.name)
 
         return namedFunction
             ?: if (declaration.isProcedure()) {
@@ -324,16 +375,12 @@ private class BuiltinDeclarations(val module: LLVMModuleRef, structValueP: LLVMT
                     acc.put(idx.toLong(), item)
                 }
 
-                LLVM.LLVMAddFunction(
-                    module,
+                module.addFunction(
                     declaration.name,
                     LLVM.LLVMFunctionType(declaration.returnType, parameterTypes, declaration.parameters.size, 0)
                 )!!
-            } else {
-                val result = LLVM.LLVMAddGlobal(module, declaration.returnType, declaration.name)!!
-                LLVM.LLVMSetGlobalConstant(result, 1)
-                result
-            }
+            } else
+                module.addGlobal(declaration.name, declaration.returnType)!!
     }
 
     fun invoke(builder: LLVMBuilderRef, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
