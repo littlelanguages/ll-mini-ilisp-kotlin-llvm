@@ -6,6 +6,7 @@ import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.compiler.llvm.pointerPointerOf
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.Pointer
@@ -371,9 +372,7 @@ private class BuiltinDeclarations(val module: Module, structValueP: LLVMTypeRef,
         return if (declaration.isProcedure())
             module.getNamedFunction(declaration.name) ?: run {
                 val parameters = declaration.parameters!!
-                val parameterTypes = declaration.parameters.foldIndexed(PointerPointer<LLVMTypeRef>(parameters.size.toLong())) { idx, acc, item ->
-                    acc.put(idx.toLong(), item)
-                }
+                val parameterTypes = pointerPointerOf(parameters)
 
                 module.addFunction(
                     declaration.name,

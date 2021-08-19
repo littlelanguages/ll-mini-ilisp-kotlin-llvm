@@ -1,6 +1,8 @@
 package io.littlelanguages.mil.compiler.llvm
 
 import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.javacpp.Pointer
+import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMContextRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
@@ -61,3 +63,13 @@ interface VerifyResult
 class VerifySuccess : VerifyResult
 
 class VerifyError(val message: String) : VerifyResult
+
+fun <T : Pointer?> pointerPointerOf(elements: List<T>): PointerPointer<T> {
+    val result = PointerPointer<T>(elements.size.toLong())
+
+    for (index in elements.indices) {
+        result.put(index.toLong(), elements[index])
+    }
+
+    return result
+}
