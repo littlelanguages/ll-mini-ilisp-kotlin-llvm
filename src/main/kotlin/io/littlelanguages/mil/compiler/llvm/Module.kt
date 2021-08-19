@@ -6,7 +6,7 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-class Module(moduleID: String, context: LLVMContextRef) {
+class Module(moduleID: String, private var context: LLVMContextRef) {
     private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context)
 
     fun getNamedFunction(name: String): LLVMValueRef? =
@@ -47,6 +47,9 @@ class Module(moduleID: String, context: LLVMContextRef) {
     fun writeBitcodeToFile(fileName: String) {
         LLVM.LLVMWriteBitcodeToFile(module, fileName)
     }
+
+    fun createBuilder(): Builder =
+        Builder(LLVM.LLVMCreateBuilderInContext(context))
 
     override fun toString(): String =
         LLVM.LLVMPrintModuleToString(module).string

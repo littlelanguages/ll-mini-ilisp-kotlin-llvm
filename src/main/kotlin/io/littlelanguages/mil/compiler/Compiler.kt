@@ -4,12 +4,15 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.*
+import org.bytedeco.llvm.LLVM.LLVMContextRef
+import org.bytedeco.llvm.LLVM.LLVMTypeRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 interface LLVMState {
@@ -39,7 +42,7 @@ private class Compiler(
     override val context: LLVMContextRef,
     override val module: Module
 ) : LLVMState {
-    val builder: LLVMBuilderRef = LLVM.LLVMCreateBuilderInContext(context)
+    val builder = module.createBuilder()
     var procedure: LLVMValueRef? = null
 
     var expressionName = 0
@@ -125,7 +128,8 @@ private class Compiler(
     }
 
     override fun dispose() {
-        LLVM.LLVMDisposeBuilder(builder)
+        builder.dispose()
+
         LLVM.LLVMContextDispose(context)
     }
 
@@ -136,7 +140,7 @@ private class Compiler(
 
         System.err.println(module.toString())
 
-        when(val result = module.verify()) {
+        when (val result = module.verify()) {
             is io.littlelanguages.mil.compiler.llvm.VerifyError -> throw CompilationError(result.message)
         }
     }
@@ -156,13 +160,13 @@ private class Compiler(
         LLVM.LLVMSetFunctionCallConv(procedure, LLVM.LLVMCCallConv)
 
         val entry = LLVM.LLVMAppendBasicBlockInContext(context, procedure, "entry")
-        LLVM.LLVMPositionBuilderAtEnd(builder, entry)
+        builder.positionAtEnd(entry)
 
         for (e in declaration.es) {
             compileE(e)
         }
 
-        LLVM.LLVMBuildRet(builder, LLVM.LLVMConstInt(i32, 0, 0))
+        builder.buildRet(LLVM.LLVMConstInt(i32, 0, 0))
     }
 
     private fun compileEForce(e: Expression): LLVMValueRef =
@@ -191,24 +195,24 @@ private class Compiler(
                 val e1op = compileEForce(e.e1)
                 val falseOp = builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_FALSE, nextName())
 
-                val e1Compare = LLVM.LLVMBuildICmp(builder, LLVM.LLVMIntNE, e1op, falseOp, nextName())
+                val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp, nextName())
 
                 val ifThen = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
                 val ifElse = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
                 val ifEnd = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
 
-                LLVM.LLVMBuildCondBr(builder, e1Compare, ifThen, ifElse)
+                builder.buildCondBr(e1Compare, ifThen, ifElse)
 
-                LLVM.LLVMPositionBuilderAtEnd(builder, ifThen)
+                builder.positionAtEnd(ifThen)
                 val e2op = compileEForce(e.e2)
-                LLVM.LLVMBuildBr(builder, ifEnd)
+                builder.buildBr(ifEnd)
 
-                LLVM.LLVMPositionBuilderAtEnd(builder, ifElse)
+                builder.positionAtEnd(ifElse)
                 val e3op = compileEForce(e.e3)
-                LLVM.LLVMBuildBr(builder, ifEnd)
+                builder.buildBr(ifEnd)
 
-                LLVM.LLVMPositionBuilderAtEnd(builder, ifEnd)
-                val phi = LLVM.LLVMBuildPhi(builder, structValueP, nextName())
+                builder.positionAtEnd(ifEnd)
+                val phi = builder.buildPhi(structValueP, nextName())
                 val phiValues = PointerPointer<Pointer>(2)
                     .put(0, e2op)
                     .put(1, e3op)
@@ -383,15 +387,11 @@ private class BuiltinDeclarations(val module: Module, structValueP: LLVMTypeRef,
                 module.addGlobal(declaration.name, declaration.returnType)!!
     }
 
-    fun invoke(builder: LLVMBuilderRef, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
-        LLVM.LLVMBuildCall(
-            builder, get(bip),
-            arguments.foldIndexed(PointerPointer<Pointer>(arguments.size.toLong())) { idx, acc, op -> acc.put(idx.toLong(), op) },
-            arguments.size, name
-        )
+    fun invoke(builder: Builder, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
+        builder.buildCall(get(bip), arguments, name)
 
-    fun invoke(builder: LLVMBuilderRef, bip: BuiltinDeclarationEnum, name: String): LLVMValueRef =
-        LLVM.LLVMBuildLoad(builder, get(bip), name)
+    fun invoke(builder: Builder, bip: BuiltinDeclarationEnum, name: String): LLVMValueRef =
+        builder.buildLoad(get(bip), name)
 }
 
 private data class BuiltinDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef) {
