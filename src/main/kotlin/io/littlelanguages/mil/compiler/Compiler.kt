@@ -206,10 +206,12 @@ private class Compiler(
                 builder.positionAtEnd(ifThen)
                 val e2op = compileEForce(e.e2)
                 builder.buildBr(ifEnd)
+                val fromThen = builder.getCurrentBasicBlock()
 
                 builder.positionAtEnd(ifElse)
                 val e3op = compileEForce(e.e3)
                 builder.buildBr(ifEnd)
+                val fromElse = builder.getCurrentBasicBlock()
 
                 builder.positionAtEnd(ifEnd)
                 val phi = builder.buildPhi(structValueP, nextName())
@@ -218,8 +220,8 @@ private class Compiler(
                     .put(1, e3op)
 
                 val phiBlocks = PointerPointer<Pointer>(2)
-                    .put(0, ifThen)
-                    .put(1, ifElse)
+                    .put(0, fromThen)
+                    .put(1, fromElse)
                 LLVM.LLVMAddIncoming(phi, phiValues, phiBlocks,  /* pairCount */2)
 
                 return phi
@@ -366,14 +368,8 @@ private class BuiltinDeclarations(val module: Module, structValueP: LLVMTypeRef,
 
     fun get(bip: BuiltinDeclarationEnum): LLVMValueRef {
         val declaration = declarations[bip]!!
-        val namedFunction: LLVMValueRef? =
-            if (declaration.isProcedure())
-                module.getNamedFunction(declaration.name)
-            else
-                module.getNamedGlobal(declaration.name)
-
-        return namedFunction
-            ?: if (declaration.isProcedure()) {
+        return if (declaration.isProcedure())
+            module.getNamedFunction(declaration.name) ?: run {
                 val parameters = declaration.parameters!!
                 val parameterTypes = declaration.parameters.foldIndexed(PointerPointer<LLVMTypeRef>(parameters.size.toLong())) { idx, acc, item ->
                     acc.put(idx.toLong(), item)
@@ -383,8 +379,9 @@ private class BuiltinDeclarations(val module: Module, structValueP: LLVMTypeRef,
                     declaration.name,
                     LLVM.LLVMFunctionType(declaration.returnType, parameterTypes, declaration.parameters.size, 0)
                 )!!
-            } else
-                module.addGlobal(declaration.name, declaration.returnType)!!
+            }
+        else
+            module.getNamedGlobal(declaration.name) ?: module.addGlobal(declaration.name, declaration.returnType)!!
     }
 
     fun invoke(builder: Builder, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =

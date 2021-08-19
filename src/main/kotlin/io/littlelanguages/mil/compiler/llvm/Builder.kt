@@ -9,6 +9,8 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 class Builder(private val builder: LLVMBuilderRef) {
+    private var currentBasicBlock: LLVMBasicBlockRef? = null
+
     fun buildBr(basicBlock: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildBr(builder, basicBlock)
 
@@ -53,7 +55,11 @@ class Builder(private val builder: LLVMBuilderRef) {
 
     fun positionAtEnd(basicBlock: LLVMBasicBlockRef) {
         LLVM.LLVMPositionBuilderAtEnd(builder, basicBlock)
+        currentBasicBlock = basicBlock
     }
+
+    fun getCurrentBasicBlock(): LLVMBasicBlockRef? =
+        currentBasicBlock
 
     fun dispose() {
         LLVM.LLVMDisposeBuilder(builder)
