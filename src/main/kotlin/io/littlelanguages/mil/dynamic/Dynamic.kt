@@ -27,6 +27,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
     private fun program(es: List<io.littlelanguages.mil.static.ast.Expression>): Program {
         val declarations = mutableListOf<Declaration>()
         val expressions = mutableListOf<Expression>()
+        val names = mutableListOf<String>()
 
         for (e in es) {
             val ep = expressionToTST(e)
@@ -35,11 +36,14 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                 declarations.add(ep)
             else
                 expressions.add(ep)
+
+            if (ep is AssignExpression)
+                names.add(ep.symbol.name)
         }
 
         declarations.add(Procedure("_main", emptyList(), expressions))
 
-        return Program(declarations)
+        return Program(names, declarations)
     }
 
     private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): Expression =
@@ -53,8 +57,9 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                         val v2 = e.expressions[2]
 
                         if (v1 is io.littlelanguages.mil.static.ast.Symbol) {
-                            bindings.add(v1.name, TopLevelValueBinding(v1.name))
-                            Value(v1.name, expressionToTST(v2))
+                            val binding = TopLevelValueBinding(v1.name)
+                            bindings.add(v1.name, binding)
+                            AssignExpression(binding, expressionToTST(v2))
                         } else
                             reportError(InvalidConstFormError(e.position()))
                     } else

@@ -36,6 +36,10 @@ class Builder(private val builder: LLVMBuilderRef) {
     fun buildRet(v: LLVMValueRef): LLVMValueRef =
         LLVM.LLVMBuildRet(builder, v)
 
+    fun buildStore(v1: LLVMValueRef, v2: LLVMValueRef) {
+        LLVM.LLVMBuildStore(builder, v1, v2)
+    }
+
     fun positionAtEnd(basicBlock: LLVMBasicBlockRef) {
         LLVM.LLVMPositionBuilderAtEnd(builder, basicBlock)
         currentBasicBlock = basicBlock

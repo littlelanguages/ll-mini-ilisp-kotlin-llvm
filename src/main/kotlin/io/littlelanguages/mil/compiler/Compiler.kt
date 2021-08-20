@@ -135,11 +135,15 @@ private class Compiler(
     }
 
     fun compile(program: Program) {
+        for (value in program.values) {
+            module.addGlobal(value, structValueP, LLVM.LLVMConstPointerNull(structValueP), false)
+        }
+
         for (declaration in program.declarations) {
             compile(declaration)
         }
 
-//        System.err.println(module.toString())
+        System.err.println(module.toString())
 
         when (val result = module.verify()) {
             is io.littlelanguages.mil.compiler.llvm.VerifyError -> throw CompilationError(result.message)
@@ -175,6 +179,16 @@ private class Compiler(
 
     private fun compileE(e: Expression): LLVMValueRef? {
         when (e) {
+            is AssignExpression -> {
+                val op = compileEForce(e.e)
+                builder.buildStore(
+                    op,
+                    module.getNamedGlobal(e.symbol.name)!!
+                )
+
+                return null
+            }
+
             is BooleanPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), nextName())
 
@@ -312,13 +326,17 @@ private class Compiler(
             is StringPExpression ->
                 return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), nextName())
 
+            is SymbolReferenceExpression ->
+                return builder.buildLoad(module.getNamedGlobal(e.symbol.name)!!, nextName())
+
             else ->
                 TODO(e.toString())
+//                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
         }
     }
 
     private fun nextName(): String {
-        val result = "v$expressionName"
+        val result = "_v$expressionName"
         expressionName += 1
         return result
     }

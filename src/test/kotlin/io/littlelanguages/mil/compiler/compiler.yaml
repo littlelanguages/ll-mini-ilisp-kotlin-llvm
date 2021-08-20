@@ -317,3 +317,26 @@
                 #f
                 #f
                 #t
+
+- scenario:
+    name: Declarations
+    tests:
+      - name: top-level declaration
+        input: |
+          (const v1 1)
+          (const v2 #t)
+          (const v3 "Hello world")
+          (const v4 ())
+          (const v5 (pair 1 2))
+
+          (println v1)
+          (println v2)
+          (println v3)
+          (println v4)
+          (println v5)
+        output: |
+          1
+          #t
+          Hello world
+          ()
+          (1 . 2)

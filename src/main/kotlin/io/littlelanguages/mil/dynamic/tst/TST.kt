@@ -3,10 +3,13 @@ package io.littlelanguages.mil.dynamic.tst
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.mil.dynamic.Binding
 
-data class Program(val declarations: List<Declaration>) : Yamlable {
+data class Program(val values: List<String>, val declarations: List<Declaration>) : Yamlable {
     override fun yaml(): Any =
         singletonMap(
-            "Program", declarations.map { it.yaml() }
+            "program", mapOf(
+                Pair("values", values),
+                Pair("procedures", declarations.map { it.yaml() })
+            )
         )
 }
 
@@ -15,7 +18,7 @@ interface Declaration : Yamlable
 data class Procedure(val name: String, val arguments: List<String>, val es: Expressions) : Declaration, Expression {
     override fun yaml(): Any =
         singletonMap(
-            "Procedure", mapOf(
+            "procedure", mapOf(
                 Pair("name", name),
                 Pair("arguments", arguments),
                 Pair("es", es.map { it.yaml() })
@@ -23,19 +26,19 @@ data class Procedure(val name: String, val arguments: List<String>, val es: Expr
         )
 }
 
-data class Value(val name: String, val e: Expression) : Declaration, Expression {
+typealias  Expressions = List<Expression>
+
+interface Expression : Yamlable
+
+data class AssignExpression(val symbol: Binding, val e: Expression) : Expression {
     override fun yaml(): Any =
         singletonMap(
-            "Value", mapOf(
-                Pair("name", name),
+            "assign", mapOf(
+                Pair("symbol", symbol.yaml()),
                 Pair("e", e.yaml())
             )
         )
 }
-
-typealias  Expressions = List<Expression>
-
-interface Expression : Yamlable
 
 data class BooleanPExpression(val es: Expression) : Expression {
     override fun yaml(): Any =
@@ -45,7 +48,7 @@ data class BooleanPExpression(val es: Expression) : Expression {
 data class CallExpression(val name: String, val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap(
-            "Call", mapOf(
+            "call", mapOf(
                 Pair("name", name),
                 Pair("es", es.map { it.yaml() })
             )

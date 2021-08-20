@@ -34,6 +34,17 @@ class Module(moduleID: String, private var context: LLVMContextRef) {
         return result
     }
 
+    fun addGlobal(name: String, type: LLVMTypeRef, init: LLVMValueRef, global: Boolean = true): LLVMValueRef {
+        val result = LLVM.LLVMAddGlobal(module, type, name)!!
+
+        if (global) {
+            LLVM.LLVMSetGlobalConstant(result, 1)
+        }
+        LLVM.LLVMSetInitializer(result, init)
+
+        return result
+    }
+
     fun verify(): VerifyResult {
         val error = BytePointer()
 

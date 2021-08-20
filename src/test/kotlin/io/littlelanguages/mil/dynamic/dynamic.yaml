@@ -2,13 +2,15 @@
   input: |
     (println "Hello world")
   output:
-    Program:
-      - Procedure:
-          name: _main
-          arguments: []
-          es:
-            - println:
-                - 'Hello world'
+    program:
+      values: []
+      procedures:
+        - procedure:
+            name: _main
+            arguments: []
+            es:
+              - println:
+                  - 'Hello world'
 - scenario:
     name: Declaration
     tests:
@@ -22,14 +24,18 @@
         input: |
           (const x 10)
         output:
-          Program:
-            - Value:
-                name: x
-                e: 10
-            - Procedure:
-                name: _main
-                arguments: []
-                es: []
+          program:
+            values:
+              - x
+            procedures:
+              - procedure:
+                  name: _main
+                  arguments: []
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: x
+                        e: 10
 - scenario:
     name: Identifier Reference
     tests:
@@ -46,13 +52,17 @@
 
           (println x)
         output:
-          Program:
-            - Value:
-                name: x
-                e: 10
-            - Procedure:
-                name: _main
-                arguments: []
-                es:
-                  - println:
-                      - toplevel-value: x
+          program:
+            values:
+              - x
+            procedures:
+              - procedure:
+                  name: _main
+                  arguments: []
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: x
+                        e: 10
+                    - println:
+                        - toplevel-value: x

@@ -2,9 +2,11 @@ package io.littlelanguages.mil.dynamic
 
 import io.littlelanguages.data.Yamlable
 
-sealed interface Binding : Yamlable
+sealed interface Binding  : Yamlable {
+    val name: String
+}
 
-data class TopLevelValueBinding(val name: String) : Binding {
+data class TopLevelValueBinding(override val name: String) : Binding {
     override fun yaml(): Any =
         singletonMap("toplevel-value", name)
 }
