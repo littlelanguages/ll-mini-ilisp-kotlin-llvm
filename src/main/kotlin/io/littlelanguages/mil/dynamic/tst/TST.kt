@@ -13,7 +13,7 @@ data class Program(val values: List<String>, val declarations: List<Declaration>
         )
 }
 
-interface Declaration : Yamlable
+sealed interface Declaration : Yamlable
 
 data class Procedure(val name: String, val arguments: List<String>, val es: Expressions) : Declaration, Expression {
     override fun yaml(): Any =

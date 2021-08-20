@@ -135,12 +135,12 @@ private class Compiler(
     }
 
     fun compile(program: Program) {
-        for (value in program.values) {
-            module.addGlobal(value, structValueP, LLVM.LLVMConstPointerNull(structValueP), false)
+        program.values.forEach {
+            module.addGlobal(it, structValueP, LLVM.LLVMConstPointerNull(structValueP), false)
         }
 
-        for (declaration in program.declarations) {
-            compile(declaration)
+        program.declarations.forEach {
+            compile(it)
         }
 
         System.err.println(module.toString())
@@ -154,7 +154,7 @@ private class Compiler(
         if (declaration is Procedure)
             compileProcedure(declaration)
         else
-            TODO("Not yet implemented")
+            TODO(declaration.toString())
     }
 
     private fun compileProcedure(declaration: Procedure) {
@@ -167,8 +167,8 @@ private class Compiler(
         val entry = LLVM.LLVMAppendBasicBlockInContext(context, procedure, "entry")
         builder.positionAtEnd(entry)
 
-        for (e in declaration.es) {
-            compileE(e)
+        declaration.es.forEach {
+            compileE(it)
         }
 
         builder.buildRet(LLVM.LLVMConstInt(i32, 0, 0))
@@ -177,29 +177,25 @@ private class Compiler(
     private fun compileEForce(e: Expression): LLVMValueRef =
         compileE(e) ?: builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
 
-    private fun compileE(e: Expression): LLVMValueRef? {
+    private fun compileE(e: Expression): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
-                val op = compileEForce(e.e)
-                builder.buildStore(
-                    op,
-                    module.getNamedGlobal(e.symbol.name)!!
-                )
+                builder.buildStore(compileEForce(e.e), module.getNamedGlobal(e.symbol.name)!!)
 
-                return null
+                null
             }
 
             is BooleanPExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), nextName())
 
             is CarExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CAR, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CAR, listOf(compileEForce(e.es)), nextName())
 
             is CdrExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), nextName())
 
             is EqualsExpression ->
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     BuiltinDeclarationEnum.EQUALS,
                     listOf(compileEForce(e.e1), compileEForce(e.e2)),
@@ -239,14 +235,14 @@ private class Compiler(
                     .put(1, fromElse)
                 LLVM.LLVMAddIncoming(phi, phiValues, phiBlocks,  /* pairCount */2)
 
-                return phi
+                phi
             }
 
             is IntegerPExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), nextName())
 
             is LessThanExpression ->
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     BuiltinDeclarationEnum.LESS_THAN,
                     listOf(compileEForce(e.e1), compileEForce(e.e2)),
@@ -254,14 +250,14 @@ private class Compiler(
                 )
 
             is LiteralBool ->
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE,
                     nextName()
                 )
 
             is LiteralInt ->
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     BuiltinDeclarationEnum.FROM_LITERAL_INT,
                     listOf(LLVM.LLVMConstInt(i32, e.value.toLong(), 0)),
@@ -272,7 +268,7 @@ private class Compiler(
                 val globalStringName = module.addGlobal(nextName(), LLVM.LLVMArrayType(i8, e.value.length + 1))
                 LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context, BytePointer(e.value), e.value.length, 0))
 
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     BuiltinDeclarationEnum.FROM_LITERAL_STRING,
                     listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(c0i64, c0i64), 2)),
@@ -281,16 +277,16 @@ private class Compiler(
             }
 
             is LiteralUnit ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
 
             is MinusExpression ->
-                return compileOperator(e.es, 0, BuiltinDeclarationEnum.MINUS, true)
+                compileOperator(e.es, 0, BuiltinDeclarationEnum.MINUS, true)
 
             is NullPExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), nextName())
 
             is PairExpression ->
-                return builtinBuiltinDeclarations.invoke(
+                builtinBuiltinDeclarations.invoke(
                     builder,
                     BuiltinDeclarationEnum.PAIR,
                     listOf(compileEForce(e.car), compileEForce(e.cdr)),
@@ -298,13 +294,13 @@ private class Compiler(
                 )
 
             is PairPExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), nextName())
 
             is PlusExpression ->
-                return compileOperator(e.es, 0, BuiltinDeclarationEnum.PLUS, false)
+                compileOperator(e.es, 0, BuiltinDeclarationEnum.PLUS, false)
 
             is PrintlnExpression -> {
-                for (it in e.es) {
+                e.es.forEach {
                     val op = compileE(it)
 
                     if (op != null) {
@@ -314,26 +310,25 @@ private class Compiler(
 
                 builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
 
-                return null
+                null
             }
 
             is SlashExpression ->
-                return compileOperator(e.es, 1, BuiltinDeclarationEnum.DIVIDE, true)
+                compileOperator(e.es, 1, BuiltinDeclarationEnum.DIVIDE, true)
 
             is StarExpression ->
-                return compileOperator(e.es, 1, BuiltinDeclarationEnum.MULTIPLY, false)
+                compileOperator(e.es, 1, BuiltinDeclarationEnum.MULTIPLY, false)
 
             is StringPExpression ->
-                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), nextName())
+                builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), nextName())
 
             is SymbolReferenceExpression ->
-                return builder.buildLoad(module.getNamedGlobal(e.symbol.name)!!, nextName())
+                builder.buildLoad(module.getNamedGlobal(e.symbol.name)!!, nextName())
 
             else ->
                 TODO(e.toString())
 //                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName())
         }
-    }
 
     private fun nextName(): String {
         val result = "_v$expressionName"
