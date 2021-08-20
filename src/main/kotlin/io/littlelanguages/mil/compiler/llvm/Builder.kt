@@ -30,8 +30,11 @@ class Builder(private val builder: LLVMBuilderRef) {
     fun buildLoad(valueRef: LLVMValueRef, name: String): LLVMValueRef =
         LLVM.LLVMBuildLoad(builder, valueRef, name)
 
-    fun buildPhi(type: LLVMTypeRef, name: String): LLVMValueRef =
-        LLVM.LLVMBuildPhi(builder, type, name)
+    fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String): LLVMValueRef {
+        val phi = LLVM.LLVMBuildPhi(builder, type, name)
+        LLVM.LLVMAddIncoming(phi, pointerPointerOf(incomingValues), pointerPointerOf(incomingBlocks), incomingValues.size)
+        return phi
+    }
 
     fun buildRet(v: LLVMValueRef): LLVMValueRef =
         LLVM.LLVMBuildRet(builder, v)

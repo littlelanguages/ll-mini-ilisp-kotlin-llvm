@@ -9,7 +9,6 @@ import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.compiler.llvm.pointerPointerOf
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.BytePointer
-import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMContextRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
@@ -217,25 +216,15 @@ private class Compiler(
                 builder.positionAtEnd(ifThen)
                 val e2op = compileEForce(e.e2)
                 builder.buildBr(ifEnd)
-                val fromThen = builder.getCurrentBasicBlock()
+                val fromThen = builder.getCurrentBasicBlock()!!
 
                 builder.positionAtEnd(ifElse)
                 val e3op = compileEForce(e.e3)
                 builder.buildBr(ifEnd)
-                val fromElse = builder.getCurrentBasicBlock()
+                val fromElse = builder.getCurrentBasicBlock()!!
 
                 builder.positionAtEnd(ifEnd)
-                val phi = builder.buildPhi(structValueP, nextName())
-                val phiValues = PointerPointer<Pointer>(2)
-                    .put(0, e2op)
-                    .put(1, e3op)
-
-                val phiBlocks = PointerPointer<Pointer>(2)
-                    .put(0, fromThen)
-                    .put(1, fromElse)
-                LLVM.LLVMAddIncoming(phi, phiValues, phiBlocks,  /* pairCount */2)
-
-                phi
+                builder.buildPhi(structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse), nextName())
             }
 
             is IntegerPExpression ->
