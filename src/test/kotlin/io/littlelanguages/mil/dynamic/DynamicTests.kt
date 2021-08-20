@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.scopes.FunSpecContainerContext
 import io.kotest.matchers.shouldBe
 import io.littlelanguages.data.Either
+import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.dynamic.tst.Program
@@ -44,13 +45,17 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
             val output = s["output"]
 
             ctx.test(name) {
-                val lhs =
-                    translate(input).map { it.yaml() }.toString()
-
+//                val lhs =
+//                    translate(input).map { it.yaml() }.toString()
                 val rhs =
-                    Right<Errors, Any>(output as Any).toString()
+                    output.toString()
 
-                lhs shouldBe rhs
+                when (val lhs = translate(input)) {
+                    is Left ->
+                        lhs.left.map { it.yaml() }.toString() shouldBe rhs
+                    is Right ->
+                        lhs.right.yaml().toString() shouldBe rhs
+                }
             }
         } else {
             val name = nestedScenario["name"] as String

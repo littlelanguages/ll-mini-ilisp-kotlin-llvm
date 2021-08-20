@@ -7,5 +7,52 @@
           name: _main
           arguments: []
           es:
-            - Println:
+            - println:
                 - 'Hello world'
+- scenario:
+    name: Declaration
+    tests:
+      - name: Invalid Form - too many arguments
+        input: |
+          (const x 10 20)
+        output:
+          - InvalidConstFormError:
+              location: 0:1:1-14:1:15
+      - name: Top-level constant
+        input: |
+          (const x 10)
+        output:
+          Program:
+            - Value:
+                name: x
+                e: 10
+            - Procedure:
+                name: _main
+                arguments: []
+                es: []
+- scenario:
+    name: Identifier Reference
+    tests:
+      - name: Unknown identifier
+        input: |
+          (println x)
+        output:
+          - InvalidConstFormError:
+              name: x
+              location: "9:1:10"
+      - name: Top-level constant
+        input: |
+          (const x 10)
+
+          (println x)
+        output:
+          Program:
+            - Value:
+                name: x
+                e: 10
+            - Procedure:
+                name: _main
+                arguments: []
+                es:
+                  - println:
+                      - toplevel-value: x

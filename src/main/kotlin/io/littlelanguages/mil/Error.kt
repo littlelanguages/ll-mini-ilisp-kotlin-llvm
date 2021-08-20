@@ -28,7 +28,7 @@ data class CompilationError(override val message: String) : Exception(message), 
 data class ArgumentMismatchError(val name: String, val expected: Int, val actual: Int, val location: Location) : Errors {
     override fun yaml(): Any =
         singletonMap(
-            "ParseError", mapOf(
+            "ArgumentMismatchError", mapOf(
                 Pair("name", name),
                 Pair("expected", expected),
                 Pair("actual", actual),
@@ -36,3 +36,19 @@ data class ArgumentMismatchError(val name: String, val expected: Int, val actual
             )
         )
 }
+
+data class InvalidConstFormError(val location: Location) : Errors {
+    override fun yaml(): Any =
+        singletonMap("InvalidConstFormError", singletonMap("location", location))
+}
+
+data class UnknownSymbolError(val name: String, val location: Location) : Errors {
+    override fun yaml(): Any =
+        singletonMap(
+            "InvalidConstFormError", mapOf(
+                Pair("name", name),
+                Pair("location", location)
+            )
+        )
+}
+

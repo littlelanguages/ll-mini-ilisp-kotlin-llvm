@@ -139,7 +139,7 @@ private class Compiler(
             compile(declaration)
         }
 
-        System.err.println(module.toString())
+//        System.err.println(module.toString())
 
         when (val result = module.verify()) {
             is io.littlelanguages.mil.compiler.llvm.VerifyError -> throw CompilationError(result.message)

@@ -1,6 +1,7 @@
 package io.littlelanguages.mil.dynamic.tst
 
 import io.littlelanguages.data.Yamlable
+import io.littlelanguages.mil.dynamic.Binding
 
 data class Program(val declarations: List<Declaration>) : Yamlable {
     override fun yaml(): Any =
@@ -18,6 +19,16 @@ data class Procedure(val name: String, val arguments: List<String>, val es: Expr
                 Pair("name", name),
                 Pair("arguments", arguments),
                 Pair("es", es.map { it.yaml() })
+            )
+        )
+}
+
+data class Value(val name: String, val e: Expression) : Declaration, Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "Value", mapOf(
+                Pair("name", name),
+                Pair("e", e.yaml())
             )
         )
 }
@@ -109,17 +120,22 @@ data class PlusExpression(val es: Expressions) : Expression {
 
 data class PrintExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
-        singletonMap("Print", es.map { it.yaml() })
+        singletonMap("print", es.map { it.yaml() })
 }
 
 data class PrintlnExpression(val es: Expressions) : Expression {
     override fun yaml(): Any =
-        singletonMap("Println", es.map { it.yaml() })
+        singletonMap("println", es.map { it.yaml() })
 }
 
 data class StringPExpression(val es: Expression) : Expression {
     override fun yaml(): Any =
         singletonMap("string?", es.yaml())
+}
+
+data class SymbolReferenceExpression(val symbol: Binding) : Expression {
+    override fun yaml(): Any =
+        symbol.yaml()
 }
 
 enum class LiteralBool : Expression {

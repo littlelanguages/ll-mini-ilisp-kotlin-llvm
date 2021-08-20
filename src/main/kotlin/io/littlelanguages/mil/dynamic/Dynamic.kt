@@ -5,6 +5,8 @@ import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.InvalidConstFormError
+import io.littlelanguages.mil.UnknownSymbolError
 import io.littlelanguages.mil.dynamic.tst.*
 
 fun translate(p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program> =
@@ -13,6 +15,8 @@ fun translate(p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>
 private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
     val errors =
         mutableListOf<Errors>()
+
+    val bindings = Bindings()
 
     fun apply(): Either<List<Errors>, Program> {
         val r = program(ast.expressions)
@@ -43,7 +47,19 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
             is io.littlelanguages.mil.static.ast.SExpression -> {
                 if (e.expressions.isEmpty())
                     LiteralUnit
-                else {
+                else if (e.isConst()) {
+                    if (e.expressions.size == 3) {
+                        val v1 = e.expressions[1]
+                        val v2 = e.expressions[2]
+
+                        if (v1 is io.littlelanguages.mil.static.ast.Symbol) {
+                            bindings.add(v1.name, TopLevelValueBinding(v1.name))
+                            Value(v1.name, expressionToTST(v2))
+                        } else
+                            reportError(InvalidConstFormError(e.position()))
+                    } else
+                        reportError(InvalidConstFormError(e.position()))
+                } else {
                     val first = e.expressions[0]
 
                     if (first is io.littlelanguages.mil.static.ast.Symbol) {
@@ -125,7 +141,14 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
             is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
             is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
             is io.littlelanguages.mil.static.ast.LiteralString -> translateLiteralString(e)
-            is io.littlelanguages.mil.static.ast.Symbol -> TODO()
+            is io.littlelanguages.mil.static.ast.Symbol -> {
+                val binding = bindings.get(e.name)
+
+                if (binding == null)
+                    reportError(UnknownSymbolError(e.name, e.position))
+                else
+                    SymbolReferenceExpression(binding)
+            }
         }
 
     private fun reportError(error: Errors): Expression {
@@ -182,3 +205,12 @@ fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): 
 
 private fun Char.isHexDigit(): Boolean =
     this.isDigit() || this.uppercaseChar() in 'A'..'F'
+
+private fun io.littlelanguages.mil.static.ast.SExpression.isConst() =
+    if (this.expressions.isEmpty())
+        false
+    else {
+        val e1 = this.expressions[0]
+
+        e1 is io.littlelanguages.mil.static.ast.Symbol && e1.name == "const"
+    }
