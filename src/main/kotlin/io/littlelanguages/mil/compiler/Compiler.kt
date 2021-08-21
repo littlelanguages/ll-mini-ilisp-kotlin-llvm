@@ -7,6 +7,7 @@ import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.compiler.llvm.pointerPointerOf
+import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.PointerPointer
@@ -43,7 +44,6 @@ private class Compiler(
     override val module: Module
 ) : LLVMState {
     val builder = module.createBuilder()
-    var procedure: LLVMValueRef? = null
 
     var expressionName = 0
 
@@ -151,19 +151,22 @@ private class Compiler(
 
     private fun compile(declaration: Declaration) {
         if (declaration is Procedure)
-            compileProcedure(declaration)
+            if (declaration.name == "_main")
+                compileMainProcedure(declaration)
+            else
+                compileProcedure(declaration)
         else
             TODO(declaration.toString())
     }
 
-    private fun compileProcedure(declaration: Procedure) {
+    private fun compileMainProcedure(declaration: Procedure) {
         val procedureType = LLVM.LLVMFunctionType(i32, PointerPointer<LLVMTypeRef>(), 0, 0)
 
-        procedure = module.addFunction(declaration.name, procedureType)
+        builder.procedure = module.addFunction(declaration.name, procedureType)
 
-        LLVM.LLVMSetFunctionCallConv(procedure, LLVM.LLVMCCallConv)
+        LLVM.LLVMSetFunctionCallConv(builder.procedure, LLVM.LLVMCCallConv)
 
-        val entry = LLVM.LLVMAppendBasicBlockInContext(context, procedure, "entry")
+        val entry = LLVM.LLVMAppendBasicBlockInContext(context, builder.procedure, "entry")
         builder.positionAtEnd(entry)
 
         declaration.es.forEach {
@@ -171,6 +174,24 @@ private class Compiler(
         }
 
         builder.buildRet(LLVM.LLVMConstInt(i32, 0, 0))
+    }
+
+    private fun compileProcedure(declaration: Procedure) {
+        val procedureType =
+            LLVM.LLVMFunctionType(structValueP, pointerPointerOf(declaration.arguments.map { structValueP }), declaration.arguments.size, 0)
+
+        builder.procedure = module.addFunction(declaration.name, procedureType)
+
+        LLVM.LLVMSetFunctionCallConv(builder.procedure, LLVM.LLVMCCallConv)
+
+        val entry = LLVM.LLVMAppendBasicBlockInContext(context, builder.procedure, "entry")
+        builder.positionAtEnd(entry)
+
+        val result = declaration.es.fold(null) { _: LLVMValueRef?, b: Expression ->
+            compileE(b)
+        }
+
+        builder.buildRet(result ?: builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, nextName()))
     }
 
     private fun compileEForce(e: Expression): LLVMValueRef =
@@ -186,6 +207,9 @@ private class Compiler(
 
             is BooleanPExpression ->
                 builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), nextName())
+
+            is CallProcedureExpression ->
+                builder.buildCall(module.getNamedFunction(e.procedure.name)!!, e.es.map { compileEForce(it) }, nextName())
 
             is CarExpression ->
                 builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.CAR, listOf(compileEForce(e.es)), nextName())
@@ -207,9 +231,9 @@ private class Compiler(
 
                 val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp, nextName())
 
-                val ifThen = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
-                val ifElse = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
-                val ifEnd = LLVM.LLVMAppendBasicBlockInContext(context, procedure, nextName())
+                val ifThen = LLVM.LLVMAppendBasicBlockInContext(context, builder.procedure, nextName())
+                val ifElse = LLVM.LLVMAppendBasicBlockInContext(context, builder.procedure, nextName())
+                val ifEnd = LLVM.LLVMAppendBasicBlockInContext(context, builder.procedure, nextName())
 
                 builder.buildCondBr(e1Compare, ifThen, ifElse)
 
@@ -312,7 +336,13 @@ private class Compiler(
                 builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), nextName())
 
             is SymbolReferenceExpression ->
-                builder.buildLoad(module.getNamedGlobal(e.symbol.name)!!, nextName())
+                when (val symbol = e.symbol) {
+                    is ParameterBinding ->
+                        builder.getParam(symbol.offset)
+
+                    else ->
+                        builder.buildLoad(module.getNamedGlobal(symbol.name)!!, nextName())
+                }
 
             else ->
                 TODO(e.toString())
