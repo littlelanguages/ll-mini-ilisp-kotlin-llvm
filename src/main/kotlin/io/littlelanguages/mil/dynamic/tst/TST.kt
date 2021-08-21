@@ -2,6 +2,7 @@ package io.littlelanguages.mil.dynamic.tst
 
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.mil.dynamic.Binding
+import io.littlelanguages.mil.dynamic.TopLevelProcedureBinding
 
 data class Program(val values: List<String>, val declarations: List<Declaration>) : Yamlable {
     override fun yaml(): Any =
@@ -45,11 +46,21 @@ data class BooleanPExpression(val es: Expression) : Expression {
         singletonMap("boolean?", es.yaml())
 }
 
-data class CallExpression(val name: String, val es: Expressions) : Expression {
+data class CallProcedureExpression(val procedure: TopLevelProcedureBinding, val es: Expressions) : Expression {
     override fun yaml(): Any =
         singletonMap(
-            "call", mapOf(
-                Pair("name", name),
+            "call-procedure", mapOf(
+                Pair("procedure", procedure.yaml()),
+                Pair("es", es.map { it.yaml() })
+            )
+        )
+}
+
+data class CallValueExpression(val operand: Expression, val es: Expressions) : Expression {
+    override fun yaml(): Any =
+        singletonMap(
+            "call-value", mapOf(
+                Pair("operand", operand.yaml()),
                 Pair("es", es.map { it.yaml() })
             )
         )

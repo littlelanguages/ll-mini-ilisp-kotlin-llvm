@@ -1,7 +1,6 @@
 package io.littlelanguages.mil.dynamic
 
 import io.littlelanguages.data.Yamlable
-import io.littlelanguages.mil.dynamic.tst.Procedure
 
 sealed interface Binding : Yamlable {
     val name: String
@@ -12,12 +11,14 @@ data class TopLevelValueBinding(override val name: String) : Binding {
         singletonMap("toplevel-value", name)
 }
 
-data class TopLevelProcedureBinding(val declaration: Procedure) : Binding {
-    override val name: String
-        get() = declaration.name
-
+data class TopLevelProcedureBinding(override val name: String, val parameterCount: Int) : Binding {
     override fun yaml(): Any =
-        singletonMap("toplevel-procedure", name)
+        singletonMap(
+            "toplevel-procedure", mapOf(
+                Pair("name", name),
+                Pair("parameter-count", parameterCount)
+            )
+        )
 }
 
 data class ParameterBinding(override val name: String, val offset: Int) : Binding {

@@ -3,11 +3,11 @@
     (println "Hello world")
   output:
     program:
-      values: []
+      values: [ ]
       procedures:
         - procedure:
             name: _main
-            arguments: []
+            arguments: [ ]
             es:
               - println:
                   - 'Hello world'
@@ -30,7 +30,7 @@
             procedures:
               - procedure:
                   name: _main
-                  arguments: []
+                  arguments: [ ]
                   es:
                     - assign:
                         symbol:
@@ -41,7 +41,7 @@
           (const (add a b) (+ a b))
         output:
           program:
-            values: []
+            values: [ ]
             procedures:
               - procedure:
                   name: add
@@ -58,8 +58,8 @@
                             offset: 1
               - procedure:
                   name: _main
-                  arguments: []
-                  es: []
+                  arguments: [ ]
+                  es: [ ]
       - name: Procedure with duplicate parameter names
         input: |
           (const (add a a) (+ a a))
@@ -70,14 +70,21 @@
 - scenario:
     name: Identifier Reference
     tests:
-      - name: Unknown identifier
+      - name: Unknown value identifier
         input: |
           (println x)
         output:
           - UnknownSymbolError:
               name: x
               location: "9:1:10"
-      - name: Top-level constant
+      - name: Unknown procedure identifier
+        input: |
+          (println (add 1 2))
+        output:
+          - UnknownSymbolError:
+              name: add
+              location: 10:1:11-12:1:13
+      - name: Top-level value
         input: |
           (const x 10)
 
@@ -89,7 +96,7 @@
             procedures:
               - procedure:
                   name: _main
-                  arguments: []
+                  arguments: [ ]
                   es:
                     - assign:
                         symbol:
@@ -97,3 +104,61 @@
                         e: 10
                     - println:
                         - toplevel-value: x
+      - name: Top-level procedure
+        input: |
+          (const (add a b) (+ a b))
+
+          (println (add 1 2))
+        output:
+          program:
+            values: [ ]
+            procedures:
+              - procedure:
+                  name: add
+                  arguments:
+                    - a
+                    - b
+                  es:
+                    - "+":
+                        - parameter:
+                            name: a
+                            offset: 0
+                        - parameter:
+                            name: b
+                            offset: 1
+              - procedure:
+                  name: _main
+                  arguments: [ ]
+                  es:
+                    - println:
+                        - call-procedure:
+                            procedure:
+                              toplevel-procedure:
+                                name: add
+                                parameter-count: 2
+                            es:
+                              - 1
+                              - 2
+      - name: Top-level procedure with incorrect number of arguments
+        input: |
+          (const (add a b) (+ a b))
+
+          (println (add))
+          (println (add 1))
+          (println (add 1 2 3))
+        output:
+          - ArgumentMismatchError:
+              name: add
+              expected: 2
+              actual: 0
+              location: 36:3:10-40:3:14
+          - ArgumentMismatchError:
+              name: add
+              expected: 2
+              actual: 1
+              location: 52:4:10-58:4:16
+          - ArgumentMismatchError:
+              name: add
+              expected: 2
+              actual: 3
+              location: 70:5:10-80:5:20

@@ -61,6 +61,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                 if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
                                     val parameterNames = mutableListOf<String>()
 
+                                    bindings.add(v1v0.name, TopLevelProcedureBinding(v1v0.name, parameters.size))
                                     bindings.open()
                                     parameters.forEachIndexed { index, symbol ->
                                         if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
@@ -73,8 +74,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                         } else
                                             reportError(InvalidConstFormError(e.position()))
                                     }
+                                    bindings.open()
                                     val procedure = Procedure(v1v0.name, parameterNames, e.expressions.drop(2).map { expressionToTST(it) })
                                     bindings.close()
+                                    bindings.close()
+
                                     procedure
                                 } else
                                     reportError(InvalidConstFormError(e.position()))
@@ -162,8 +166,19 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     StringPExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            else ->
-                                CallExpression(first.name, arguments)
+                            else -> {
+                                val binding = bindings.get(first.name)
+
+                                if (binding == null)
+                                    reportError(UnknownSymbolError(first.name, first.position))
+                                else if (binding is TopLevelProcedureBinding)
+                                    if (binding.parameterCount == arguments.size)
+                                        CallProcedureExpression(binding, arguments)
+                                    else
+                                        reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
+                                else
+                                    CallValueExpression(SymbolReferenceExpression(binding), arguments)
+                            }
                         }
                     } else
                         TODO()
