@@ -36,6 +36,37 @@
                         symbol:
                           toplevel-value: x
                         e: 10
+      - name: Top-level procedure
+        input: |
+          (const (add a b) (+ a b))
+        output:
+          program:
+            values: []
+            procedures:
+              - procedure:
+                  name: add
+                  arguments:
+                    - a
+                    - b
+                  es:
+                    - "+":
+                        - parameter:
+                            name: a
+                            offset: 0
+                        - parameter:
+                            name: b
+                            offset: 1
+              - procedure:
+                  name: _main
+                  arguments: []
+                  es: []
+      - name: Procedure with duplicate parameter names
+        input: |
+          (const (add a a) (+ a a))
+        output:
+          - DuplicateParameterNameError:
+              name: a
+              location: "14:1:15"
 - scenario:
     name: Identifier Reference
     tests:
@@ -43,7 +74,7 @@
         input: |
           (println x)
         output:
-          - InvalidConstFormError:
+          - UnknownSymbolError:
               name: x
               location: "9:1:10"
       - name: Top-level constant

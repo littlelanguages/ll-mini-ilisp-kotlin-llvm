@@ -37,6 +37,15 @@ data class ArgumentMismatchError(val name: String, val expected: Int, val actual
         )
 }
 
+data class DuplicateParameterNameError(val name: String, val location: Location) : Errors {
+    override fun yaml(): Any =
+        singletonMap(
+            "DuplicateParameterNameError", mapOf(
+                Pair("name", name),
+                Pair("location", location)
+            )
+        )
+}
 data class InvalidConstFormError(val location: Location) : Errors {
     override fun yaml(): Any =
         singletonMap("InvalidConstFormError", singletonMap("location", location))
@@ -45,7 +54,7 @@ data class InvalidConstFormError(val location: Location) : Errors {
 data class UnknownSymbolError(val name: String, val location: Location) : Errors {
     override fun yaml(): Any =
         singletonMap(
-            "InvalidConstFormError", mapOf(
+            "UnknownSymbolError", mapOf(
                 Pair("name", name),
                 Pair("location", location)
             )

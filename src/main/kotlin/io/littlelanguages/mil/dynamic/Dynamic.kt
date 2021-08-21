@@ -3,10 +3,7 @@ package io.littlelanguages.mil.dynamic
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
-import io.littlelanguages.mil.ArgumentMismatchError
-import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.InvalidConstFormError
-import io.littlelanguages.mil.UnknownSymbolError
+import io.littlelanguages.mil.*
 import io.littlelanguages.mil.dynamic.tst.*
 
 fun translate(p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program> =
@@ -52,11 +49,40 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                 if (e.expressions.isEmpty())
                     LiteralUnit
                 else if (e.isConst()) {
-                    if (e.expressions.size == 3) {
+                    if (e.expressions.size > 1) {
                         val v1 = e.expressions[1]
-                        val v2 = e.expressions[2]
 
-                        if (v1 is io.littlelanguages.mil.static.ast.Symbol) {
+                        if (v1 is io.littlelanguages.mil.static.ast.SExpression && v1.expressions.isNotEmpty()) {
+                            val v1v0 = v1.expressions[0]
+
+                            if (v1v0 is io.littlelanguages.mil.static.ast.Symbol) {
+                                val parameters = v1.expressions.drop(1)
+
+                                if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
+                                    val parameterNames = mutableListOf<String>()
+
+                                    bindings.open()
+                                    parameters.forEachIndexed { index, symbol ->
+                                        if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
+                                            val parameterName = symbol.name
+
+                                            parameterNames.add(parameterName)
+                                            if (bindings.inCurrentScope(parameterName))
+                                                reportError(DuplicateParameterNameError(parameterName, symbol.position()))
+                                            bindings.add(parameterName, ParameterBinding(parameterName, index))
+                                        } else
+                                            reportError(InvalidConstFormError(e.position()))
+                                    }
+                                    val procedure = Procedure(v1v0.name, parameterNames, e.expressions.drop(2).map { expressionToTST(it) })
+                                    bindings.close()
+                                    procedure
+                                } else
+                                    reportError(InvalidConstFormError(e.position()))
+                            } else
+                                reportError(InvalidConstFormError(e.position()))
+                        } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
+                            val v2 = e.expressions[2]
+
                             val binding = TopLevelValueBinding(v1.name)
                             bindings.add(v1.name, binding)
                             AssignExpression(binding, expressionToTST(v2))
