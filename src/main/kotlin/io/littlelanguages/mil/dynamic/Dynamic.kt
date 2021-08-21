@@ -45,56 +45,12 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
 
     private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): Expression =
         when (e) {
-            is io.littlelanguages.mil.static.ast.SExpression -> {
+            is io.littlelanguages.mil.static.ast.SExpression ->
                 if (e.expressions.isEmpty())
                     LiteralUnit
-                else if (e.isConst()) {
-                    if (e.expressions.size > 1) {
-                        val v1 = e.expressions[1]
-
-                        if (v1 is io.littlelanguages.mil.static.ast.SExpression && v1.expressions.isNotEmpty()) {
-                            val v1v0 = v1.expressions[0]
-
-                            if (v1v0 is io.littlelanguages.mil.static.ast.Symbol) {
-                                val parameters = v1.expressions.drop(1)
-
-                                if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
-                                    val parameterNames = mutableListOf<String>()
-
-                                    bindings.add(v1v0.name, TopLevelProcedureBinding(v1v0.name, parameters.size))
-                                    bindings.open()
-                                    parameters.forEachIndexed { index, symbol ->
-                                        if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
-                                            val parameterName = symbol.name
-
-                                            parameterNames.add(parameterName)
-                                            if (bindings.inCurrentScope(parameterName))
-                                                reportError(DuplicateParameterNameError(parameterName, symbol.position()))
-                                            bindings.add(parameterName, ParameterBinding(parameterName, index))
-                                        } else
-                                            reportError(InvalidConstFormError(e.position()))
-                                    }
-                                    bindings.open()
-                                    val procedure = Procedure(v1v0.name, parameterNames, e.expressions.drop(2).map { expressionToTST(it) })
-                                    bindings.close()
-                                    bindings.close()
-
-                                    procedure
-                                } else
-                                    reportError(InvalidConstFormError(e.position()))
-                            } else
-                                reportError(InvalidConstFormError(e.position()))
-                        } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
-                            val v2 = e.expressions[2]
-
-                            val binding = TopLevelValueBinding(v1.name)
-                            bindings.add(v1.name, binding)
-                            AssignExpression(binding, expressionToTST(v2))
-                        } else
-                            reportError(InvalidConstFormError(e.position()))
-                    } else
-                        reportError(InvalidConstFormError(e.position()))
-                } else {
+                else if (e.isConst())
+                    constToTST(e)
+                else {
                     val first = e.expressions[0]
 
                     if (first is io.littlelanguages.mil.static.ast.Symbol) {
@@ -183,7 +139,6 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                     } else
                         TODO()
                 }
-            }
             is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
             is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
             is io.littlelanguages.mil.static.ast.LiteralString -> translateLiteralString(e)
@@ -196,6 +151,53 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                     SymbolReferenceExpression(binding)
             }
         }
+
+    private fun constToTST(e: io.littlelanguages.mil.static.ast.SExpression) =
+        if (e.expressions.size > 1) {
+            val v1 = e.expressions[1]
+
+            if (v1 is io.littlelanguages.mil.static.ast.SExpression && v1.expressions.isNotEmpty()) {
+                val v1v0 = v1.expressions[0]
+
+                if (v1v0 is io.littlelanguages.mil.static.ast.Symbol) {
+                    val parameters = v1.expressions.drop(1)
+
+                    if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
+                        val parameterNames = mutableListOf<String>()
+
+                        bindings.add(v1v0.name, TopLevelProcedureBinding(v1v0.name, parameters.size))
+                        bindings.open()
+                        parameters.forEachIndexed { index, symbol ->
+                            if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
+                                val parameterName = symbol.name
+
+                                parameterNames.add(parameterName)
+                                if (bindings.inCurrentScope(parameterName))
+                                    reportError(DuplicateParameterNameError(parameterName, symbol.position()))
+                                bindings.add(parameterName, ParameterBinding(parameterName, index))
+                            } else
+                                reportError(InvalidConstFormError(e.position()))
+                        }
+                        bindings.open()
+                        val procedure = Procedure(v1v0.name, parameterNames, e.expressions.drop(2).map { expressionToTST(it) })
+                        bindings.close()
+                        bindings.close()
+
+                        procedure
+                    } else
+                        reportError(InvalidConstFormError(e.position()))
+                } else
+                    reportError(InvalidConstFormError(e.position()))
+            } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
+                val v2 = e.expressions[2]
+
+                val binding = TopLevelValueBinding(v1.name)
+                bindings.add(v1.name, binding)
+                AssignExpression(binding, expressionToTST(v2))
+            } else
+                reportError(InvalidConstFormError(e.position()))
+        } else
+            reportError(InvalidConstFormError(e.position()))
 
     private fun reportError(error: Errors): Expression {
         errors.add(error)
