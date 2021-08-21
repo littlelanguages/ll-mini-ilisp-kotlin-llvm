@@ -78,8 +78,7 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                 else
                                     reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "if" ->
-                                expressionToIf(arguments)
-
+                                ifToTST(arguments)
                             "integer?" ->
                                 if (arguments.size == 1)
                                     IntegerPExpression(arguments[0])
@@ -199,18 +198,18 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
         } else
             reportError(InvalidConstFormError(e.position()))
 
-    private fun reportError(error: Errors): Expression {
-        errors.add(error)
-        return LiteralUnit
-    }
-
-    private fun expressionToIf(es: List<Expression>): Expression =
+    private fun ifToTST(es: List<Expression>): Expression =
         when (es.size) {
             0 -> LiteralUnit
             1 -> es[0]
             2 -> IfExpression(es[0], es[1], LiteralUnit)
-            else -> IfExpression(es[0], es[1], expressionToIf(es.drop(2)))
+            else -> IfExpression(es[0], es[1], ifToTST(es.drop(2)))
         }
+
+    private fun reportError(error: Errors): Expression {
+        errors.add(error)
+        return LiteralUnit
+    }
 }
 
 fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString {
