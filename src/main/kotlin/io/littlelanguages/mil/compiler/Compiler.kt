@@ -65,7 +65,7 @@ private class Compiler(val module: Module) {
     private fun compileProcedure(declaration: Procedure) {
         val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
 
-        val result = declaration.es.fold(null) { _: LLVMValueRef?, b: Expression ->
+        val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression ->
             compileE(builder, b)
         }
 
