@@ -7,10 +7,11 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.compiler.llvm.Context
+import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.translate
 import io.littlelanguages.mil.static.Scanner
 import io.littlelanguages.mil.static.parse
-import org.bytedeco.llvm.global.LLVM
 import org.yaml.snakeyaml.Yaml
 import java.io.*
 
@@ -19,20 +20,23 @@ private val yaml = Yaml()
 
 class CompilerTests : FunSpec({
     context("Conformance Tests") {
+        val context = Context()
         val content = File("./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml").readText()
 
         val scenarios: Any = yaml.load(content)
 
         if (scenarios is List<*>) {
-            parserConformanceTest(this, scenarios)
+            parserConformanceTest(context, this, scenarios)
         }
+
+        context.dispose()
     }
 })
 
-fun compile(input: String): Either<List<Errors>, LLVMState> =
-    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(it) } andThen { compile("test", it) }
+fun compile(context: Context, input: String): Either<List<Errors>, Module> =
+    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(it) } andThen { compile(context, "test", it) }
 
-suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<*>) {
+suspend fun parserConformanceTest(context: Context, ctx: FunSpecContainerContext, scenarios: List<*>) {
     scenarios.forEach { scenario ->
         val s = scenario as Map<*, *>
 
@@ -43,14 +47,12 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
             val output = s["output"]
 
             ctx.test(name) {
-                val llvmState = compile(input)
-
-                val lhs = when (llvmState) {
+                val lhs = when (val llvmState = compile(context, input)) {
                     is Left ->
                         llvmState.left.joinToString("")
 
                     is Right -> {
-                        val module = llvmState.right.module
+                        val module = llvmState.right
 
 //                        LLVM.LLVMDumpModule(module)
 //                        System.err.println(LLVM.LLVMPrintModuleToString(module).string)
@@ -58,7 +60,7 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
                         runCommand(arrayOf("clang", "test.bc", "src/main/c/lib.o", "./src/main/c/main.o", "-o", "test.bin"))
                         val commandOutput = runCommand(arrayOf("./test.bin"))
 
-                        llvmState.right.dispose()
+                        module.dispose()
 
                         commandOutput
                     }
@@ -73,7 +75,7 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
             val name = nestedScenario["name"] as String
             val tests = nestedScenario["tests"] as List<*>
             ctx.context(name) {
-                parserConformanceTest(this, tests)
+                parserConformanceTest(context, this, tests)
             }
         }
     }

@@ -3,13 +3,19 @@ package io.littlelanguages.mil.compiler.llvm
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.LLVMContextRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-class Module(moduleID: String, private var context: LLVMContextRef) {
-    private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context)
+class Module(moduleID: String, private var context: Context) {
+    private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)
+    private val builder = LLVM.LLVMCreateBuilderInContext(context.context)
+
+    var expressionName = 0
+
+    fun dispose() {
+        LLVM.LLVMDisposeBuilder(builder)
+    }
 
     fun getNamedFunction(name: String): LLVMValueRef? =
         LLVM.LLVMGetNamedFunction(module, name)
@@ -17,12 +23,29 @@ class Module(moduleID: String, private var context: LLVMContextRef) {
     fun getNamedGlobal(name: String): LLVMValueRef? =
         LLVM.LLVMGetNamedGlobal(module, name)
 
-    fun addFunction(name: String, llvmFunctionType: LLVMTypeRef): LLVMValueRef? =
+    fun addExternalFunction(name: String, llvmFunctionType: LLVMTypeRef): LLVMValueRef =
         LLVM.LLVMAddFunction(
             module,
             name,
             llvmFunctionType
         )
+
+    fun addFunction(name: String, llvmFunctionType: LLVMTypeRef): Builder {
+        val builder = Builder(
+            context,
+            this,
+            builder,
+            LLVM.LLVMAddFunction(
+                module,
+                name,
+                llvmFunctionType
+            )
+        )
+
+        LLVM.LLVMSetFunctionCallConv(builder.procedure, LLVM.LLVMCCallConv)
+
+        return builder
+    }
 
     fun addGlobal(name: String, type: LLVMTypeRef, global: Boolean = true): LLVMValueRef? {
         val result = LLVM.LLVMAddGlobal(module, type, name)
@@ -61,11 +84,28 @@ class Module(moduleID: String, private var context: LLVMContextRef) {
         LLVM.LLVMWriteBitcodeToFile(module, fileName)
     }
 
-    fun createBuilder(): Builder =
-        Builder(LLVM.LLVMCreateBuilderInContext(context))
-
     override fun toString(): String =
         LLVM.LLVMPrintModuleToString(module).string
+
+    fun addGlobalString(value: String, name: String): LLVMValueRef {
+        val globalStringName = addGlobal(name, LLVM.LLVMArrayType(i8, value.length + 1))
+        LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context.context, BytePointer(value), value.length, 0))
+
+        return globalStringName!!
+    }
+
+    fun nextName(): String {
+        val result = "_v$expressionName"
+        expressionName += 1
+        return result
+    }
+
+    val void get() = context.void
+    val structValueP get() = context.structValueP
+    val i8 get() = context.i8
+    val i8P get() = context.i8P
+    val i32 get() = context.i32
+    val c0i64 get() = context.c0i64
 }
 
 

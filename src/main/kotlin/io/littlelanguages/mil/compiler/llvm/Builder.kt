@@ -6,9 +6,12 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-class Builder(private val builder: LLVMBuilderRef) {
-    private var currentBasicBlock: LLVMBasicBlockRef? = null
-    var procedure: LLVMValueRef? = null
+class Builder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
+    private var currentBasicBlock: LLVMBasicBlockRef = appendBasicBlock("entry")
+
+    init {
+        positionAtEnd(currentBasicBlock)
+    }
 
     fun buildBr(basicBlock: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildBr(builder, basicBlock)
@@ -49,13 +52,32 @@ class Builder(private val builder: LLVMBuilderRef) {
         currentBasicBlock = basicBlock
     }
 
-    fun getCurrentBasicBlock(): LLVMBasicBlockRef? =
+    fun getCurrentBasicBlock(): LLVMBasicBlockRef =
         currentBasicBlock
 
     fun getParam(offset: Int): LLVMValueRef =
-        LLVM.LLVMGetParam(procedure!!, offset)
+        LLVM.LLVMGetParam(procedure, offset)
 
-    fun dispose() {
-        LLVM.LLVMDisposeBuilder(builder)
-    }
+    fun appendBasicBlock(name: String): LLVMBasicBlockRef =
+        LLVM.LLVMAppendBasicBlockInContext(context.context, procedure, name)
+
+    fun nextName(): String =
+        module.nextName()
+
+    val void get() = context.void
+    val structValueP get() = context.structValueP
+    val i8 get() = context.i8
+    val i8P get() = context.i8P
+    val i32 get() = context.i32
+    val c0i64 get() = context.c0i64
+
+    fun getNamedGlobal(name: String): LLVMValueRef? =
+        module.getNamedGlobal(name)
+
+    fun getNamedFunction(name: String): LLVMValueRef? =
+        module.getNamedGlobal(name)
+
+    fun addGlobalString(value: String, name: String): LLVMValueRef =
+        module.addGlobalString(value, name)
 }
+
