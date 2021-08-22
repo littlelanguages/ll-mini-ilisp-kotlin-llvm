@@ -59,69 +59,49 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                         val arguments = e.expressions.drop(1).map { expressionToTST(it) }
 
                         when (first.name) {
-                            "=" ->
-                                if (arguments.size == 2)
-                                    EqualsExpression(arguments[0], arguments[1])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "if" ->
                                 ifToTST(arguments)
-                            "integer?" ->
-                                if (arguments.size == 1)
-                                    IntegerPExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "<" ->
-                                if (arguments.size == 2)
-                                    LessThanExpression(arguments[0], arguments[1])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
-                            "null?" ->
-                                if (arguments.size == 1)
-                                    NullPExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "pair?" ->
-                                if (arguments.size == 1)
-                                    PairPExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "print" ->
                                 PrintExpression(arguments)
                             "println" ->
                                 PrintlnExpression(arguments)
-                            "string?" ->
-                                if (arguments.size == 1)
-                                    StringPExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            else -> {
-                                val binding = bindings.get(first.name)
+                            else ->
+                                when (val binding = bindings.get(first.name)) {
+                                    null ->
+                                        reportError(UnknownSymbolError(first.name, first.position))
 
-                                if (binding == null)
-                                    reportError(UnknownSymbolError(first.name, first.position))
-                                else if (binding is TopLevelProcedureBinding)
-                                    if (binding.parameterCount == arguments.size)
-                                        CallProcedureExpression(binding, arguments)
-                                    else
-                                        reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
-                                else if (binding is ExternalProcedureBinding) {
-                                    val error = binding.validateArguments(e, first.name, arguments)
+                                    is TopLevelProcedureBinding ->
+                                        if (binding.parameterCount == arguments.size)
+                                            CallProcedureExpression(binding, arguments)
+                                        else
+                                            reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
 
-                                    if (error == null)
-                                        CallProcedureExpression(binding, arguments)
-                                    else
-                                        reportError(error)
-                                } else
-                                    CallValueExpression(SymbolReferenceExpression(binding), arguments)
-                            }
+                                    is ExternalProcedureBinding ->
+                                        when (val error = binding.validateArguments(e, first.name, arguments)) {
+                                            null ->
+                                                CallProcedureExpression(binding, arguments)
+                                            else ->
+                                                reportError(error)
+                                        }
+
+                                    else ->
+                                        CallValueExpression(SymbolReferenceExpression(binding), arguments)
+                                }
+
                         }
                     } else
                         TODO()
                 }
-            is io.littlelanguages.mil.static.ast.LiteralBool -> LiteralBool(e.value)
-            is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
-            is io.littlelanguages.mil.static.ast.LiteralString -> translateLiteralString(e)
+
+            is io.littlelanguages.mil.static.ast.LiteralBool ->
+                LiteralBool(e.value)
+
+            is io.littlelanguages.mil.static.ast.LiteralInt ->
+                LiteralInt(e.value.toInt())
+
+            is io.littlelanguages.mil.static.ast.LiteralString ->
+                translateLiteralString(e)
+
             is io.littlelanguages.mil.static.ast.Symbol -> {
                 val binding = bindings.get(e.name)
 

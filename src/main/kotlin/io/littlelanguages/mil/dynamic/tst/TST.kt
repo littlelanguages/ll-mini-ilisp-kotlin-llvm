@@ -61,16 +61,6 @@ data class CallValueExpression<S, T>(val operand: Expression<S, T>, val es: Expr
         )
 }
 
-data class EqualsExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap(
-            "=", mapOf(
-                Pair("e1", e1.yaml()),
-                Pair("e2", e2.yaml())
-            )
-        )
-}
-
 data class IfExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>, val e3: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
@@ -82,31 +72,6 @@ data class IfExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>
         )
 }
 
-data class IntegerPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("integer?", es.yaml())
-}
-
-data class LessThanExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap(
-            "<", mapOf(
-                Pair("e1", e1.yaml()),
-                Pair("e2", e2.yaml())
-            )
-        )
-}
-
-data class NullPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("null?", es.yaml())
-}
-
-data class PairPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("pair?", es.yaml())
-}
-
 data class PrintExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("print", es.map { it.yaml() })
@@ -115,11 +80,6 @@ data class PrintExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
 data class PrintlnExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("println", es.map { it.yaml() })
-}
-
-data class StringPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("string?", es.yaml())
 }
 
 data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>) : Expression<S, T> {

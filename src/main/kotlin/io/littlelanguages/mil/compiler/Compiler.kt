@@ -96,11 +96,11 @@ private class CompileExpression(val builder: Builder) {
                         builder.buildCall(builder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) })
                 }
 
-            is EqualsExpression ->
-                builder.invoke(
-                    BuiltinDeclarationEnum.EQUALS,
-                    listOf(compileEForce(e.e1), compileEForce(e.e2))
-                )
+//            is EqualsExpression ->
+//                builder.invoke(
+//                    BuiltinDeclarationEnum.EQUALS,
+//                    listOf(compileEForce(e.e1), compileEForce(e.e2))
+//                )
 
             is IfExpression -> {
                 val e1op = compileEForce(e.e1)
@@ -128,14 +128,14 @@ private class CompileExpression(val builder: Builder) {
                 builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse), builder.nextName())
             }
 
-            is IntegerPExpression ->
-                builder.invoke(BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)))
+//            is IntegerPExpression ->
+//                builder.invoke(BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)))
 
-            is LessThanExpression ->
-                builder.invoke(
-                    BuiltinDeclarationEnum.LESS_THAN,
-                    listOf(compileEForce(e.e1), compileEForce(e.e2))
-                )
+//            is LessThanExpression ->
+//                builder.invoke(
+//                    BuiltinDeclarationEnum.LESS_THAN,
+//                    listOf(compileEForce(e.e1), compileEForce(e.e2))
+//                )
 
             is LiteralBool ->
                 builder.invoke(if (e.value) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE)
@@ -155,11 +155,11 @@ private class CompileExpression(val builder: Builder) {
             is LiteralUnit ->
                 builder.invoke(BuiltinDeclarationEnum.V_NULL)
 
-            is NullPExpression ->
-                builder.invoke(BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)))
+//            is NullPExpression ->
+//                builder.invoke(BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)))
 
-            is PairPExpression ->
-                builder.invoke(BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)))
+//            is PairPExpression ->
+//                builder.invoke(BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)))
 
             is PrintlnExpression -> {
                 e.es.forEach {
@@ -175,8 +175,8 @@ private class CompileExpression(val builder: Builder) {
                 null
             }
 
-            is StringPExpression ->
-                builder.invoke(BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)))
+//            is StringPExpression ->
+//                builder.invoke(BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)))
 
             is SymbolReferenceExpression ->
                 when (val symbol = e.symbol) {
@@ -193,14 +193,20 @@ private class CompileExpression(val builder: Builder) {
 }
 
 val builtinBindings = listOf(
-    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
-    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
-    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
     ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
     ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
     ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
     ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
-    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair"))
+    ExternalProcedureBinding("=", validateFixedArityArgument(2), compileFixedArity("_equals")),
+    ExternalProcedureBinding("<", validateFixedArityArgument(2), compileFixedArity("_less_than")),
+    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
+    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
+    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
+    ExternalProcedureBinding("integer?", validateFixedArityArgument(1), compileFixedArity("_integerp")),
+    ExternalProcedureBinding("null?", validateFixedArityArgument(1), compileFixedArity("_nullp")),
+    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair")),
+    ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
+    ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
 )
 
 private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
