@@ -23,22 +23,14 @@ class Module(moduleID: String, private var context: Context) {
     fun getNamedGlobal(name: String): LLVMValueRef? =
         LLVM.LLVMGetNamedGlobal(module, name)
 
-    fun addExternalFunction(name: String, llvmFunctionType: LLVMTypeRef): LLVMValueRef =
+    fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         LLVM.LLVMAddFunction(
             module,
             name,
-            llvmFunctionType
+            functionType(parameterTypes, resultType)
         )
 
     fun addFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): Builder {
-        val procedureType =
-            LLVM.LLVMFunctionType(
-                resultType,
-                pointerPointerOf(parameterTypes),
-                parameterTypes.size,
-                0
-            )
-
         val builder = Builder(
             context,
             this,
@@ -46,7 +38,7 @@ class Module(moduleID: String, private var context: Context) {
             LLVM.LLVMAddFunction(
                 module,
                 name,
-                procedureType
+                functionType(parameterTypes, resultType)
             )
         )
 
@@ -54,6 +46,14 @@ class Module(moduleID: String, private var context: Context) {
 
         return builder
     }
+
+    private fun functionType(parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMTypeRef =
+        LLVM.LLVMFunctionType(
+            resultType,
+            pointerPointerOf(parameterTypes),
+            parameterTypes.size,
+            0
+        )
 
     fun addGlobal(name: String, type: LLVMTypeRef, global: Boolean = true): LLVMValueRef? {
         val result = LLVM.LLVMAddGlobal(module, type, name)

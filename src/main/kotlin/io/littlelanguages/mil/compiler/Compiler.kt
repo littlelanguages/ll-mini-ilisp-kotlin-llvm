@@ -7,7 +7,6 @@ import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
-import io.littlelanguages.mil.compiler.llvm.pointerPointerOf
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.PointerPointer
@@ -281,15 +280,11 @@ private class BuiltinDeclarations(val module: Module) {
     fun get(bip: BuiltinDeclarationEnum): LLVMValueRef {
         val declaration = declarations[bip]!!
         return if (declaration.isProcedure())
-            module.getNamedFunction(declaration.name) ?: run {
-                val parameters = declaration.parameters!!
-                val parameterTypes = pointerPointerOf(parameters)
-
-                module.addExternalFunction(
-                    declaration.name,
-                    LLVM.LLVMFunctionType(declaration.returnType, parameterTypes, declaration.parameters.size, 0)
-                )
-            }
+            module.getNamedFunction(declaration.name) ?: module.addExternalFunction(
+                declaration.name,
+                declaration.parameters!!,
+                declaration.returnType
+            )
         else
             module.getNamedGlobal(declaration.name) ?: module.addGlobal(declaration.name, declaration.returnType)!!
     }
