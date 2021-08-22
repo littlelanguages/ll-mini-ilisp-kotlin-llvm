@@ -2,12 +2,14 @@ package io.littlelanguages.mil.compiler
 
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Right
+import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.*
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
+import io.littlelanguages.mil.static.ast.SExpression
 import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
@@ -188,20 +190,60 @@ private class CompileExpression(val builder: Builder) {
             else ->
                 TODO(e.toString())
         }
-
-    private fun compileOperator(
-        es: Expressions<Builder, LLVMValueRef>,
-        unitValue: Int,
-        operator: BuiltinDeclarationEnum,
-        explicitFirst: Boolean
-    ): LLVMValueRef? {
-        val ops = es.mapNotNull { compileE(it) }
-
-        return if (ops.isEmpty())
-            compileE(LiteralInt(unitValue))
-        else if (explicitFirst && ops.size == 1)
-            builder.invoke(operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]))
-        else
-            ops.drop(1).fold(ops[0]) { op1, op2 -> builder.invoke(operator, listOf(op1, op2)) }
-    }
 }
+
+val builtinBindings = listOf(
+    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
+    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
+    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
+    ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
+    ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
+    ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
+    ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
+    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair"))
+)
+
+private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
+    { e, name, arguments ->
+        if (arity == arguments.size)
+            null
+        else
+            ArgumentMismatchError(name, arity, arguments.size, e.position)
+    }
+
+private fun validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
+    { _, _, _ -> null }
+
+private fun compileFixedArity(externalName: String): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef =
+    { builder, arguments ->
+        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+            externalName,
+            List(arguments.size) { builder.structValueP },
+            builder.structValueP
+        )
+        builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) })
+    }
+
+private fun compileOperator(
+    unitValue: Int,
+    externalName: String,
+    explicitFirst: Boolean
+): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+    { builder, arguments ->
+        val ops = arguments.mapNotNull { compileE(builder, it) }
+
+        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+            externalName,
+            List(2) { builder.structValueP },
+            builder.structValueP
+        )
+
+        if (ops.isEmpty())
+            compileE(builder, LiteralInt(unitValue))
+        else if (explicitFirst && ops.size == 1)
+            builder.buildCall(namedFunction, listOf(compileEForce(builder, LiteralInt(unitValue)), ops[0]))
+        else
+            ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
+    }
+
+
