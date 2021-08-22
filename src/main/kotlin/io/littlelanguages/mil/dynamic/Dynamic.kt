@@ -15,6 +15,13 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
 
     val bindings = Bindings()
 
+    init {
+        bindings.add("boolean?", ExternalProcedureBinding("boolean?", 1, "_booleanp"))
+        bindings.add("car", ExternalProcedureBinding("car", 1, "_pair_car"))
+        bindings.add("cdr", ExternalProcedureBinding("cdr", 1, "_pair_cdr"))
+        bindings.add("pair", ExternalProcedureBinding("pair", 2, "_mk_pair"))
+    }
+
     fun apply(): Either<List<Errors>, Program> {
         val r = program(ast.expressions)
 
@@ -57,21 +64,6 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                         val arguments = e.expressions.drop(1).map { expressionToTST(it) }
 
                         when (first.name) {
-                            "boolean?" ->
-                                if (arguments.size == 1)
-                                    BooleanPExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "car" ->
-                                if (arguments.size == 1)
-                                    CarExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "cdr" ->
-                                if (arguments.size == 1)
-                                    CdrExpression(arguments[0])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
                             "=" ->
                                 if (arguments.size == 2)
                                     EqualsExpression(arguments[0], arguments[1])
@@ -96,11 +88,6 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                     NullPExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "pair" ->
-                                if (arguments.size == 2)
-                                    PairExpression(arguments[0], arguments[1])
-                                else
-                                    reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
                             "pair?" ->
                                 if (arguments.size == 1)
                                     PairPExpression(arguments[0])
@@ -131,6 +118,11 @@ private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
                                         CallProcedureExpression(binding, arguments)
                                     else
                                         reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
+                                else if (binding is ExternalProcedureBinding)
+                                    if (binding.parameterCount == arguments.size)
+                                        CallProcedureExpression(binding, arguments)
+                                    else
+                                        reportError(ArgumentMismatchError(first.name, binding.parameterCount ?: -1, arguments.size, e.position))
                                 else
                                     CallValueExpression(SymbolReferenceExpression(binding), arguments)
                             }

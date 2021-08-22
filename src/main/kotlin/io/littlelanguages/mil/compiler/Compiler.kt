@@ -7,6 +7,7 @@ import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.PointerPointer
@@ -87,17 +88,19 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
                 null
             }
 
-            is BooleanPExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.BOOLEANP, listOf(compileEForce(e.es)), builder.nextName())
+            is CallProcedureExpression -> {
+                val procedure = e.procedure
 
-            is CallProcedureExpression ->
-                builder.buildCall(builder.getNamedFunction(e.procedure.name)!!, e.es.map { compileEForce(it) }, builder.nextName())
-
-            is CarExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.CAR, listOf(compileEForce(e.es)), builder.nextName())
-
-            is CdrExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.CDR, listOf(compileEForce(e.es)), builder.nextName())
+                if (procedure is ExternalProcedureBinding) {
+                    val namedFunction = builder.getNamedFunction(procedure.externalName) ?:builder.addExternalFunction(
+                            procedure.externalName,
+                            List(procedure.parameterCount ?: 0) { builder.structValueP },
+                            builder.structValueP
+                        )
+                    builder.buildCall(namedFunction, e.es.map { compileEForce(it) }, builder.nextName())
+                } else
+                    builder.buildCall(builder.getNamedFunction(e.procedure.name)!!, e.es.map { compileEForce(it) }, builder.nextName())
+            }
 
             is EqualsExpression ->
                 builtinDeclarations.invoke(
@@ -179,13 +182,13 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
             is NullPExpression ->
                 builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), builder.nextName())
 
-            is PairExpression ->
-                builtinDeclarations.invoke(
-                    builder,
-                    BuiltinDeclarationEnum.PAIR,
-                    listOf(compileEForce(e.car), compileEForce(e.cdr)),
-                    builder.nextName()
-                )
+//            is PairExpression ->
+//                builtinDeclarations.invoke(
+//                    builder,
+//                    BuiltinDeclarationEnum.PAIR,
+//                    listOf(compileEForce(e.car), compileEForce(e.cdr)),
+//                    builder.nextName()
+//                )
 
             is PairPExpression ->
                 builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), builder.nextName())
@@ -243,17 +246,14 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
 }
 
 private enum class BuiltinDeclarationEnum {
-    BOOLEANP, CAR, CDR, DIVIDE, EQUALS, FROM_LITERAL_INT, FROM_LITERAL_STRING,
-    INTEGERP, LESS_THAN, MINUS, MULTIPLY, NULLP, PAIR, PAIRP, PLUS,
+    DIVIDE, EQUALS, FROM_LITERAL_INT, FROM_LITERAL_STRING,
+    INTEGERP, LESS_THAN, MINUS, MULTIPLY, NULLP, PAIRP, PLUS,
     PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
     V_FALSE, V_NULL
 }
 
 private class BuiltinDeclarations(val module: Module) {
     private val declarations = mapOf(
-        Pair(BuiltinDeclarationEnum.BOOLEANP, BuiltinDeclaration("_booleanp", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.CAR, BuiltinDeclaration("_pair_car", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.CDR, BuiltinDeclaration("_pair_cdr", listOf(module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.DIVIDE, BuiltinDeclaration("_divide", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.EQUALS, BuiltinDeclaration("_equals", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.FROM_LITERAL_INT, BuiltinDeclaration("_from_literal_int", listOf(module.i32), module.structValueP)),
@@ -266,7 +266,6 @@ private class BuiltinDeclarations(val module: Module) {
         Pair(BuiltinDeclarationEnum.MINUS, BuiltinDeclaration("_minus", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.MULTIPLY, BuiltinDeclaration("_multiply", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.NULLP, BuiltinDeclaration("_nullp", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.PAIR, BuiltinDeclaration("_mk_pair", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.PAIRP, BuiltinDeclaration("_pairp", listOf(module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.PLUS, BuiltinDeclaration("_plus", listOf(module.structValueP, module.structValueP), module.structValueP)),
         Pair(BuiltinDeclarationEnum.PRINT_VALUE, BuiltinDeclaration("_print_value", listOf(module.structValueP), module.void)),

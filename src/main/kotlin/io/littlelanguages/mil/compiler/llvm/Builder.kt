@@ -77,6 +77,9 @@ class Builder(private val context: Context, private val module: Module, private 
     fun getNamedFunction(name: String): LLVMValueRef? =
         module.getNamedFunction(name)
 
+    fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
+        module.addExternalFunction(name, parameterTypes, resultType)
+
     fun addGlobalString(value: String, name: String): LLVMValueRef =
         module.addGlobalString(value, name)
 }

@@ -11,12 +11,35 @@ data class TopLevelValueBinding(override val name: String) : Binding {
         singletonMap("toplevel-value", name)
 }
 
-data class TopLevelProcedureBinding(override val name: String, val parameterCount: Int) : Binding {
+sealed interface ProcedureBinding : Binding
+
+data class TopLevelProcedureBinding(override val name: String, val parameterCount: Int) : ProcedureBinding {
     override fun yaml(): Any =
         singletonMap(
             "toplevel-procedure", mapOf(
                 Pair("name", name),
                 Pair("parameter-count", parameterCount)
+            )
+        )
+}
+
+data class ExternalValueBinding(override val name: String, val externalName: String) : Binding {
+    override fun yaml(): Any =
+        singletonMap(
+            "external-value", mapOf(
+                Pair("name", name),
+                Pair("external-name", externalName)
+            )
+        )
+}
+
+data class ExternalProcedureBinding(override val name: String, val parameterCount: Int?, val externalName: String) : ProcedureBinding {
+    override fun yaml(): Any =
+        singletonMap(
+            "external-procedure", mapOf(
+                Pair("name", name),
+                Pair("parameter-count", parameterCount ?: "variable"),
+                Pair("external-name", externalName)
             )
         )
 }
