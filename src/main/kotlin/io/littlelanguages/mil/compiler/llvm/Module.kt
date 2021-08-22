@@ -11,7 +11,7 @@ class Module(moduleID: String, private var context: Context) {
     private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)
     private val builder = LLVM.LLVMCreateBuilderInContext(context.context)
 
-    var expressionName = 0
+    private var expressionName = 0
 
     fun dispose() {
         LLVM.LLVMDisposeBuilder(builder)
