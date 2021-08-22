@@ -75,7 +75,7 @@ class Builder(private val context: Context, private val module: Module, private 
         module.getNamedGlobal(name)
 
     fun getNamedFunction(name: String): LLVMValueRef? =
-        module.getNamedGlobal(name)
+        module.getNamedFunction(name)
 
     fun addGlobalString(value: String, name: String): LLVMValueRef =
         module.addGlobalString(value, name)
