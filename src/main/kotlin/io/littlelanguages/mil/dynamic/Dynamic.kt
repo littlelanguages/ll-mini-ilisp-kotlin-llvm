@@ -6,20 +6,17 @@ import io.littlelanguages.data.Right
 import io.littlelanguages.mil.*
 import io.littlelanguages.mil.dynamic.tst.*
 
-fun translate(p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program> =
-    Translator(p).apply()
+fun translate(builtinBindings: List<Binding>, p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program> =
+    Translator(builtinBindings, p).apply()
 
-private class Translator(val ast: io.littlelanguages.mil.static.ast.Program) {
+private class Translator(builtinBindings: List<Binding>, val ast: io.littlelanguages.mil.static.ast.Program) {
     val errors =
         mutableListOf<Errors>()
 
     val bindings = Bindings()
 
     init {
-        bindings.add("boolean?", ExternalProcedureBinding("boolean?", 1, "_booleanp"))
-        bindings.add("car", ExternalProcedureBinding("car", 1, "_pair_car"))
-        bindings.add("cdr", ExternalProcedureBinding("cdr", 1, "_pair_cdr"))
-        bindings.add("pair", ExternalProcedureBinding("pair", 2, "_mk_pair"))
+        builtinBindings.forEach { bindings.add(it.name, it) }
     }
 
     fun apply(): Either<List<Errors>, Program> {

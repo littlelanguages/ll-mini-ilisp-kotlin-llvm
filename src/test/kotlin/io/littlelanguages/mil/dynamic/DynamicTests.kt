@@ -23,18 +23,20 @@ class DynamicTests : FunSpec({
 
         val scenarios: Any = yaml.load(content)
 
+        val builtinBindings: List<ExternalProcedureBinding> = emptyList()
+
         if (scenarios is List<*>) {
-            parserConformanceTest(this, scenarios)
+            parserConformanceTest(builtinBindings, this, scenarios)
         }
     }
 })
 
 
-fun translate(input: String): Either<List<Errors>, Program> =
-    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(it) }
+fun translate(builtinBindings: List<Binding>, input: String): Either<List<Errors>, Program> =
+    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) }
 
 
-suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<*>) {
+suspend fun parserConformanceTest(builtinBindings: List<Binding>, ctx: FunSpecContainerContext, scenarios: List<*>) {
     scenarios.forEach { scenario ->
         val s = scenario as Map<*, *>
 
@@ -45,12 +47,10 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
             val output = s["output"]
 
             ctx.test(name) {
-//                val lhs =
-//                    translate(input).map { it.yaml() }.toString()
                 val rhs =
                     output.toString()
 
-                when (val lhs = translate(input)) {
+                when (val lhs = translate(builtinBindings, input)) {
                     is Left ->
                         lhs.left.map { it.yaml() }.toString() shouldBe rhs
                     is Right ->
@@ -61,7 +61,7 @@ suspend fun parserConformanceTest(ctx: FunSpecContainerContext, scenarios: List<
             val name = nestedScenario["name"] as String
             val tests = nestedScenario["tests"] as List<*>
             ctx.context(name) {
-                parserConformanceTest(this, tests)
+                parserConformanceTest(builtinBindings, this, tests)
             }
         }
     }

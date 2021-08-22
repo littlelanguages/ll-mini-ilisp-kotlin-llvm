@@ -9,6 +9,8 @@ import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.dynamic.Binding
+import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.translate
 import io.littlelanguages.mil.static.Scanner
 import io.littlelanguages.mil.static.parse
@@ -23,20 +25,28 @@ class CompilerTests : FunSpec({
         val context = Context()
         val content = File("./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml").readText()
 
+        val builtinBindings = listOf(
+            ExternalProcedureBinding("boolean?", 1, "_booleanp"),
+            ExternalProcedureBinding("car", 1, "_pair_car"),
+            ExternalProcedureBinding("cdr", 1, "_pair_cdr"),
+            ExternalProcedureBinding("pair", 2, "_mk_pair")
+        )
+
         val scenarios: Any = yaml.load(content)
 
         if (scenarios is List<*>) {
-            parserConformanceTest(context, this, scenarios)
+            parserConformanceTest(builtinBindings, context, this, scenarios)
         }
 
         context.dispose()
     }
 })
 
-fun compile(context: Context, input: String): Either<List<Errors>, Module> =
-    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(it) } andThen { compile(context, "test", it) }
 
-suspend fun parserConformanceTest(context: Context, ctx: FunSpecContainerContext, scenarios: List<*>) {
+fun compile(builtinBindings: List<Binding>, context: Context, input: String): Either<List<Errors>, Module> =
+    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "test", it) }
+
+suspend fun parserConformanceTest(builtinBindings: List<Binding>, context: Context, ctx: FunSpecContainerContext, scenarios: List<*>) {
     scenarios.forEach { scenario ->
         val s = scenario as Map<*, *>
 
@@ -47,7 +57,7 @@ suspend fun parserConformanceTest(context: Context, ctx: FunSpecContainerContext
             val output = s["output"]
 
             ctx.test(name) {
-                val lhs = when (val llvmState = compile(context, input)) {
+                val lhs = when (val llvmState = compile(builtinBindings, context, input)) {
                     is Left ->
                         llvmState.left.joinToString("")
 
@@ -75,7 +85,7 @@ suspend fun parserConformanceTest(context: Context, ctx: FunSpecContainerContext
             val name = nestedScenario["name"] as String
             val tests = nestedScenario["tests"] as List<*>
             ctx.context(name) {
-                parserConformanceTest(context, this, tests)
+                parserConformanceTest(builtinBindings, context, this, tests)
             }
         }
     }
