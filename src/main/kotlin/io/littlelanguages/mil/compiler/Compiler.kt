@@ -154,25 +154,6 @@ private class CompileExpression(val builder: Builder) {
         }
 }
 
-val builtinBindings = listOf(
-    ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
-    ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
-    ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
-    ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
-    ExternalProcedureBinding("=", validateFixedArityArgument(2), compileFixedArity("_equals")),
-    ExternalProcedureBinding("<", validateFixedArityArgument(2), compileFixedArity("_less_than")),
-    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
-    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
-    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
-    ExternalProcedureBinding("integer?", validateFixedArityArgument(1), compileFixedArity("_integerp")),
-    ExternalProcedureBinding("null?", validateFixedArityArgument(1), compileFixedArity("_nullp")),
-    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair")),
-    ExternalProcedureBinding("print", validateVariableArityArguments(), compilePrint()),
-    ExternalProcedureBinding("println", validateVariableArityArguments(), compilePrintln()),
-    ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
-    ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
-)
-
 private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
     { e, name, arguments ->
         if (arity == arguments.size)
@@ -216,30 +197,36 @@ private fun compileOperator(
             ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
     }
 
-private fun compilePrintln(): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+private val compilePrintln: (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
     { builder, arguments ->
-        arguments.forEach {
-            val op = compileE(builder, it)
+        arguments.forEach { builder.buildPrintValue(compileE(builder, it)) }
 
-            if (op != null) {
-                builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
-            }
-        }
+        builder.buildPrintNewline()
+    }
 
-        builder.invoke(BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
+private val compilePrint: (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+    { builder, arguments ->
+        arguments.forEach { builder.buildPrintValue(compileE(builder, it)) }
 
         null
     }
 
-private fun compilePrint(): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
-    { builder, arguments ->
-        arguments.forEach {
-            val op = compileE(builder, it)
+val builtinBindings = listOf(
+    ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
+    ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
+    ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
+    ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
+    ExternalProcedureBinding("=", validateFixedArityArgument(2), compileFixedArity("_equals")),
+    ExternalProcedureBinding("<", validateFixedArityArgument(2), compileFixedArity("_less_than")),
+    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
+    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
+    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
+    ExternalProcedureBinding("integer?", validateFixedArityArgument(1), compileFixedArity("_integerp")),
+    ExternalProcedureBinding("null?", validateFixedArityArgument(1), compileFixedArity("_nullp")),
+    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair")),
+    ExternalProcedureBinding("print", validateVariableArityArguments(), compilePrint),
+    ExternalProcedureBinding("println", validateVariableArityArguments(), compilePrintln),
+    ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
+    ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
+)
 
-            if (op != null) {
-                builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
-            }
-        }
-
-        null
-    }

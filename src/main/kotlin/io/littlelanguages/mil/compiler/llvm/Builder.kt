@@ -18,7 +18,7 @@ class Builder(private val context: Context, private val module: Module, private 
     fun buildBr(basicBlock: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildBr(builder, basicBlock)
 
-    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef>, name: String? = null): LLVMValueRef =
+    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String? = null): LLVMValueRef =
         LLVM.LLVMBuildCall(
             builder,
             functionRef,
@@ -40,6 +40,27 @@ class Builder(private val context: Context, private val module: Module, private 
         val phi = LLVM.LLVMBuildPhi(builder, type, name)
         LLVM.LLVMAddIncoming(phi, pointerPointerOf(incomingValues), pointerPointerOf(incomingBlocks), incomingValues.size)
         return phi
+    }
+
+    fun buildPrintNewline(): LLVMValueRef? {
+        buildCall(
+            getNamedFunction("_print_newline", listOf(), void),
+            listOf(),
+            ""
+        )
+
+        return null
+    }
+
+    fun buildPrintValue(value: LLVMValueRef?): LLVMValueRef? {
+        if (value != null)
+            buildCall(
+                getNamedFunction("_print_value", listOf(structValueP), void),
+                listOf(value),
+                ""
+            )
+
+        return null
     }
 
     fun buildRet(v: LLVMValueRef): LLVMValueRef =
@@ -84,6 +105,9 @@ class Builder(private val context: Context, private val module: Module, private 
 
     fun getNamedFunction(name: String): LLVMValueRef? =
         module.getNamedFunction(name)
+
+    private fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
+        getNamedFunction(name) ?: addExternalFunction(name, parameterTypes, resultType)
 
     fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         module.addExternalFunction(name, parameterTypes, resultType)
