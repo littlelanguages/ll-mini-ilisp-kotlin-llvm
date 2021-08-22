@@ -30,16 +30,14 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
         val expressions = mutableListOf<Expression<S, T>>()
         val names = mutableListOf<String>()
 
-        for (e in es) {
-            val ep = expressionToTST(e)
-
-            if (ep is Declaration<*, *>)
-                declarations.add(ep as Declaration<S, T>)
+        es.map { expressionToTST(it) }.forEach {
+            if (it is Procedure<S, T>)
+                declarations.add(it)
             else
-                expressions.add(ep)
+                expressions.add(it)
 
-            if (ep is AssignExpression<S, T>)
-                names.add(ep.symbol.name)
+            if (it is AssignExpression<S, T>)
+                names.add(it.symbol.name)
         }
 
         declarations.add(Procedure("_main", emptyList(), expressions))
@@ -78,8 +76,6 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                     LessThanExpression(arguments[0], arguments[1])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 2, arguments.size, e.position()))
-                            "-" ->
-                                MinusExpression(arguments)
                             "null?" ->
                                 if (arguments.size == 1)
                                     NullPExpression(arguments[0])
@@ -90,16 +86,10 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                     PairPExpression(arguments[0])
                                 else
                                     reportError(ArgumentMismatchError(first.name, 1, arguments.size, e.position()))
-                            "+" ->
-                                PlusExpression(arguments)
                             "print" ->
                                 PrintExpression(arguments)
                             "println" ->
                                 PrintlnExpression(arguments)
-                            "/" ->
-                                SlashExpression(arguments)
-                            "*" ->
-                                StarExpression(arguments)
                             "string?" ->
                                 if (arguments.size == 1)
                                     StringPExpression(arguments[0])
@@ -203,7 +193,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
     }
 }
 
-fun <S, T>translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString<S, T> {
+fun <S, T> translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString<S, T> {
     val sb = StringBuilder()
     val eValue = e.value
     val eLength = eValue.length

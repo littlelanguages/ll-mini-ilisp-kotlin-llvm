@@ -7,8 +7,10 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.dynamic.tst.Expression
 import io.littlelanguages.mil.dynamic.tst.Program
 import io.littlelanguages.mil.static.Scanner
+import io.littlelanguages.mil.static.ast.SExpression
 import io.littlelanguages.mil.static.parse
 import org.yaml.snakeyaml.Yaml
 import java.io.File
@@ -25,7 +27,10 @@ class DynamicTests : FunSpec({
 
         val scenarios: Any = yaml.load(content)
 
-        val builtinBindings: List<ExternalProcedureBinding<S, T>> = emptyList()
+        val builtinBindings: List<ExternalProcedureBinding<S, T>> = listOf(
+            ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator()),
+            ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator())
+        )
 
         if (scenarios is List<*>) {
             parserConformanceTest(builtinBindings, this, scenarios)
@@ -33,6 +38,10 @@ class DynamicTests : FunSpec({
     }
 })
 
+private fun validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors? =
+    { _, _, _ -> null }
+
+private fun compileOperator(): (builder: S, arguments: List<Expression<S, T>>) -> T? = { _, _ -> null }
 
 fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) }

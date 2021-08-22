@@ -18,13 +18,13 @@ class Builder(private val context: Context, private val module: Module, private 
     fun buildBr(basicBlock: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildBr(builder, basicBlock)
 
-    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
+    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef>, name: String? = null): LLVMValueRef =
         LLVM.LLVMBuildCall(
             builder,
             functionRef,
             pointerPointerOf(arguments),
             arguments.size,
-            name
+            name ?: nextName()
         )
 
     fun buildCondBr(ifOp: LLVMValueRef, thenOp: LLVMBasicBlockRef, elseOp: LLVMBasicBlockRef): LLVMValueRef =

@@ -49,13 +49,16 @@
                     - a
                     - b
                   es:
-                    - "+":
-                        - parameter:
-                            name: a
-                            offset: 0
-                        - parameter:
-                            name: b
-                            offset: 1
+                    - call-procedure:
+                        procedure:
+                          external-procedure: +
+                        es:
+                          - parameter:
+                              name: a
+                              offset: 0
+                          - parameter:
+                              name: b
+                              offset: 1
               - procedure:
                   name: _main
                   arguments: [ ]
@@ -119,13 +122,16 @@
                     - a
                     - b
                   es:
-                    - "+":
-                        - parameter:
-                            name: a
-                            offset: 0
-                        - parameter:
-                            name: b
-                            offset: 1
+                    - call-procedure:
+                        procedure:
+                          external-procedure: +
+                        es:
+                          - parameter:
+                              name: a
+                              offset: 0
+                          - parameter:
+                              name: b
+                              offset: 1
               - procedure:
                   name: _main
                   arguments: [ ]

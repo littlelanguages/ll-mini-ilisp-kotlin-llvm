@@ -39,21 +39,10 @@ data class ExternalValueBinding<S, T>(override val name: String, val externalNam
 data class ExternalProcedureBinding<S, T>(
     override val name: String,
     val validateArguments: (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors?,
-    val compile: (state: S, arguments: List<Expression<S, T>>) -> T
+    val compile: (state: S, arguments: List<Expression<S, T>>) -> T?
 ) : ProcedureBinding<S, T> {
     override fun yaml(): Any =
-        singletonMap(
-            "external-procedure", mapOf(
-                Pair("name", name)
-            )
-        )
-//    fun validateArguments(e: SExpression, name: String, arguments: List<Expression>): Errors? =
-//        if (parameterCount == null)
-//            null
-//        else if (arguments.size == parameterCount)
-//            null
-//        else
-//            ArgumentMismatchError(name, parameterCount, arguments.size, e.position)
+        singletonMap("external-procedure", name)
 }
 
 data class ParameterBinding<S, T>(override val name: String, val offset: Int) : Binding<S, T> {

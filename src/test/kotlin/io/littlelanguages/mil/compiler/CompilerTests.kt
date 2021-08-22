@@ -15,6 +15,7 @@ import io.littlelanguages.mil.dynamic.Binding
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.translate
 import io.littlelanguages.mil.dynamic.tst.Expression
+import io.littlelanguages.mil.dynamic.tst.LiteralInt
 import io.littlelanguages.mil.static.Scanner
 import io.littlelanguages.mil.static.ast.SExpression
 import io.littlelanguages.mil.static.parse
@@ -34,7 +35,10 @@ class CompilerTests : FunSpec({
             ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
             ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
             ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
-            ExternalProcedureBinding("/", validateVariableArityArguments(), compileFixedArity("_divide")),
+            ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
+            ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
+            ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
+            ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
             ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair"))
         )
 
@@ -56,7 +60,7 @@ private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: Strin
             ArgumentMismatchError(name, arity, arguments.size, e.position)
     }
 
-private fun <S, T> validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors? =
+private fun validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
     { _, _, _ -> null }
 
 private fun compileFixedArity(externalName: String): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef =
@@ -66,7 +70,29 @@ private fun compileFixedArity(externalName: String): (builder: Builder, argument
             List(arguments.size) { builder.structValueP },
             builder.structValueP
         )
-        builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) }, builder.nextName())
+        builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) })
+    }
+
+private fun compileOperator(
+    unitValue: Int,
+    externalName: String,
+    explicitFirst: Boolean
+): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+    { builder, arguments ->
+        val ops = arguments.mapNotNull { compileE(builder, it) }
+
+        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+            externalName,
+            List(2) { builder.structValueP },
+            builder.structValueP
+        )
+
+        if (ops.isEmpty())
+            compileE(builder, LiteralInt(unitValue))
+        else if (explicitFirst && ops.size == 1)
+            builder.buildCall(namedFunction, listOf(compileEForce(builder, LiteralInt(unitValue)), ops[0]))
+        else
+            ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
     }
 
 

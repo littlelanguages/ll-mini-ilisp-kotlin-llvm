@@ -97,11 +97,6 @@ data class LessThanExpression<S, T>(val e1: Expression<S, T>, val e2: Expression
         )
 }
 
-data class MinusExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("-", es.map { it.yaml() })
-}
-
 data class NullPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("null?", es.yaml())
@@ -110,11 +105,6 @@ data class NullPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
 data class PairPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("pair?", es.yaml())
-}
-
-data class PlusExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("+", es.map { it.yaml() })
 }
 
 data class PrintExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
@@ -154,14 +144,4 @@ data class LiteralString<S, T>(val value: String) : Expression<S, T> {
 
 class LiteralUnit<S, T> : Expression<S, T> {
     override fun yaml(): Any = "()"
-}
-
-data class SlashExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("/", es.map { it.yaml() })
-}
-
-data class StarExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("*", es.map { it.yaml() })
 }

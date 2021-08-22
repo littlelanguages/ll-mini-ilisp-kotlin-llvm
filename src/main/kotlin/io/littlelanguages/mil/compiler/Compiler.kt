@@ -21,8 +21,6 @@ fun compile(context: Context, moduleID: String, program: Program<Builder, LLVMVa
 }
 
 private class Compiler(val module: Module) {
-    val builtinDeclarations = BuiltinDeclarations(module)
-
     fun compile(program: Program<Builder, LLVMValueRef>) {
         program.values.forEach {
             module.addGlobal(it, module.structValueP, LLVM.LLVMConstPointerNull(module.structValueP), false)
@@ -66,19 +64,19 @@ private class Compiler(val module: Module) {
             compileE(builder, b)
         }
 
-        builder.buildRet(result ?: builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, module.nextName()))
+        builder.buildRet(result ?: builder.invoke(BuiltinDeclarationEnum.V_NULL))
     }
-
-    private fun compileE(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
-        CompileExpression(builder).compileE(e)
 }
+
+fun compileE(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
+    CompileExpression(builder).compileE(e)
 
 fun compileEForce(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMValueRef =
     CompileExpression(builder).compileEForce(e)
 
 private class CompileExpression(val builder: Builder) {
     fun compileEForce(e: Expression<Builder, LLVMValueRef>): LLVMValueRef =
-        compileE(e) ?: builder.builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
+        compileE(e) ?: builder.invoke(BuiltinDeclarationEnum.V_NULL)
 
     fun compileE(e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
         when (e) {
@@ -93,7 +91,7 @@ private class CompileExpression(val builder: Builder) {
                     is ExternalProcedureBinding ->
                         procedure.compile(builder, e.es)
                     else ->
-                        builder.buildCall(builder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) }, builder.nextName())
+                        builder.buildCall(builder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) })
                 }
 
             is EqualsExpression ->
@@ -155,17 +153,11 @@ private class CompileExpression(val builder: Builder) {
             is LiteralUnit ->
                 builder.invoke(BuiltinDeclarationEnum.V_NULL)
 
-            is MinusExpression ->
-                compileOperator(e.es, 0, BuiltinDeclarationEnum.MINUS, true)
-
             is NullPExpression ->
                 builder.invoke(BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)))
 
             is PairPExpression ->
                 builder.invoke(BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)))
-
-            is PlusExpression ->
-                compileOperator(e.es, 0, BuiltinDeclarationEnum.PLUS, false)
 
             is PrintlnExpression -> {
                 e.es.forEach {
@@ -181,12 +173,6 @@ private class CompileExpression(val builder: Builder) {
                 null
             }
 
-            is SlashExpression ->
-                compileOperator(e.es, 1, BuiltinDeclarationEnum.DIVIDE, true)
-
-            is StarExpression ->
-                compileOperator(e.es, 1, BuiltinDeclarationEnum.MULTIPLY, false)
-
             is StringPExpression ->
                 builder.invoke(BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)))
 
@@ -201,7 +187,6 @@ private class CompileExpression(val builder: Builder) {
 
             else ->
                 TODO(e.toString())
-//                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
         }
 
     private fun compileOperator(
