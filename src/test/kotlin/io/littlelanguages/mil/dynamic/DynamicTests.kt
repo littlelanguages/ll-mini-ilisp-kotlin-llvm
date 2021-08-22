@@ -16,6 +16,8 @@ import java.io.StringReader
 
 private val yaml = Yaml()
 
+typealias S = String
+typealias T = String
 
 class DynamicTests : FunSpec({
     context("Conformance Tests") {
@@ -23,7 +25,7 @@ class DynamicTests : FunSpec({
 
         val scenarios: Any = yaml.load(content)
 
-        val builtinBindings: List<ExternalProcedureBinding> = emptyList()
+        val builtinBindings: List<ExternalProcedureBinding<S, T>> = emptyList()
 
         if (scenarios is List<*>) {
             parserConformanceTest(builtinBindings, this, scenarios)
@@ -32,11 +34,11 @@ class DynamicTests : FunSpec({
 })
 
 
-fun translate(builtinBindings: List<Binding>, input: String): Either<List<Errors>, Program> =
+fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) }
 
 
-suspend fun parserConformanceTest(builtinBindings: List<Binding>, ctx: FunSpecContainerContext, scenarios: List<*>) {
+suspend fun parserConformanceTest(builtinBindings: List<Binding<S, T>>, ctx: FunSpecContainerContext, scenarios: List<*>) {
     scenarios.forEach { scenario ->
         val s = scenario as Map<*, *>
 

@@ -6,14 +6,19 @@ import io.kotest.matchers.shouldBe
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
+import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.Binding
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.translate
+import io.littlelanguages.mil.dynamic.tst.Expression
 import io.littlelanguages.mil.static.Scanner
+import io.littlelanguages.mil.static.ast.SExpression
 import io.littlelanguages.mil.static.parse
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.yaml.snakeyaml.Yaml
 import java.io.*
 
@@ -26,10 +31,11 @@ class CompilerTests : FunSpec({
         val content = File("./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml").readText()
 
         val builtinBindings = listOf(
-            ExternalProcedureBinding("boolean?", 1, "_booleanp"),
-            ExternalProcedureBinding("car", 1, "_pair_car"),
-            ExternalProcedureBinding("cdr", 1, "_pair_cdr"),
-            ExternalProcedureBinding("pair", 2, "_mk_pair")
+            ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
+            ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
+            ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
+            ExternalProcedureBinding("/", validateVariableArityArguments(), compileFixedArity("_divide")),
+            ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair"))
         )
 
         val scenarios: Any = yaml.load(content)
@@ -42,11 +48,37 @@ class CompilerTests : FunSpec({
     }
 })
 
+private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
+    { e, name, arguments ->
+        if (arity == arguments.size)
+            null
+        else
+            ArgumentMismatchError(name, arity, arguments.size, e.position)
+    }
 
-fun compile(builtinBindings: List<Binding>, context: Context, input: String): Either<List<Errors>, Module> =
+private fun <S, T> validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors? =
+    { _, _, _ -> null }
+
+private fun compileFixedArity(externalName: String): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef =
+    { builder, arguments ->
+        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+            externalName,
+            List(arguments.size) { builder.structValueP },
+            builder.structValueP
+        )
+        builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) }, builder.nextName())
+    }
+
+
+fun compile(builtinBindings: List<Binding<Builder, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "test", it) }
 
-suspend fun parserConformanceTest(builtinBindings: List<Binding>, context: Context, ctx: FunSpecContainerContext, scenarios: List<*>) {
+suspend fun parserConformanceTest(
+    builtinBindings: List<Binding<Builder, LLVMValueRef>>,
+    context: Context,
+    ctx: FunSpecContainerContext,
+    scenarios: List<*>
+) {
     scenarios.forEach { scenario ->
         val s = scenario as Map<*, *>
 

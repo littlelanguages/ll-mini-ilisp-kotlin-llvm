@@ -4,18 +4,15 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.compiler.llvm.Builder
-import io.littlelanguages.mil.compiler.llvm.Context
-import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.compiler.llvm.*
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-fun compile(context: Context, moduleID: String, program: Program): Either<List<Errors>, Module> {
+fun compile(context: Context, moduleID: String, program: Program<Builder, LLVMValueRef>): Either<List<Errors>, Module> {
     val module = context.module(moduleID)
     val compiler = Compiler(module)
     compiler.compile(program)
@@ -26,7 +23,7 @@ fun compile(context: Context, moduleID: String, program: Program): Either<List<E
 private class Compiler(val module: Module) {
     val builtinDeclarations = BuiltinDeclarations(module)
 
-    fun compile(program: Program) {
+    fun compile(program: Program<Builder, LLVMValueRef>) {
         program.values.forEach {
             module.addGlobal(it, module.structValueP, LLVM.LLVMConstPointerNull(module.structValueP), false)
         }
@@ -38,11 +35,11 @@ private class Compiler(val module: Module) {
         System.err.println(module.toString())
 
         when (val result = module.verify()) {
-            is io.littlelanguages.mil.compiler.llvm.VerifyError -> throw CompilationError(result.message)
+            is VerifyError -> throw CompilationError(result.message)
         }
     }
 
-    private fun compile(declaration: Declaration) {
+    private fun compile(declaration: Declaration<Builder, LLVMValueRef>) {
         if (declaration is Procedure)
             if (declaration.name == "_main")
                 compileMainProcedure(declaration)
@@ -52,7 +49,7 @@ private class Compiler(val module: Module) {
             TODO(declaration.toString())
     }
 
-    private fun compileMainProcedure(declaration: Procedure) {
+    private fun compileMainProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, emptyList(), module.i32)
 
         declaration.es.forEach {
@@ -62,25 +59,28 @@ private class Compiler(val module: Module) {
         builder.buildRet(LLVM.LLVMConstInt(module.i32, 0, 0))
     }
 
-    private fun compileProcedure(declaration: Procedure) {
+    private fun compileProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
 
-        val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression ->
+        val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression<Builder, LLVMValueRef> ->
             compileE(builder, b)
         }
 
         builder.buildRet(result ?: builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, module.nextName()))
     }
 
-    private fun compileE(builder: Builder, e: Expression): LLVMValueRef? =
-        CompileExpression(builder, builtinDeclarations).compileE(e)
+    private fun compileE(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
+        CompileExpression(builder).compileE(e)
 }
 
-private class CompileExpression(val builder: Builder, val builtinDeclarations: BuiltinDeclarations) {
-    fun compileEForce(e: Expression): LLVMValueRef =
-        compileE(e) ?: builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
+fun compileEForce(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMValueRef =
+    CompileExpression(builder).compileEForce(e)
 
-    fun compileE(e: Expression): LLVMValueRef? =
+private class CompileExpression(val builder: Builder) {
+    fun compileEForce(e: Expression<Builder, LLVMValueRef>): LLVMValueRef =
+        compileE(e) ?: builder.builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
+
+    fun compileE(e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
                 builder.buildStore(compileEForce(e.e), builder.getNamedGlobal(e.symbol.name)!!)
@@ -88,31 +88,23 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
                 null
             }
 
-            is CallProcedureExpression -> {
-                val procedure = e.procedure
-
-                if (procedure is ExternalProcedureBinding) {
-                    val namedFunction = builder.getNamedFunction(procedure.externalName) ?:builder.addExternalFunction(
-                            procedure.externalName,
-                            List(procedure.parameterCount ?: 0) { builder.structValueP },
-                            builder.structValueP
-                        )
-                    builder.buildCall(namedFunction, e.es.map { compileEForce(it) }, builder.nextName())
-                } else
-                    builder.buildCall(builder.getNamedFunction(e.procedure.name)!!, e.es.map { compileEForce(it) }, builder.nextName())
-            }
+            is CallProcedureExpression ->
+                when (val procedure = e.procedure) {
+                    is ExternalProcedureBinding ->
+                        procedure.compile(builder, e.es)
+                    else ->
+                        builder.buildCall(builder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) }, builder.nextName())
+                }
 
             is EqualsExpression ->
-                builtinDeclarations.invoke(
-                    builder,
+                builder.invoke(
                     BuiltinDeclarationEnum.EQUALS,
-                    listOf(compileEForce(e.e1), compileEForce(e.e2)),
-                    builder.nextName()
+                    listOf(compileEForce(e.e1), compileEForce(e.e2))
                 )
 
             is IfExpression -> {
                 val e1op = compileEForce(e.e1)
-                val falseOp = builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_FALSE, builder.nextName())
+                val falseOp = builder.invoke(BuiltinDeclarationEnum.V_FALSE)
 
                 val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp, builder.nextName())
 
@@ -137,61 +129,40 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
             }
 
             is IntegerPExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)), builder.nextName())
+                builder.invoke(BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)))
 
             is LessThanExpression ->
-                builtinDeclarations.invoke(
-                    builder,
+                builder.invoke(
                     BuiltinDeclarationEnum.LESS_THAN,
-                    listOf(compileEForce(e.e1), compileEForce(e.e2)),
-                    builder.nextName()
+                    listOf(compileEForce(e.e1), compileEForce(e.e2))
                 )
 
             is LiteralBool ->
-                builtinDeclarations.invoke(
-                    builder,
-                    if (e == LiteralBool.TRUE) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE,
-                    builder.nextName()
-                )
+                builder.invoke(if (e.value) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE)
 
             is LiteralInt ->
-                builtinDeclarations.invoke(
-                    builder,
-                    BuiltinDeclarationEnum.FROM_LITERAL_INT,
-                    listOf(LLVM.LLVMConstInt(builder.i32, e.value.toLong(), 0)),
-                    builder.nextName()
-                )
+                builder.invoke(BuiltinDeclarationEnum.FROM_LITERAL_INT, listOf(LLVM.LLVMConstInt(builder.i32, e.value.toLong(), 0)))
 
             is LiteralString -> {
                 val globalStringName = builder.addGlobalString(e.value, builder.nextName())
 
-                builtinDeclarations.invoke(
-                    builder,
+                builder.invoke(
                     BuiltinDeclarationEnum.FROM_LITERAL_STRING,
-                    listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(builder.c0i64, builder.c0i64), 2)),
-                    builder.nextName()
+                    listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(builder.c0i64, builder.c0i64), 2))
                 )
             }
 
             is LiteralUnit ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
+                builder.invoke(BuiltinDeclarationEnum.V_NULL)
 
             is MinusExpression ->
                 compileOperator(e.es, 0, BuiltinDeclarationEnum.MINUS, true)
 
             is NullPExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)), builder.nextName())
-
-//            is PairExpression ->
-//                builtinDeclarations.invoke(
-//                    builder,
-//                    BuiltinDeclarationEnum.PAIR,
-//                    listOf(compileEForce(e.car), compileEForce(e.cdr)),
-//                    builder.nextName()
-//                )
+                builder.invoke(BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)))
 
             is PairPExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)), builder.nextName())
+                builder.invoke(BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)))
 
             is PlusExpression ->
                 compileOperator(e.es, 0, BuiltinDeclarationEnum.PLUS, false)
@@ -201,11 +172,11 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
                     val op = compileE(it)
 
                     if (op != null) {
-                        builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
+                        builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
                     }
                 }
 
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
+                builder.invoke(BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
 
                 null
             }
@@ -217,7 +188,7 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
                 compileOperator(e.es, 1, BuiltinDeclarationEnum.MULTIPLY, false)
 
             is StringPExpression ->
-                builtinDeclarations.invoke(builder, BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)), builder.nextName())
+                builder.invoke(BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)))
 
             is SymbolReferenceExpression ->
                 when (val symbol = e.symbol) {
@@ -233,69 +204,19 @@ private class CompileExpression(val builder: Builder, val builtinDeclarations: B
 //                return builtinBuiltinDeclarations.invoke(builder, BuiltinDeclarationEnum.V_NULL, builder.nextName())
         }
 
-    private fun compileOperator(es: Expressions, unitValue: Int, operator: BuiltinDeclarationEnum, explicitFirst: Boolean): LLVMValueRef? {
+    private fun compileOperator(
+        es: Expressions<Builder, LLVMValueRef>,
+        unitValue: Int,
+        operator: BuiltinDeclarationEnum,
+        explicitFirst: Boolean
+    ): LLVMValueRef? {
         val ops = es.mapNotNull { compileE(it) }
 
         return if (ops.isEmpty())
             compileE(LiteralInt(unitValue))
         else if (explicitFirst && ops.size == 1)
-            builtinDeclarations.invoke(builder, operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]), builder.nextName())
+            builder.invoke(operator, listOf(compileEForce(LiteralInt(unitValue)), ops[0]))
         else
-            ops.drop(1).fold(ops[0]) { op1, op2 -> builtinDeclarations.invoke(builder, operator, listOf(op1, op2), builder.nextName()) }
+            ops.drop(1).fold(ops[0]) { op1, op2 -> builder.invoke(operator, listOf(op1, op2)) }
     }
-}
-
-private enum class BuiltinDeclarationEnum {
-    DIVIDE, EQUALS, FROM_LITERAL_INT, FROM_LITERAL_STRING,
-    INTEGERP, LESS_THAN, MINUS, MULTIPLY, NULLP, PAIRP, PLUS,
-    PRINT_VALUE, PRINT_NEWLINE, STRINGP, V_TRUE,
-    V_FALSE, V_NULL
-}
-
-private class BuiltinDeclarations(val module: Module) {
-    private val declarations = mapOf(
-        Pair(BuiltinDeclarationEnum.DIVIDE, BuiltinDeclaration("_divide", listOf(module.structValueP, module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.EQUALS, BuiltinDeclaration("_equals", listOf(module.structValueP, module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.FROM_LITERAL_INT, BuiltinDeclaration("_from_literal_int", listOf(module.i32), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.FROM_LITERAL_STRING, BuiltinDeclaration("_from_literal_string", listOf(module.i8P), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.INTEGERP, BuiltinDeclaration("_integerp", listOf(module.structValueP), module.structValueP)),
-        Pair(
-            BuiltinDeclarationEnum.LESS_THAN,
-            BuiltinDeclaration("_less_than", listOf(module.structValueP, module.structValueP), module.structValueP)
-        ),
-        Pair(BuiltinDeclarationEnum.MINUS, BuiltinDeclaration("_minus", listOf(module.structValueP, module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.MULTIPLY, BuiltinDeclaration("_multiply", listOf(module.structValueP, module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.NULLP, BuiltinDeclaration("_nullp", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.PAIRP, BuiltinDeclaration("_pairp", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.PLUS, BuiltinDeclaration("_plus", listOf(module.structValueP, module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.PRINT_VALUE, BuiltinDeclaration("_print_value", listOf(module.structValueP), module.void)),
-        Pair(BuiltinDeclarationEnum.PRINT_NEWLINE, BuiltinDeclaration("_print_newline", listOf(), module.void)),
-        Pair(BuiltinDeclarationEnum.STRINGP, BuiltinDeclaration("_stringp", listOf(module.structValueP), module.structValueP)),
-        Pair(BuiltinDeclarationEnum.V_TRUE, BuiltinDeclaration("_VTrue", null, module.structValueP)),
-        Pair(BuiltinDeclarationEnum.V_FALSE, BuiltinDeclaration("_VFalse", null, module.structValueP)),
-        Pair(BuiltinDeclarationEnum.V_NULL, BuiltinDeclaration("_VNull", null, module.structValueP))
-    )
-
-    fun get(bip: BuiltinDeclarationEnum): LLVMValueRef {
-        val declaration = declarations[bip]!!
-        return if (declaration.isProcedure())
-            module.getNamedFunction(declaration.name) ?: module.addExternalFunction(
-                declaration.name,
-                declaration.parameters!!,
-                declaration.returnType
-            )
-        else
-            module.getNamedGlobal(declaration.name) ?: module.addGlobal(declaration.name, declaration.returnType)!!
-    }
-
-    fun invoke(builder: Builder, bip: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String): LLVMValueRef =
-        builder.buildCall(get(bip), arguments, name)
-
-    fun invoke(builder: Builder, bip: BuiltinDeclarationEnum, name: String): LLVMValueRef =
-        builder.buildLoad(get(bip), name)
-}
-
-private data class BuiltinDeclaration(val name: String, val parameters: List<LLVMTypeRef>?, val returnType: LLVMTypeRef) {
-    fun isProcedure() =
-        parameters != null
 }

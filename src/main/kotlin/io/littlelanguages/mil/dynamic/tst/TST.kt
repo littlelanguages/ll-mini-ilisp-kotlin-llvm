@@ -3,9 +3,8 @@ package io.littlelanguages.mil.dynamic.tst
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.mil.dynamic.Binding
 import io.littlelanguages.mil.dynamic.ProcedureBinding
-import io.littlelanguages.mil.dynamic.TopLevelProcedureBinding
 
-data class Program(val values: List<String>, val declarations: List<Declaration>) : Yamlable {
+data class Program<S, T>(val values: List<String>, val declarations: List<Declaration<S, T>>) : Yamlable {
     override fun yaml(): Any =
         singletonMap(
             "program", mapOf(
@@ -15,9 +14,9 @@ data class Program(val values: List<String>, val declarations: List<Declaration>
         )
 }
 
-sealed interface Declaration : Yamlable
+sealed interface Declaration<S, T> : Yamlable
 
-data class Procedure(val name: String, val arguments: List<String>, val es: Expressions) : Declaration, Expression {
+data class Procedure<S, T>(val name: String, val arguments: List<String>, val es: Expressions<S, T>) : Declaration<S, T>, Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "procedure", mapOf(
@@ -28,11 +27,11 @@ data class Procedure(val name: String, val arguments: List<String>, val es: Expr
         )
 }
 
-typealias  Expressions = List<Expression>
+typealias  Expressions<S, T> = List<Expression<S, T>>
 
-interface Expression : Yamlable
+interface Expression<S, T> : Yamlable
 
-data class AssignExpression(val symbol: Binding, val e: Expression) : Expression {
+data class AssignExpression<S, T>(val symbol: Binding<S, T>, val e: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "assign", mapOf(
@@ -42,7 +41,7 @@ data class AssignExpression(val symbol: Binding, val e: Expression) : Expression
         )
 }
 
-data class CallProcedureExpression(val procedure: ProcedureBinding, val es: Expressions) : Expression {
+data class CallProcedureExpression<S, T>(val procedure: ProcedureBinding<S, T>, val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "call-procedure", mapOf(
@@ -52,7 +51,7 @@ data class CallProcedureExpression(val procedure: ProcedureBinding, val es: Expr
         )
 }
 
-data class CallValueExpression(val operand: Expression, val es: Expressions) : Expression {
+data class CallValueExpression<S, T>(val operand: Expression<S, T>, val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "call-value", mapOf(
@@ -62,7 +61,7 @@ data class CallValueExpression(val operand: Expression, val es: Expressions) : E
         )
 }
 
-data class EqualsExpression(val e1: Expression, val e2: Expression) : Expression {
+data class EqualsExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "=", mapOf(
@@ -72,7 +71,7 @@ data class EqualsExpression(val e1: Expression, val e2: Expression) : Expression
         )
 }
 
-data class IfExpression(val e1: Expression, val e2: Expression, val e3: Expression) : Expression {
+data class IfExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>, val e3: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "if", mapOf(
@@ -83,12 +82,12 @@ data class IfExpression(val e1: Expression, val e2: Expression, val e3: Expressi
         )
 }
 
-data class IntegerPExpression(val es: Expression) : Expression {
+data class IntegerPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("integer?", es.yaml())
 }
 
-data class LessThanExpression(val e1: Expression, val e2: Expression) : Expression {
+data class LessThanExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "<", mapOf(
@@ -98,88 +97,71 @@ data class LessThanExpression(val e1: Expression, val e2: Expression) : Expressi
         )
 }
 
-data class MinusExpression(val es: Expressions) : Expression {
+data class MinusExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("-", es.map { it.yaml() })
 }
 
-data class NullPExpression(val es: Expression) : Expression {
+data class NullPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("null?", es.yaml())
 }
 
-data class PairPExpression(val es: Expression) : Expression {
+data class PairPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("pair?", es.yaml())
 }
 
-data class PlusExpression(val es: Expressions) : Expression {
+data class PlusExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("+", es.map { it.yaml() })
 }
 
-data class PrintExpression(val es: Expressions) : Expression {
+data class PrintExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("print", es.map { it.yaml() })
 }
 
-data class PrintlnExpression(val es: Expressions) : Expression {
+data class PrintlnExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("println", es.map { it.yaml() })
 }
 
-data class StringPExpression(val es: Expression) : Expression {
+data class StringPExpression<S, T>(val es: Expression<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("string?", es.yaml())
 }
 
-data class SymbolReferenceExpression(val symbol: Binding) : Expression {
+data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         symbol.yaml()
 }
 
-enum class LiteralBool : Expression {
-    TRUE {
-        override fun yaml(): Any =
-            "TRUE"
-    },
-    FALSE {
-        override fun yaml(): Any =
-            "FALSE"
-    }
+data class LiteralBool<S, T>(val value: Boolean) : Expression<S, T> {
+    override fun yaml(): Any =
+        if (value) "TRUE" else "FALSE"
 }
 
-data class LiteralInt(val value: Int) : Expression {
+data class LiteralInt<S, T>(val value: Int) : Expression<S, T> {
     override fun yaml(): Any =
         value
 }
 
-data class LiteralString(val value: String) : Expression {
+data class LiteralString<S, T>(val value: String) : Expression<S, T> {
     override fun yaml(): Any =
         value
 }
 
-object LiteralUnit : Expression {
+class LiteralUnit<S, T> : Expression<S, T> {
     override fun yaml(): Any = "()"
 }
 
-data class PairExpression(val car: Expression, val cdr: Expression) : Expression {
-    override fun yaml(): Any =
-        singletonMap(
-            "pair", mapOf(
-                Pair("car", car.yaml()),
-                Pair("cdr", cdr.yaml())
-            )
-        )
-}
-
-data class SlashExpression(val es: Expressions) : Expression {
+data class SlashExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("/", es.map { it.yaml() })
 }
 
-data class StarExpression(val es: Expressions) : Expression {
+data class StarExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap("*", es.map { it.yaml() })
 }
-

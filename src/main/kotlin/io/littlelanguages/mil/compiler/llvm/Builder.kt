@@ -7,6 +7,8 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 class Builder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
+    val builtinDeclarations = BuiltinDeclarations(module)
+
     private var currentBasicBlock: LLVMBasicBlockRef = appendBasicBlock("entry")
 
     init {
@@ -63,6 +65,12 @@ class Builder(private val context: Context, private val module: Module, private 
 
     fun nextName(): String =
         module.nextName()
+
+    fun invoke(operator: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String? = null): LLVMValueRef =
+        builtinDeclarations.invoke(this, operator, arguments, name ?: nextName())
+
+    fun invoke(bip: BuiltinDeclarationEnum): LLVMValueRef =
+        builtinDeclarations.invoke(this, bip, nextName())
 
     val void get() = context.void
     val structValueP get() = context.structValueP

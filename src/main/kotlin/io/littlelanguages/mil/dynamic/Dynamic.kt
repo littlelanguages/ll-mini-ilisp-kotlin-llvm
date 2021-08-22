@@ -6,39 +6,39 @@ import io.littlelanguages.data.Right
 import io.littlelanguages.mil.*
 import io.littlelanguages.mil.dynamic.tst.*
 
-fun translate(builtinBindings: List<Binding>, p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program> =
+fun <S, T> translate(builtinBindings: List<Binding<S, T>>, p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program<S, T>> =
     Translator(builtinBindings, p).apply()
 
-private class Translator(builtinBindings: List<Binding>, val ast: io.littlelanguages.mil.static.ast.Program) {
+private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io.littlelanguages.mil.static.ast.Program) {
     val errors =
         mutableListOf<Errors>()
 
-    val bindings = Bindings()
+    val bindings = Bindings<S, T>()
 
     init {
         builtinBindings.forEach { bindings.add(it.name, it) }
     }
 
-    fun apply(): Either<List<Errors>, Program> {
+    fun apply(): Either<List<Errors>, Program<S, T>> {
         val r = program(ast.expressions)
 
         return if (errors.isEmpty()) Right(r) else Left(errors)
     }
 
-    private fun program(es: List<io.littlelanguages.mil.static.ast.Expression>): Program {
-        val declarations = mutableListOf<Declaration>()
-        val expressions = mutableListOf<Expression>()
+    private fun program(es: List<io.littlelanguages.mil.static.ast.Expression>): Program<S, T> {
+        val declarations = mutableListOf<Declaration<S, T>>()
+        val expressions = mutableListOf<Expression<S, T>>()
         val names = mutableListOf<String>()
 
         for (e in es) {
             val ep = expressionToTST(e)
 
-            if (ep is Declaration)
-                declarations.add(ep)
+            if (ep is Declaration<*, *>)
+                declarations.add(ep as Declaration<S, T>)
             else
                 expressions.add(ep)
 
-            if (ep is AssignExpression)
+            if (ep is AssignExpression<S, T>)
                 names.add(ep.symbol.name)
         }
 
@@ -47,11 +47,11 @@ private class Translator(builtinBindings: List<Binding>, val ast: io.littlelangu
         return Program(names, declarations)
     }
 
-    private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): Expression =
+    private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): Expression<S, T> =
         when (e) {
             is io.littlelanguages.mil.static.ast.SExpression ->
                 if (e.expressions.isEmpty())
-                    LiteralUnit
+                    LiteralUnit()
                 else if (e.isConst())
                     constToTST(e)
                 else {
@@ -115,19 +115,21 @@ private class Translator(builtinBindings: List<Binding>, val ast: io.littlelangu
                                         CallProcedureExpression(binding, arguments)
                                     else
                                         reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
-                                else if (binding is ExternalProcedureBinding)
-                                    if (binding.parameterCount == arguments.size)
+                                else if (binding is ExternalProcedureBinding) {
+                                    val error = binding.validateArguments(e, first.name, arguments)
+
+                                    if (error == null)
                                         CallProcedureExpression(binding, arguments)
                                     else
-                                        reportError(ArgumentMismatchError(first.name, binding.parameterCount ?: -1, arguments.size, e.position))
-                                else
+                                        reportError(error)
+                                } else
                                     CallValueExpression(SymbolReferenceExpression(binding), arguments)
                             }
                         }
                     } else
                         TODO()
                 }
-            is io.littlelanguages.mil.static.ast.LiteralBool -> if (e.value) LiteralBool.TRUE else LiteralBool.FALSE
+            is io.littlelanguages.mil.static.ast.LiteralBool -> LiteralBool(e.value)
             is io.littlelanguages.mil.static.ast.LiteralInt -> LiteralInt(e.value.toInt())
             is io.littlelanguages.mil.static.ast.LiteralString -> translateLiteralString(e)
             is io.littlelanguages.mil.static.ast.Symbol -> {
@@ -179,7 +181,7 @@ private class Translator(builtinBindings: List<Binding>, val ast: io.littlelangu
             } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
                 val v2 = e.expressions[2]
 
-                val binding = TopLevelValueBinding(v1.name)
+                val binding = TopLevelValueBinding<S, T>(v1.name)
                 bindings.add(v1.name, binding)
                 AssignExpression(binding, expressionToTST(v2))
             } else
@@ -187,21 +189,21 @@ private class Translator(builtinBindings: List<Binding>, val ast: io.littlelangu
         } else
             reportError(InvalidConstFormError(e.position()))
 
-    private fun ifToTST(es: List<Expression>): Expression =
+    private fun ifToTST(es: List<Expression<S, T>>): Expression<S, T> =
         when (es.size) {
-            0 -> LiteralUnit
+            0 -> LiteralUnit()
             1 -> es[0]
-            2 -> IfExpression(es[0], es[1], LiteralUnit)
+            2 -> IfExpression(es[0], es[1], LiteralUnit())
             else -> IfExpression(es[0], es[1], ifToTST(es.drop(2)))
         }
 
-    private fun reportError(error: Errors): Expression {
+    private fun reportError(error: Errors): Expression<S, T> {
         errors.add(error)
-        return LiteralUnit
+        return LiteralUnit()
     }
 }
 
-fun translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString {
+fun <S, T>translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString<S, T> {
     val sb = StringBuilder()
     val eValue = e.value
     val eLength = eValue.length
