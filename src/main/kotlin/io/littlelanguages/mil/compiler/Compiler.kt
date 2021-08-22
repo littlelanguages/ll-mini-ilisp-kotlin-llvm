@@ -53,9 +53,7 @@ private class Compiler(val module: Module) {
     }
 
     private fun compileMainProcedure(declaration: Procedure) {
-        val procedureType = LLVM.LLVMFunctionType(module.i32, PointerPointer<LLVMTypeRef>(), 0, 0)
-
-        val builder = module.addFunction(declaration.name, procedureType)
+        val builder = module.addFunction(declaration.name, emptyList(), module.i32)
 
         declaration.es.forEach {
             compileE(builder, it)
@@ -65,15 +63,7 @@ private class Compiler(val module: Module) {
     }
 
     private fun compileProcedure(declaration: Procedure) {
-        val procedureType =
-            LLVM.LLVMFunctionType(
-                module.structValueP,
-                pointerPointerOf(declaration.arguments.map { module.structValueP }),
-                declaration.arguments.size,
-                0
-            )
-
-        val builder = module.addFunction(declaration.name, procedureType)
+        val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
 
         val result = declaration.es.fold(null) { _: LLVMValueRef?, b: Expression ->
             compileE(builder, b)
