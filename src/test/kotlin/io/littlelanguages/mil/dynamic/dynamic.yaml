@@ -9,8 +9,11 @@
             name: _main
             arguments: [ ]
             es:
-              - println:
-                  - 'Hello world'
+              - call-procedure:
+                  procedure:
+                    external-procedure: println
+                  es:
+                    - 'Hello world'
 - scenario:
     name: Declaration
     tests:
@@ -105,8 +108,11 @@
                         symbol:
                           toplevel-value: x
                         e: 10
-                    - println:
-                        - toplevel-value: x
+                    - call-procedure:
+                        procedure:
+                          external-procedure: println
+                        es:
+                          - toplevel-value: x
       - name: Top-level procedure
         input: |
           (const (add a b) (+ a b))
@@ -136,15 +142,18 @@
                   name: _main
                   arguments: [ ]
                   es:
-                    - println:
-                        - call-procedure:
-                            procedure:
-                              toplevel-procedure:
-                                name: add
-                                parameter-count: 2
-                            es:
-                              - 1
-                              - 2
+                    - call-procedure:
+                        procedure:
+                          external-procedure: println
+                        es:
+                          - call-procedure:
+                              procedure:
+                                toplevel-procedure:
+                                  name: add
+                                  parameter-count: 2
+                              es:
+                                - 1
+                                - 2
       - name: Top-level procedure with incorrect number of arguments
         input: |
           (const (add a b) (+ a b))

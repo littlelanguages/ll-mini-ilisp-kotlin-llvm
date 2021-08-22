@@ -96,12 +96,6 @@ private class CompileExpression(val builder: Builder) {
                         builder.buildCall(builder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) })
                 }
 
-//            is EqualsExpression ->
-//                builder.invoke(
-//                    BuiltinDeclarationEnum.EQUALS,
-//                    listOf(compileEForce(e.e1), compileEForce(e.e2))
-//                )
-
             is IfExpression -> {
                 val e1op = compileEForce(e.e1)
                 val falseOp = builder.invoke(BuiltinDeclarationEnum.V_FALSE)
@@ -128,15 +122,6 @@ private class CompileExpression(val builder: Builder) {
                 builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse), builder.nextName())
             }
 
-//            is IntegerPExpression ->
-//                builder.invoke(BuiltinDeclarationEnum.INTEGERP, listOf(compileEForce(e.es)))
-
-//            is LessThanExpression ->
-//                builder.invoke(
-//                    BuiltinDeclarationEnum.LESS_THAN,
-//                    listOf(compileEForce(e.e1), compileEForce(e.e2))
-//                )
-
             is LiteralBool ->
                 builder.invoke(if (e.value) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE)
 
@@ -154,29 +139,6 @@ private class CompileExpression(val builder: Builder) {
 
             is LiteralUnit ->
                 builder.invoke(BuiltinDeclarationEnum.V_NULL)
-
-//            is NullPExpression ->
-//                builder.invoke(BuiltinDeclarationEnum.NULLP, listOf(compileEForce(e.es)))
-
-//            is PairPExpression ->
-//                builder.invoke(BuiltinDeclarationEnum.PAIRP, listOf(compileEForce(e.es)))
-
-            is PrintlnExpression -> {
-                e.es.forEach {
-                    val op = compileE(it)
-
-                    if (op != null) {
-                        builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
-                    }
-                }
-
-                builder.invoke(BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
-
-                null
-            }
-
-//            is StringPExpression ->
-//                builder.invoke(BuiltinDeclarationEnum.STRINGP, listOf(compileEForce(e.es)))
 
             is SymbolReferenceExpression ->
                 when (val symbol = e.symbol) {
@@ -205,6 +167,8 @@ val builtinBindings = listOf(
     ExternalProcedureBinding("integer?", validateFixedArityArgument(1), compileFixedArity("_integerp")),
     ExternalProcedureBinding("null?", validateFixedArityArgument(1), compileFixedArity("_nullp")),
     ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair")),
+    ExternalProcedureBinding("print", validateVariableArityArguments(), compilePrint()),
+    ExternalProcedureBinding("println", validateVariableArityArguments(), compilePrintln()),
     ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
     ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
 )
@@ -252,4 +216,30 @@ private fun compileOperator(
             ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
     }
 
+private fun compilePrintln(): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+    { builder, arguments ->
+        arguments.forEach {
+            val op = compileE(builder, it)
 
+            if (op != null) {
+                builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
+            }
+        }
+
+        builder.invoke(BuiltinDeclarationEnum.PRINT_NEWLINE, listOf(), "")
+
+        null
+    }
+
+private fun compilePrint(): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
+    { builder, arguments ->
+        arguments.forEach {
+            val op = compileE(builder, it)
+
+            if (op != null) {
+                builder.invoke(BuiltinDeclarationEnum.PRINT_VALUE, listOf(op), "")
+            }
+        }
+
+        null
+    }

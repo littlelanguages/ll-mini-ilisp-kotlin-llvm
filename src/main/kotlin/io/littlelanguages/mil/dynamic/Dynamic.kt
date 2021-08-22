@@ -61,10 +61,6 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                         when (first.name) {
                             "if" ->
                                 ifToTST(arguments)
-                            "print" ->
-                                PrintExpression(arguments)
-                            "println" ->
-                                PrintlnExpression(arguments)
                             else ->
                                 when (val binding = bindings.get(first.name)) {
                                     null ->

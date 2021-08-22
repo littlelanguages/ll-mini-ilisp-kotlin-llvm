@@ -29,7 +29,8 @@ class DynamicTests : FunSpec({
 
         val builtinBindings: List<ExternalProcedureBinding<S, T>> = listOf(
             ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator()),
-            ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator())
+            ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator()),
+            ExternalProcedureBinding("println", validateVariableArityArguments(), compileOperator())
         )
 
         if (scenarios is List<*>) {

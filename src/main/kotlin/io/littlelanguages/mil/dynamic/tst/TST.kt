@@ -72,16 +72,6 @@ data class IfExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>
         )
 }
 
-data class PrintExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("print", es.map { it.yaml() })
-}
-
-data class PrintlnExpression<S, T>(val es: Expressions<S, T>) : Expression<S, T> {
-    override fun yaml(): Any =
-        singletonMap("println", es.map { it.yaml() })
-}
-
 data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         symbol.yaml()
