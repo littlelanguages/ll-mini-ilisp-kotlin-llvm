@@ -10,7 +10,6 @@ import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import io.littlelanguages.mil.static.ast.SExpression
-import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
@@ -100,11 +99,11 @@ private class CompileExpression(val builder: Builder) {
                 val e1op = compileEForce(e.e1)
                 val falseOp = builder.invoke(BuiltinDeclarationEnum.V_FALSE)
 
-                val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp, builder.nextName())
+                val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp)
 
-                val ifThen = builder.appendBasicBlock(builder.nextName())
-                val ifElse = builder.appendBasicBlock(builder.nextName())
-                val ifEnd = builder.appendBasicBlock(builder.nextName())
+                val ifThen = builder.appendBasicBlock()
+                val ifElse = builder.appendBasicBlock()
+                val ifEnd = builder.appendBasicBlock()
 
                 builder.buildCondBr(e1Compare, ifThen, ifElse)
 
@@ -119,23 +118,17 @@ private class CompileExpression(val builder: Builder) {
                 val fromElse = builder.getCurrentBasicBlock()
 
                 builder.positionAtEnd(ifEnd)
-                builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse), builder.nextName())
+                builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse))
             }
 
             is LiteralBool ->
                 builder.invoke(if (e.value) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE)
 
             is LiteralInt ->
-                builder.invoke(BuiltinDeclarationEnum.FROM_LITERAL_INT, listOf(LLVM.LLVMConstInt(builder.i32, e.value.toLong(), 0)))
+                builder.buildFromLiteralInt(e.value)
 
-            is LiteralString -> {
-                val globalStringName = builder.addGlobalString(e.value, builder.nextName())
-
-                builder.invoke(
-                    BuiltinDeclarationEnum.FROM_LITERAL_STRING,
-                    listOf(LLVM.LLVMConstInBoundsGEP(globalStringName, PointerPointer(builder.c0i64, builder.c0i64), 2))
-                )
-            }
+            is LiteralString ->
+                builder.buildFromLiteralString(e.value)
 
             is LiteralUnit ->
                 builder.invoke(BuiltinDeclarationEnum.V_NULL)
@@ -146,7 +139,7 @@ private class CompileExpression(val builder: Builder) {
                         builder.getParam(symbol.offset)
 
                     else ->
-                        builder.buildLoad(builder.getNamedGlobal(symbol.name)!!, builder.nextName())
+                        builder.buildLoad(builder.getNamedGlobal(symbol.name)!!)
                 }
 
             else ->

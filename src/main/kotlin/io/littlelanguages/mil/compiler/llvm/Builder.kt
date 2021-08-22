@@ -1,5 +1,6 @@
 package io.littlelanguages.mil.compiler.llvm
 
+import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMBuilderRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
@@ -7,7 +8,7 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 class Builder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
-    val builtinDeclarations = BuiltinDeclarations(module)
+    private val builtinDeclarations = BuiltinDeclarations(module)
 
     private var currentBasicBlock: LLVMBasicBlockRef = appendBasicBlock("entry")
 
@@ -30,14 +31,26 @@ class Builder(private val context: Context, private val module: Module, private 
     fun buildCondBr(ifOp: LLVMValueRef, thenOp: LLVMBasicBlockRef, elseOp: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildCondBr(builder, ifOp, thenOp, elseOp)
 
-    fun buildICmp(op: Int, lhs: LLVMValueRef, rhs: LLVMValueRef, name: String): LLVMValueRef =
-        LLVM.LLVMBuildICmp(builder, op, lhs, rhs, name)
+    fun buildFromLiteralInt(n: Int): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_from_literal_int", listOf(i32), structValueP),
+            listOf(LLVM.LLVMConstInt(i32, n.toLong(), 0)),
+        )
 
-    fun buildLoad(valueRef: LLVMValueRef, name: String): LLVMValueRef =
-        LLVM.LLVMBuildLoad(builder, valueRef, name)
+    fun buildFromLiteralString(s: String): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_from_literal_string", listOf(i8P), structValueP),
+            listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, nextName()), PointerPointer(c0i64, c0i64), 2))
+        )
 
-    fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String): LLVMValueRef {
-        val phi = LLVM.LLVMBuildPhi(builder, type, name)
+    fun buildICmp(op: Int, lhs: LLVMValueRef, rhs: LLVMValueRef, name: String? = null): LLVMValueRef =
+        LLVM.LLVMBuildICmp(builder, op, lhs, rhs, name ?: nextName())
+
+    fun buildLoad(valueRef: LLVMValueRef, name: String? = null): LLVMValueRef =
+        LLVM.LLVMBuildLoad(builder, valueRef, name ?: nextName())
+
+    fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String? = null): LLVMValueRef {
+        val phi = LLVM.LLVMBuildPhi(builder, type, name ?: nextName())
         LLVM.LLVMAddIncoming(phi, pointerPointerOf(incomingValues), pointerPointerOf(incomingBlocks), incomingValues.size)
         return phi
     }
@@ -81,10 +94,10 @@ class Builder(private val context: Context, private val module: Module, private 
     fun getParam(offset: Int): LLVMValueRef =
         LLVM.LLVMGetParam(procedure, offset)
 
-    fun appendBasicBlock(name: String): LLVMBasicBlockRef =
-        LLVM.LLVMAppendBasicBlockInContext(context.context, procedure, name)
+    fun appendBasicBlock(name: String? = null): LLVMBasicBlockRef =
+        LLVM.LLVMAppendBasicBlockInContext(context.context, procedure, name ?: nextName())
 
-    fun nextName(): String =
+    private fun nextName(): String =
         module.nextName()
 
     fun invoke(operator: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String? = null): LLVMValueRef =
@@ -112,7 +125,7 @@ class Builder(private val context: Context, private val module: Module, private 
     fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         module.addExternalFunction(name, parameterTypes, resultType)
 
-    fun addGlobalString(value: String, name: String): LLVMValueRef =
+    private fun addGlobalString(value: String, name: String): LLVMValueRef =
         module.addGlobalString(value, name)
 }
 
