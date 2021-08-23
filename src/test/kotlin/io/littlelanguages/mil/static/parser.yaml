@@ -16,15 +16,15 @@
         input: |
           #t
         output:
-          - LiteralBool:
-              value: true
+          - Symbol:
+              value: "#t"
               position: 0:1:1-1:1:2
       - name: Literal False
         input: |
           #f
         output:
-          - LiteralBool:
-              value: false
+          - Symbol:
+              value: "#f"
               position: 0:1:1-1:1:2
       - name: Literal Int
         input: |
@@ -44,4 +44,6 @@
         input: |
           ()
         output:
-          - SExpression: []
+          - Symbol:
+              value: ()
+              position: 0:1:1-1:1:2

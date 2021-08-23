@@ -89,9 +89,6 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                         TODO()
                 }
 
-            is io.littlelanguages.mil.static.ast.LiteralBool ->
-                LiteralBool(e.value)
-
             is io.littlelanguages.mil.static.ast.LiteralInt ->
                 LiteralInt(e.value.toInt())
 

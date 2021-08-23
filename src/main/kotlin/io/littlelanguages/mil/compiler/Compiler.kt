@@ -7,6 +7,7 @@ import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.*
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
+import io.littlelanguages.mil.dynamic.ExternalValueBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
 import io.littlelanguages.mil.dynamic.tst.*
 import io.littlelanguages.mil.static.ast.SExpression
@@ -65,7 +66,7 @@ private class Compiler(val module: Module) {
             compileE(builder, b)
         }
 
-        builder.buildRet(result ?: builder.invoke(BuiltinDeclarationEnum.V_NULL))
+        builder.buildRet(result ?: builder.buildVNull())
     }
 }
 
@@ -77,7 +78,7 @@ fun compileEForce(builder: Builder, e: Expression<Builder, LLVMValueRef>): LLVMV
 
 private class CompileExpression(val builder: Builder) {
     fun compileEForce(e: Expression<Builder, LLVMValueRef>): LLVMValueRef =
-        compileE(e) ?: builder.invoke(BuiltinDeclarationEnum.V_NULL)
+        compileE(e) ?: builder.buildVNull()
 
     fun compileE(e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
         when (e) {
@@ -97,7 +98,8 @@ private class CompileExpression(val builder: Builder) {
 
             is IfExpression -> {
                 val e1op = compileEForce(e.e1)
-                val falseOp = builder.invoke(BuiltinDeclarationEnum.V_FALSE)
+                val falseOp = builder.buildVFalse()
+
 
                 val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp)
 
@@ -121,9 +123,6 @@ private class CompileExpression(val builder: Builder) {
                 builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse))
             }
 
-            is LiteralBool ->
-                builder.invoke(if (e.value) BuiltinDeclarationEnum.V_TRUE else BuiltinDeclarationEnum.V_FALSE)
-
             is LiteralInt ->
                 builder.buildFromLiteralInt(e.value)
 
@@ -131,12 +130,15 @@ private class CompileExpression(val builder: Builder) {
                 builder.buildFromLiteralString(e.value)
 
             is LiteralUnit ->
-                builder.invoke(BuiltinDeclarationEnum.V_NULL)
+                builder.buildVNull()
 
             is SymbolReferenceExpression ->
                 when (val symbol = e.symbol) {
                     is ParameterBinding ->
                         builder.getParam(symbol.offset)
+
+                    is ExternalValueBinding ->
+                        builder.buildLoadNamedGlobal(symbol.externalName)
 
                     else ->
                         builder.buildLoad(builder.getNamedGlobal(symbol.name)!!)
@@ -221,5 +223,9 @@ val builtinBindings = listOf(
     ExternalProcedureBinding("println", validateVariableArityArguments(), compilePrintln),
     ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
     ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
+
+    ExternalValueBinding("()", "_VNull"),
+    ExternalValueBinding("#t", "_VTrue"),
+    ExternalValueBinding("#f", "_VFalse"),
 )
 

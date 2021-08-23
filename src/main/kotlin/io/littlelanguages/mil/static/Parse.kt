@@ -20,7 +20,10 @@ class ParseVisitor : Visitor<
         Program(a)
 
     override fun visitExpression1(a1: Token, a2: List<Expression>, a3: Token): Expression =
-        SExpression(a1.location + a3.location, a2)
+        if (a2.isEmpty())
+            Symbol(a1.location + a3.location, "()")
+        else
+            SExpression(a1.location + a3.location, a2)
 
     override fun visitExpression2(a: Token): Expression =
         Symbol(a.location, a.lexeme)
@@ -32,8 +35,8 @@ class ParseVisitor : Visitor<
         LiteralString(a.location, a.lexeme)
 
     override fun visitExpression5(a: Token): Expression =
-        LiteralBool(a.location, true)
+        Symbol(a.location, "#t")
 
     override fun visitExpression6(a: Token): Expression =
-        LiteralBool(a.location, false)
+        Symbol(a.location, "#f")
 }

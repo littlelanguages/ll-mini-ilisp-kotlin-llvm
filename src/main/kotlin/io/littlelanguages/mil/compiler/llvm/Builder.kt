@@ -8,8 +8,6 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 class Builder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
-    private val builtinDeclarations = BuiltinDeclarations(module)
-
     private var currentBasicBlock: LLVMBasicBlockRef = appendBasicBlock("entry")
 
     init {
@@ -49,6 +47,9 @@ class Builder(private val context: Context, private val module: Module, private 
     fun buildLoad(valueRef: LLVMValueRef, name: String? = null): LLVMValueRef =
         LLVM.LLVMBuildLoad(builder, valueRef, name ?: nextName())
 
+    fun buildLoadNamedGlobal(globalName: String, name: String? = null): LLVMValueRef =
+        buildLoad(getNamedGlobal(globalName) ?: addGlobal(globalName, structValueP)!!, name)
+
     fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String? = null): LLVMValueRef {
         val phi = LLVM.LLVMBuildPhi(builder, type, name ?: nextName())
         LLVM.LLVMAddIncoming(phi, pointerPointerOf(incomingValues), pointerPointerOf(incomingBlocks), incomingValues.size)
@@ -83,6 +84,15 @@ class Builder(private val context: Context, private val module: Module, private 
         LLVM.LLVMBuildStore(builder, v1, v2)
     }
 
+    fun buildVNull(name: String? = null): LLVMValueRef =
+        buildLoadNamedGlobal("_VNull", name)
+
+    fun buildVTrue(name: String? = null): LLVMValueRef =
+        buildLoadNamedGlobal("_VTrue", name)
+
+    fun buildVFalse(name: String? = null): LLVMValueRef =
+        buildLoadNamedGlobal("_VFalse", name)
+
     fun positionAtEnd(basicBlock: LLVMBasicBlockRef) {
         LLVM.LLVMPositionBuilderAtEnd(builder, basicBlock)
         currentBasicBlock = basicBlock
@@ -100,18 +110,15 @@ class Builder(private val context: Context, private val module: Module, private 
     private fun nextName(): String =
         module.nextName()
 
-    fun invoke(operator: BuiltinDeclarationEnum, arguments: List<LLVMValueRef>, name: String? = null): LLVMValueRef =
-        builtinDeclarations.invoke(this, operator, arguments, name ?: nextName())
-
-    fun invoke(bip: BuiltinDeclarationEnum): LLVMValueRef =
-        builtinDeclarations.invoke(this, bip, nextName())
-
     val void get() = context.void
     val structValueP get() = context.structValueP
     val i8 get() = context.i8
     val i8P get() = context.i8P
     val i32 get() = context.i32
     val c0i64 get() = context.c0i64
+
+    private fun addGlobal(name: String, type: LLVMTypeRef): LLVMValueRef? =
+        module.addGlobal(name, type)
 
     fun getNamedGlobal(name: String): LLVMValueRef? =
         module.getNamedGlobal(name)

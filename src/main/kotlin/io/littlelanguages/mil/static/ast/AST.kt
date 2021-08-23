@@ -40,19 +40,6 @@ data class SExpression(
         )
 }
 
-data class LiteralBool(
-    override val position: Location,
-    val value: Boolean
-) : Expression(position) {
-    override fun yaml(): Any =
-        singletonMap(
-            "LiteralBool", mapOf(
-                Pair("value", if (value) "true" else "false"),
-                Pair("position", position.yaml())
-            )
-        )
-}
-
 data class LiteralInt(
     override val position: Location,
     val value: String

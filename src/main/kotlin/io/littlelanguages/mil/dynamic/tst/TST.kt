@@ -77,11 +77,6 @@ data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>) : Expressi
         symbol.yaml()
 }
 
-data class LiteralBool<S, T>(val value: Boolean) : Expression<S, T> {
-    override fun yaml(): Any =
-        if (value) "TRUE" else "FALSE"
-}
-
 data class LiteralInt<S, T>(val value: Int) : Expression<S, T> {
     override fun yaml(): Any =
         value
