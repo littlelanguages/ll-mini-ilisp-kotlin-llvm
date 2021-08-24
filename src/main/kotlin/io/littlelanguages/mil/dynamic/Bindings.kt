@@ -28,21 +28,17 @@ data class TopLevelProcedureBinding<S, T>(override val name: String, val paramet
 
 data class ExternalValueBinding<S, T>(override val name: String, val externalName: String) : Binding<S, T> {
     override fun yaml(): Any =
-        singletonMap(
-            "external-value", mapOf(
-                Pair("name", name),
-                Pair("external-name", externalName)
-            )
-        )
+        singletonMap("external-value", name)
 }
 
-data class ExternalProcedureBinding<S, T>(
+abstract class ExternalProcedureBinding<S, T>(
     override val name: String,
-    val validateArguments: (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors?,
-    val compile: (state: S, arguments: List<Expression<S, T>>) -> T?
 ) : ProcedureBinding<S, T> {
     override fun yaml(): Any =
         singletonMap("external-procedure", name)
+
+    abstract fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors?
+    abstract fun compile(builder: S, arguments: List<Expression<S, T>>): T?
 }
 
 data class ParameterBinding<S, T>(override val name: String, val offset: Int) : Binding<S, T> {

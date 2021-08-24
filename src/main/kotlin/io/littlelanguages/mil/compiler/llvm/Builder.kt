@@ -126,7 +126,7 @@ class Builder(private val context: Context, private val module: Module, private 
     fun getNamedFunction(name: String): LLVMValueRef? =
         module.getNamedFunction(name)
 
-    private fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
+    fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         getNamedFunction(name) ?: addExternalFunction(name, parameterTypes, resultType)
 
     fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =

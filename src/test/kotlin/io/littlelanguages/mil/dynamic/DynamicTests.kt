@@ -28,9 +28,9 @@ class DynamicTests : FunSpec({
         val scenarios: Any = yaml.load(content)
 
         val builtinBindings: List<ExternalProcedureBinding<S, T>> = listOf(
-            ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator()),
-            ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator()),
-            ExternalProcedureBinding("println", validateVariableArityArguments(), compileOperator())
+            DummyVariableArityExternalProcedure("+"),
+            DummyVariableArityExternalProcedure("-"),
+            DummyVariableArityExternalProcedure("println")
         )
 
         if (scenarios is List<*>) {
@@ -39,14 +39,16 @@ class DynamicTests : FunSpec({
     }
 })
 
-private fun validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<S, T>>) -> Errors? =
-    { _, _, _ -> null }
+private class DummyVariableArityExternalProcedure(
+    override val name: String
+) : ExternalProcedureBinding<S, T>(name) {
+    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors? = null
 
-private fun compileOperator(): (builder: S, arguments: List<Expression<S, T>>) -> T? = { _, _ -> null }
+    override fun compile(builder: S, arguments: List<Expression<S, T>>): T? = null
+}
 
 fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) }
-
 
 suspend fun parserConformanceTest(builtinBindings: List<Binding<S, T>>, ctx: FunSpecContainerContext, scenarios: List<*>) {
     scenarios.forEach { scenario ->

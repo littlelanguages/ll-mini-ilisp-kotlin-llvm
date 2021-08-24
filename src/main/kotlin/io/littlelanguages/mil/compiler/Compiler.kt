@@ -5,7 +5,10 @@ import io.littlelanguages.data.Right
 import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.compiler.llvm.*
+import io.littlelanguages.mil.compiler.llvm.Builder
+import io.littlelanguages.mil.compiler.llvm.Context
+import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.compiler.llvm.VerifyError
 import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.ExternalValueBinding
 import io.littlelanguages.mil.dynamic.ParameterBinding
@@ -149,83 +152,93 @@ private class CompileExpression(val builder: Builder) {
         }
 }
 
-private fun validateFixedArityArgument(arity: Int): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
-    { e, name, arguments ->
+val builtinBindings = listOf(
+    OperatorExternalProcedure("+", 0, "_plus", false),
+    OperatorExternalProcedure("-", 0, "_minus", true),
+    OperatorExternalProcedure("*", 1, "_multiply", false),
+    OperatorExternalProcedure("/", 1, "_divide", true),
+    FixedArityExternalProcedure("=", 2, "_equals"),
+    FixedArityExternalProcedure("<", 2, "_less_than"),
+    FixedArityExternalProcedure("boolean?", 1, "_booleanp"),
+    FixedArityExternalProcedure("car", 1, "_pair_car"),
+    FixedArityExternalProcedure("cdr", 1, "_pair_cdr"),
+    FixedArityExternalProcedure("integer?", 1, "_integerp"),
+    FixedArityExternalProcedure("null?", 1, "_nullp"),
+    FixedArityExternalProcedure("pair", 2, "_mk_pair"),
+    PrintExternalProcedure("print"),
+    PrintlnExternalProcedure("println"),
+    FixedArityExternalProcedure("string?", 1, "_stringp"),
+    FixedArityExternalProcedure("pair?", 1, "_pairp"),
+
+    ExternalValueBinding("()", "_VNull"),
+    ExternalValueBinding("#t", "_VTrue"),
+    ExternalValueBinding("#f", "_VFalse"),
+)
+
+private class FixedArityExternalProcedure(
+    override val name: String,
+    private val arity: Int,
+    private val externalName: String
+) : ExternalProcedureBinding<Builder, LLVMValueRef>(name) {
+    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>): Errors? =
         if (arity == arguments.size)
             null
         else
             ArgumentMismatchError(name, arity, arguments.size, e.position)
-    }
 
-private fun validateVariableArityArguments(): (e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>) -> Errors? =
-    { _, _, _ -> null }
-
-private fun compileFixedArity(externalName: String): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef =
-    { builder, arguments ->
-        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+    override fun compile(builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>): LLVMValueRef {
+        val namedFunction = builder.getNamedFunction(
             externalName,
             List(arguments.size) { builder.structValueP },
             builder.structValueP
         )
-        builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) })
+
+        return builder.buildCall(namedFunction, arguments.map { compileEForce(builder, it) })
     }
 
-private fun compileOperator(
-    unitValue: Int,
-    externalName: String,
-    explicitFirst: Boolean
-): (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
-    { builder, arguments ->
+}
+
+private abstract class VariableArityExternalProcedure(override val name: String) : ExternalProcedureBinding<Builder, LLVMValueRef>(name) {
+    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<Builder, LLVMValueRef>>): Errors? = null
+}
+
+private class OperatorExternalProcedure(
+    override val name: String,
+    private val unitValue: Int,
+    private val externalName: String,
+    private val explicitFirst: Boolean
+) : VariableArityExternalProcedure(name) {
+    override fun compile(builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>): LLVMValueRef? {
         val ops = arguments.mapNotNull { compileE(builder, it) }
 
-        val namedFunction = builder.getNamedFunction(externalName) ?: builder.addExternalFunction(
+        val namedFunction = builder.getNamedFunction(
             externalName,
             List(2) { builder.structValueP },
             builder.structValueP
         )
 
-        if (ops.isEmpty())
+        return if (ops.isEmpty())
             compileE(builder, LiteralInt(unitValue))
         else if (explicitFirst && ops.size == 1)
             builder.buildCall(namedFunction, listOf(compileEForce(builder, LiteralInt(unitValue)), ops[0]))
         else
             ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
     }
+}
 
-private val compilePrintln: (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
-    { builder, arguments ->
+private class PrintExternalProcedure(override val name: String) : VariableArityExternalProcedure(name) {
+    override fun compile(builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>): LLVMValueRef? {
         arguments.forEach { builder.buildPrintValue(compileE(builder, it)) }
 
-        builder.buildPrintNewline()
+        return null
     }
+}
 
-private val compilePrint: (builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>) -> LLVMValueRef? =
-    { builder, arguments ->
+private class PrintlnExternalProcedure(override val name: String) : VariableArityExternalProcedure(name) {
+    override fun compile(builder: Builder, arguments: List<Expression<Builder, LLVMValueRef>>): LLVMValueRef? {
         arguments.forEach { builder.buildPrintValue(compileE(builder, it)) }
 
-        null
+        return builder.buildPrintNewline()
     }
-
-val builtinBindings = listOf(
-    ExternalProcedureBinding("+", validateVariableArityArguments(), compileOperator(0, "_plus", false)),
-    ExternalProcedureBinding("-", validateVariableArityArguments(), compileOperator(0, "_minus", true)),
-    ExternalProcedureBinding("*", validateVariableArityArguments(), compileOperator(1, "_multiply", false)),
-    ExternalProcedureBinding("/", validateVariableArityArguments(), compileOperator(1, "_divide", true)),
-    ExternalProcedureBinding("=", validateFixedArityArgument(2), compileFixedArity("_equals")),
-    ExternalProcedureBinding("<", validateFixedArityArgument(2), compileFixedArity("_less_than")),
-    ExternalProcedureBinding("boolean?", validateFixedArityArgument(1), compileFixedArity("_booleanp")),
-    ExternalProcedureBinding("car", validateFixedArityArgument(1), compileFixedArity("_pair_car")),
-    ExternalProcedureBinding("cdr", validateFixedArityArgument(1), compileFixedArity("_pair_cdr")),
-    ExternalProcedureBinding("integer?", validateFixedArityArgument(1), compileFixedArity("_integerp")),
-    ExternalProcedureBinding("null?", validateFixedArityArgument(1), compileFixedArity("_nullp")),
-    ExternalProcedureBinding("pair", validateFixedArityArgument(2), compileFixedArity("_mk_pair")),
-    ExternalProcedureBinding("print", validateVariableArityArguments(), compilePrint),
-    ExternalProcedureBinding("println", validateVariableArityArguments(), compilePrintln),
-    ExternalProcedureBinding("string?", validateFixedArityArgument(1), compileFixedArity("_stringp")),
-    ExternalProcedureBinding("pair?", validateFixedArityArgument(1), compileFixedArity("_pairp")),
-
-    ExternalValueBinding("()", "_VNull"),
-    ExternalValueBinding("#t", "_VTrue"),
-    ExternalValueBinding("#f", "_VFalse"),
-)
+}
 
