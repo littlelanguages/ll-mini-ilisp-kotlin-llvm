@@ -47,7 +47,7 @@ class Builder(private val context: Context, private val module: Module, private 
     fun buildLoad(valueRef: LLVMValueRef, name: String? = null): LLVMValueRef =
         LLVM.LLVMBuildLoad(builder, valueRef, name ?: nextName())
 
-    fun buildLoadNamedGlobal(globalName: String, name: String? = null): LLVMValueRef =
+    private fun buildLoadNamedGlobal(globalName: String, name: String? = null): LLVMValueRef =
         buildLoad(getNamedGlobal(globalName) ?: addGlobal(globalName, structValueP)!!, name)
 
     fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String? = null): LLVMValueRef {
@@ -129,7 +129,7 @@ class Builder(private val context: Context, private val module: Module, private 
     fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         getNamedFunction(name) ?: addExternalFunction(name, parameterTypes, resultType)
 
-    fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
+    private fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
         module.addExternalFunction(name, parameterTypes, resultType)
 
     private fun addGlobalString(value: String, name: String): LLVMValueRef =

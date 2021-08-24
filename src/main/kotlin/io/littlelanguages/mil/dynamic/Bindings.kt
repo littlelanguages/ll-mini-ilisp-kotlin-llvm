@@ -26,9 +26,11 @@ data class TopLevelProcedureBinding<S, T>(override val name: String, val paramet
         )
 }
 
-data class ExternalValueBinding<S, T>(override val name: String, val externalName: String) : Binding<S, T> {
+abstract class ExternalValueBinding<S, T>(override val name: String) : Binding<S, T> {
     override fun yaml(): Any =
         singletonMap("external-value", name)
+
+    abstract fun compile(builder: S): T?
 }
 
 abstract class ExternalProcedureBinding<S, T>(

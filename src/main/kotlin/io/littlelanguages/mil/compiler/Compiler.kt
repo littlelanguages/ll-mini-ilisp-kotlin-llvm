@@ -141,7 +141,7 @@ private class CompileExpression(val builder: Builder) {
                         builder.getParam(symbol.offset)
 
                     is ExternalValueBinding ->
-                        builder.buildLoadNamedGlobal(symbol.externalName)
+                        symbol.compile(builder)
 
                     else ->
                         builder.buildLoad(builder.getNamedGlobal(symbol.name)!!)
@@ -170,9 +170,9 @@ val builtinBindings = listOf(
     FixedArityExternalProcedure("string?", 1, "_stringp"),
     FixedArityExternalProcedure("pair?", 1, "_pairp"),
 
-    ExternalValueBinding("()", "_VNull"),
-    ExternalValueBinding("#t", "_VTrue"),
-    ExternalValueBinding("#f", "_VFalse"),
+    VFalseExternalValue(),
+    VTrueExternalValue(),
+    VNullExternalValue(),
 )
 
 private class FixedArityExternalProcedure(
@@ -242,3 +242,17 @@ private class PrintlnExternalProcedure(override val name: String) : VariableArit
     }
 }
 
+private class VFalseExternalValue : ExternalValueBinding<Builder, LLVMValueRef>("#f") {
+    override fun compile(builder: Builder): LLVMValueRef =
+        builder.buildVFalse()
+}
+
+private class VTrueExternalValue : ExternalValueBinding<Builder, LLVMValueRef>("#t") {
+    override fun compile(builder: Builder): LLVMValueRef =
+        builder.buildVTrue()
+}
+
+private class VNullExternalValue : ExternalValueBinding<Builder, LLVMValueRef>("()") {
+    override fun compile(builder: Builder): LLVMValueRef =
+        builder.buildVNull()
+}
