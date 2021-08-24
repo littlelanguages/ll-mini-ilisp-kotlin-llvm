@@ -1,5 +1,6 @@
 package io.littlelanguages.mil.dynamic
 
+import io.littlelanguages.data.NestedMap
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.dynamic.tst.Expression
@@ -53,35 +54,5 @@ data class ParameterBinding<S, T>(override val name: String, val offset: Int) : 
         )
 }
 
-class Bindings<S, T> {
-    private var last = mutableMapOf<String, Binding<S, T>>()
-    private val scope = mutableListOf(last)
-
-    fun open() {
-        last = mutableMapOf()
-        scope.add(last)
-    }
-
-    fun close() {
-        scope.dropLast(1)
-        last = scope.last()
-    }
-
-    fun add(name: String, binding: Binding<S, T>) {
-        last[name] = binding
-    }
-
-    fun inCurrentScope(name: String): Boolean =
-        last.containsKey(name)
-
-    fun get(name: String): Binding<S, T>? {
-        for (s in scope.size - 1 downTo 0) {
-            val binding = scope[s][name]
-
-            if (binding != null)
-                return binding
-        }
-
-        return null
-    }
-}
+typealias Bindings<S, T> =
+        NestedMap<String, Binding<S, T>>

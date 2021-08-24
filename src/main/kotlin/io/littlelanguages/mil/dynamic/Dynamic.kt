@@ -125,7 +125,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                 val parameterName = symbol.name
 
                                 parameterNames.add(parameterName)
-                                if (bindings.inCurrentScope(parameterName))
+                                if (bindings.inCurrentNesting(parameterName))
                                     reportError(DuplicateParameterNameError(parameterName, symbol.position()))
                                 bindings.add(parameterName, ParameterBinding(parameterName, index))
                             } else
