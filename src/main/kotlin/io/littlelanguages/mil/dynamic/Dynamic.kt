@@ -15,6 +15,9 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
 
     val bindings = Bindings<S, T>()
 
+    var toplevel = true
+    var offset = 0
+
     init {
         builtinBindings.forEach { bindings.add(it.name, it) }
     }
@@ -40,7 +43,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 names.add(it.symbol.name)
         }
 
-        declarations.add(Procedure("_main", emptyList(), expressions))
+        declarations.add(Procedure("_main", emptyList(), offset, expressions))
 
         return Program(names, declarations)
     }
@@ -118,7 +121,12 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                     if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
                         val parameterNames = mutableListOf<String>()
 
+                        val oldTopLevel = toplevel
+                        val oldOffset = offset
+
                         bindings.add(v1v0.name, TopLevelProcedureBinding(v1v0.name, parameters.size))
+                        toplevel = false
+                        offset = 0
                         bindings.open()
                         parameters.forEachIndexed { index, symbol ->
                             if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
@@ -132,9 +140,15 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                 reportError(InvalidConstFormError(e.position()))
                         }
                         bindings.open()
-                        val procedure = Procedure(v1v0.name, parameterNames, e.expressions.drop(2).map { expressionToTST(it) })
+                        val expressions = e.expressions.drop(2).map { expressionToTST(it) }
+                        val procedure = Procedure(v1v0.name, parameterNames, offset, expressions)
                         bindings.close()
                         bindings.close()
+
+                        if (oldTopLevel) {
+                            toplevel = true
+                            offset = oldOffset
+                        }
 
                         procedure
                     } else
@@ -144,7 +158,12 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
             } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
                 val v2 = e.expressions[2]
 
-                val binding = TopLevelValueBinding<S, T>(v1.name)
+                val binding = if (toplevel) TopLevelValueBinding<S, T>(v1.name) else ProcedureValueBinding(v1.name, offset)
+
+                if (!toplevel)
+                    offset += 1
+                toplevel = false
+
                 bindings.add(v1.name, binding)
                 AssignExpression(binding, expressionToTST(v2))
             } else

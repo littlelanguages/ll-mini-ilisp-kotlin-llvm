@@ -15,6 +15,16 @@ data class TopLevelValueBinding<S, T>(override val name: String) : Binding<S, T>
         singletonMap("toplevel-value", name)
 }
 
+data class ProcedureValueBinding<S, T>(override val name: String, val offset: Int) : Binding<S, T> {
+    override fun yaml(): Any =
+        singletonMap(
+            "procedure-value", mapOf(
+                Pair("name", name),
+                Pair("offset", offset)
+            )
+        )
+}
+
 sealed interface ProcedureBinding<S, T> : Binding<S, T>
 
 data class TopLevelProcedureBinding<S, T>(override val name: String, val parameterCount: Int) : ProcedureBinding<S, T> {

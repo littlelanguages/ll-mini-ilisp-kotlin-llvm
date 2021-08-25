@@ -54,20 +54,19 @@ private class Compiler(val module: Module) {
 
     private fun compileMainProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, emptyList(), module.i32)
-        val frame = builder.buildMkFrame(builder.buildVNull(), declaration.arguments.size, "_frame")
-        builder.addBindingToScope("_frame", frame)
-
-        builder.openScope()
-        declaration.es.forEach {
-            compileE(builder, it)
-        }
-        builder.closeScope()
+        compileProcedureBody(builder, declaration)
 
         builder.buildRet(LLVM.LLVMConstInt(module.i32, 0, 0))
     }
 
     private fun compileProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
+        val result = compileProcedureBody(builder, declaration)
+
+        builder.buildRet(result ?: builder.buildVNull())
+    }
+
+    private fun compileProcedureBody(builder: Builder, declaration: Procedure<Builder, LLVMValueRef>): LLVMValueRef? {
         val frame = builder.buildMkFrame(builder.buildVNull(), declaration.arguments.size, "_frame")
 
         declaration.arguments.forEachIndexed { index, name ->
@@ -83,7 +82,7 @@ private class Compiler(val module: Module) {
         }
         builder.closeScope()
 
-        builder.buildRet(result ?: builder.buildVNull())
+        return result
     }
 }
 
@@ -100,6 +99,7 @@ private class CompileExpression(val builder: Builder) {
     fun compileE(e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
+                println(e)
                 builder.buildStore(compileEForce(e.e), builder.getNamedGlobal(e.symbol.name)!!)
 
                 null
