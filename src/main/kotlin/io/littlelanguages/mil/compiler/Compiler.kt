@@ -54,20 +54,34 @@ private class Compiler(val module: Module) {
 
     private fun compileMainProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, emptyList(), module.i32)
+        val frame = builder.buildMkFrame(builder.buildVNull(), declaration.arguments.size, "_frame")
+        builder.addBindingToScope("_frame", frame)
 
+        builder.openScope()
         declaration.es.forEach {
             compileE(builder, it)
         }
+        builder.closeScope()
 
         builder.buildRet(LLVM.LLVMConstInt(module.i32, 0, 0))
     }
 
     private fun compileProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
         val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
+        val frame = builder.buildMkFrame(builder.buildVNull(), declaration.arguments.size, "_frame")
 
+        declaration.arguments.forEachIndexed { index, name ->
+            val op = builder.getParam(index)
+            builder.buildSetFrameValue(frame, index, op)
+            builder.addBindingToScope(name, op)
+        }
+        builder.addBindingToScope("_frame", frame)
+
+        builder.openScope()
         val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression<Builder, LLVMValueRef> ->
             compileE(builder, b)
         }
+        builder.closeScope()
 
         builder.buildRet(result ?: builder.buildVNull())
     }
@@ -123,6 +137,7 @@ private class CompileExpression(val builder: Builder) {
                 val fromElse = builder.getCurrentBasicBlock()
 
                 builder.positionAtEnd(ifEnd)
+
                 builder.buildPhi(builder.structValueP, listOf(e2op, e3op), listOf(fromThen, fromElse))
             }
 
