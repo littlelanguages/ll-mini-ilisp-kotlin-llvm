@@ -348,7 +348,7 @@
           (println (minus 10 (add 1 2)))
         output: |
           7
-      - name: "!const value in procedure declaration"
+      - name: const value in procedure declaration
         input: |
           (const (double-sum a b)
             (const sum (+ a b))

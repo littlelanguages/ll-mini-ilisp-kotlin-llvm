@@ -53,7 +53,7 @@
                   arguments:
                     - a
                     - b
-                  offsets: 0
+                  offsets: 2
                   es:
                     - call-procedure:
                         procedure:
@@ -77,6 +77,54 @@
           - DuplicateParameterNameError:
               name: a
               location: "14:1:15"
+      - name: Values within a procedure
+        input: |
+          (const (double-sum a b)
+            (const sum (+ a b))
+            (+ sum sum)
+          )
+        output:
+          program:
+            values: []
+            procedures:
+              - procedure:
+                  name: double-sum
+                  arguments:
+                    - a
+                    - b
+                  offsets: 3
+                  es:
+                    - assign:
+                        symbol:
+                          procedure-value:
+                            name: sum
+                            offset: 2
+                        e:
+                          call-procedure:
+                            procedure:
+                              external-procedure: +
+                            es:
+                              - parameter:
+                                  name: a
+                                  offset: 0
+                              - parameter:
+                                  name: b
+                                  offset: 1
+                    - call-procedure:
+                        procedure:
+                          external-procedure: +
+                        es:
+                          - procedure-value:
+                              name: sum
+                              offset: 2
+                          - procedure-value:
+                              name: sum
+                              offset: 2
+              - procedure:
+                  name: _main
+                  arguments: [ ]
+                  offsets: 0
+                  es: [ ]
 - scenario:
     name: Identifier Reference
     tests:
@@ -118,6 +166,37 @@
                           external-procedure: println
                         es:
                           - toplevel-value: x
+      - name: Multiple top-level values
+        input: |
+          (const v1 1)
+          (const v2 "Hello world")
+
+          (println v1 v2)
+        output:
+          program:
+            values:
+              - v1
+              - v2
+            procedures:
+              - procedure:
+                  name: _main
+                  arguments: []
+                  offsets: 0
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: v1
+                        e: 1
+                    - assign:
+                        symbol:
+                          toplevel-value: v2
+                        e: Hello world
+                    - call-procedure:
+                        procedure:
+                          external-procedure: println
+                        es:
+                          - toplevel-value: v1
+                          - toplevel-value: v2
       - name: Top-level procedure
         input: |
           (const (add a b) (+ a b))
@@ -132,7 +211,7 @@
                   arguments:
                     - a
                     - b
-                  offsets: 0
+                  offsets: 2
                   es:
                     - call-procedure:
                         procedure:
@@ -184,51 +263,3 @@
               expected: 2
               actual: 3
               location: 70:5:10-80:5:20
-      - name: Values within a procedure
-        input: |
-          (const (double-sum a b)
-            (const sum (+ a b))
-            (+ sum sum)
-          )
-        output:
-          program:
-            values: []
-            procedures:
-              - procedure:
-                  name: double-sum
-                  arguments:
-                    - a
-                    - b
-                  offsets: 1
-                  es:
-                    - assign:
-                        symbol:
-                          procedure-value:
-                            name: sum
-                            offset: 0
-                        e:
-                          call-procedure:
-                            procedure:
-                              external-procedure: +
-                            es:
-                              - parameter:
-                                  name: a
-                                  offset: 0
-                              - parameter:
-                                  name: b
-                                  offset: 1
-                    - call-procedure:
-                        procedure:
-                          external-procedure: +
-                        es:
-                          - procedure-value:
-                              name: sum
-                              offset: 0
-                          - procedure-value:
-                              name: sum
-                              offset: 0
-              - procedure:
-                  name: _main
-                  arguments: [ ]
-                  offsets: 0
-                  es: [ ]

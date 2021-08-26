@@ -9,9 +9,7 @@ import io.littlelanguages.mil.compiler.llvm.Builder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.compiler.llvm.VerifyError
-import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
-import io.littlelanguages.mil.dynamic.ExternalValueBinding
-import io.littlelanguages.mil.dynamic.ParameterBinding
+import io.littlelanguages.mil.dynamic.*
 import io.littlelanguages.mil.dynamic.tst.*
 import io.littlelanguages.mil.static.ast.SExpression
 import org.bytedeco.llvm.LLVM.LLVMValueRef
@@ -99,8 +97,18 @@ private class CompileExpression(val builder: Builder) {
     fun compileE(e: Expression<Builder, LLVMValueRef>): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
-                println(e)
-                builder.buildStore(compileEForce(e.e), builder.getNamedGlobal(e.symbol.name)!!)
+                when (val symbol = e.symbol) {
+                    is TopLevelValueBinding ->
+                        builder.buildStore(compileEForce(e.e), builder.getNamedGlobal(symbol.name)!!)
+
+                    is ProcedureValueBinding -> {
+                        val operand = compileEForce(e.e)
+                        builder.buildSetFrameValue(builder.getBindingValue("_frame")!!, symbol.offset, operand)
+                        builder.addBindingToScope(symbol.name, operand)
+                    }
+
+                    else -> TODO(e.toString())
+                }
 
                 null
             }
@@ -157,6 +165,16 @@ private class CompileExpression(val builder: Builder) {
 
                     is ExternalValueBinding ->
                         symbol.compile(builder)
+
+                    is ProcedureValueBinding -> {
+                        val result = builder.getBindingValue(symbol.name)
+                        if (result == null) {
+                            val newResult = builder.buildGetFrameValue(builder.getBindingValue("_frame")!!, symbol.offset)
+                            builder.addBindingToScope(symbol.name, newResult)
+                            newResult
+                        } else
+                            result
+                    }
 
                     else ->
                         builder.buildLoad(builder.getNamedGlobal(symbol.name)!!)

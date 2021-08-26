@@ -43,6 +43,13 @@ class Builder(private val context: Context, private val module: Module, private 
             listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, nextName()), PointerPointer(c0i64, c0i64), 2))
         )
 
+    fun buildGetFrameValue(frame: LLVMValueRef, index: Int, name: String? = null): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_get_frame_value", listOf(structValueP, i32, i32), structValueP),
+            listOf(frame, LLVM.LLVMConstInt(i32, 0.toLong(), 0), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
+            name
+        )
+
     fun buildICmp(op: Int, lhs: LLVMValueRef, rhs: LLVMValueRef, name: String? = null): LLVMValueRef =
         LLVM.LLVMBuildICmp(builder, op, lhs, rhs, name ?: nextName())
 
