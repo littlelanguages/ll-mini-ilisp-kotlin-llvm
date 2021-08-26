@@ -263,3 +263,66 @@
               expected: 2
               actual: 3
               location: 70:5:10-80:5:20
+      - name: local forward declaration
+        input: |
+          (const a 9)
+
+          (const (f)
+              (const v1 a)
+              (const a 10)
+              (const v2 a)
+              (+ v1 v2)
+          )
+        output:
+          program:
+            values:
+              - a
+            procedures:
+              - procedure:
+                  name: f
+                  arguments: []
+                  offsets: 3
+                  es:
+                    - assign:
+                        symbol:
+                          procedure-value:
+                            name: v1
+                            offset: 0
+                        e:
+                          toplevel-value: a
+                    - assign:
+                        symbol:
+                          procedure-value:
+                            name: a
+                            offset: 1
+                        e:
+                          10
+                    - assign:
+                        symbol:
+                          procedure-value:
+                            name: v2
+                            offset: 2
+                        e:
+                          procedure-value:
+                            name: a
+                            offset: 1
+                    - call-procedure:
+                        procedure:
+                          external-procedure: +
+                        es:
+                          - procedure-value:
+                              name: v1
+                              offset: 0
+                          - procedure-value:
+                              name: v2
+                              offset: 2
+              - procedure:
+                  name: _main
+                  arguments: []
+                  offsets: 0
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: a
+                        e: 9
+

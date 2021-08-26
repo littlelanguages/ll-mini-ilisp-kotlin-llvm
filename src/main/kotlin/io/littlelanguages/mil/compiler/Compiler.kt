@@ -65,7 +65,7 @@ private class Compiler(val module: Module) {
     }
 
     private fun compileProcedureBody(builder: Builder, declaration: Procedure<Builder, LLVMValueRef>): LLVMValueRef? {
-        val frame = builder.buildMkFrame(builder.buildVNull(), declaration.arguments.size, "_frame")
+        val frame = builder.buildMkFrame(builder.buildVNull(), declaration.offsets, "_frame")
 
         declaration.arguments.forEachIndexed { index, name ->
             val op = builder.getParam(index)
@@ -124,7 +124,6 @@ private class CompileExpression(val builder: Builder) {
             is IfExpression -> {
                 val e1op = compileEForce(e.e1)
                 val falseOp = builder.buildVFalse()
-
 
                 val e1Compare = builder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp)
 
