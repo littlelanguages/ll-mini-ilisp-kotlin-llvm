@@ -6,18 +6,13 @@ import io.kotest.matchers.shouldBe
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
-import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.compiler.llvm.Builder
+import io.littlelanguages.mil.compiler.llvm.FunctionBuilder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.Binding
-import io.littlelanguages.mil.dynamic.ExternalProcedureBinding
 import io.littlelanguages.mil.dynamic.translate
-import io.littlelanguages.mil.dynamic.tst.Expression
-import io.littlelanguages.mil.dynamic.tst.LiteralInt
 import io.littlelanguages.mil.static.Scanner
-import io.littlelanguages.mil.static.ast.SExpression
 import io.littlelanguages.mil.static.parse
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.yaml.snakeyaml.Yaml
@@ -41,11 +36,11 @@ class CompilerTests : FunSpec({
     }
 })
 
-fun compile(builtinBindings: List<Binding<Builder, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
+fun compile(builtinBindings: List<Binding<FunctionBuilder, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "test", it) }
 
 suspend fun parserConformanceTest(
-    builtinBindings: List<Binding<Builder, LLVMValueRef>>,
+    builtinBindings: List<Binding<FunctionBuilder, LLVMValueRef>>,
     context: Context,
     ctx: FunSpecContainerContext,
     scenarios: List<*>

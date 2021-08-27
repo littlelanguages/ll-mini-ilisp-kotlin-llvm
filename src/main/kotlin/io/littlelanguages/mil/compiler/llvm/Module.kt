@@ -30,8 +30,8 @@ class Module(moduleID: String, private var context: Context) {
             functionType(parameterTypes, resultType)
         )
 
-    fun addFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): Builder {
-        val builder = Builder(
+    fun addFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): FunctionBuilder {
+        val functionBuilder = FunctionBuilder(
             context,
             this,
             builder,
@@ -42,9 +42,9 @@ class Module(moduleID: String, private var context: Context) {
             )
         )
 
-        LLVM.LLVMSetFunctionCallConv(builder.procedure, LLVM.LLVMCCallConv)
+        LLVM.LLVMSetFunctionCallConv(functionBuilder.procedure, LLVM.LLVMCCallConv)
 
-        return builder
+        return functionBuilder
     }
 
     private fun functionType(parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMTypeRef =

@@ -8,7 +8,7 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-class Builder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
+class FunctionBuilder(private val context: Context, private val module: Module, private val builder: LLVMBuilderRef, var procedure: LLVMValueRef) {
     private var currentBasicBlock: LLVMBasicBlockRef = appendBasicBlock("entry")
     private var bindings = NestedMap<Any, LLVMValueRef>()
 

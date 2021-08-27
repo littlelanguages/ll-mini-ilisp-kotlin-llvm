@@ -321,7 +321,7 @@
 - scenario:
     name: Declarations
     tests:
-      - name: top-level value declaration
+      - name: Toplevel value declaration
         input: |
           (const v1 1)
           (const v2 #t)
@@ -340,7 +340,7 @@
           Hello world
           ()
           (1 . 2)
-      - name: top-level procedure declaration
+      - name: Toplevel procedure declaration
         input: |
           (const (add a b) (+ a b))
           (const (minus a b) (- a b))
@@ -348,7 +348,7 @@
           (println (minus 10 (add 1 2)))
         output: |
           7
-      - name: const value in procedure declaration
+      - name: Const value in procedure declaration
         input: |
           (const (double-sum a b)
             (const sum (+ a b))
@@ -359,7 +359,7 @@
           (println (double-sum 1 2))
         output: |
           6
-      - name: nested const forward value declaration
+      - name: Nested const forward value declaration
         input: |
           (const a 9)
 
@@ -373,7 +373,7 @@
           (println (f))
         output: |
           (9 . 10)
-      - name: "!nested procedures with free variables"
+      - name: "!Nested procedures with free variables"
         input: |
           (const (f a b)
               (const sum (+ a b))
