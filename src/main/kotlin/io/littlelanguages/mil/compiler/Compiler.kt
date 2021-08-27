@@ -58,7 +58,7 @@ private class Compiler(val module: Module) {
     }
 
     private fun compileProcedure(declaration: Procedure<Builder, LLVMValueRef>) {
-        val builder = module.addFunction(declaration.name, declaration.arguments.map { module.structValueP }, module.structValueP)
+        val builder = module.addFunction(declaration.name, declaration.parameters.map { module.structValueP }, module.structValueP)
         val result = compileProcedureBody(builder, declaration)
 
         builder.buildRet(result ?: builder.buildVNull())
@@ -67,7 +67,7 @@ private class Compiler(val module: Module) {
     private fun compileProcedureBody(builder: Builder, declaration: Procedure<Builder, LLVMValueRef>): LLVMValueRef? {
         val frame = builder.buildMkFrame(builder.buildVNull(), declaration.offsets, "_frame")
 
-        declaration.arguments.forEachIndexed { index, name ->
+        declaration.parameters.forEachIndexed { index, name ->
             val op = builder.getParam(index)
             builder.buildSetFrameValue(frame, index, op)
             builder.addBindingToScope(name, op)

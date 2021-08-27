@@ -16,6 +16,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
     val bindings = Bindings<S, T>()
 
     var toplevel = true
+    var depth = -1
     var offset = 0
 
     init {
@@ -43,7 +44,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 names.add(it.symbol.name)
         }
 
-        declarations.add(Procedure("_main", emptyList(), offset, expressions))
+        declarations.add(Procedure("_main", emptyList(), 0, offset, expressions))
 
         return Program(names, declarations)
     }
@@ -69,7 +70,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                     null ->
                                         reportError(UnknownSymbolError(first.name, first.position))
 
-                                    is TopLevelProcedureBinding ->
+                                    is DeclaredProcedureBinding ->
                                         if (binding.parameterCount == arguments.size)
                                             CallProcedureExpression(binding, arguments)
                                         else
@@ -124,7 +125,8 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                         val oldTopLevel = toplevel
                         val oldOffset = offset
 
-                        bindings.add(v1v0.name, TopLevelProcedureBinding(v1v0.name, parameters.size))
+                        depth += 1
+                        bindings.add(v1v0.name, DeclaredProcedureBinding(v1v0.name, parameters.size, depth))
                         toplevel = false
                         offset = parameters.size
                         bindings.open()
@@ -135,20 +137,21 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                                 parameterNames.add(parameterName)
                                 if (bindings.inCurrentNesting(parameterName))
                                     reportError(DuplicateParameterNameError(parameterName, symbol.position()))
-                                bindings.add(parameterName, ParameterBinding(parameterName, index))
+                                bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
                             } else
                                 reportError(InvalidConstFormError(e.position()))
                         }
                         bindings.open()
                         val expressions = e.expressions.drop(2).map { expressionToTST(it) }
-                        val procedure = Procedure(v1v0.name, parameterNames, offset, expressions)
+                        val procedure = Procedure(v1v0.name, parameterNames, depth, offset, expressions)
                         bindings.close()
                         bindings.close()
 
                         if (oldTopLevel) {
                             toplevel = true
-                            offset = oldOffset
                         }
+                        depth -= 1
+                        offset = oldOffset
 
                         procedure
                     } else
@@ -159,7 +162,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 val v2 = e.expressions[2]
 
                 val oldToplevel = toplevel
-                val binding = if (toplevel) TopLevelValueBinding<S, T>(v1.name) else ProcedureValueBinding(v1.name, offset)
+                val binding = if (toplevel) TopLevelValueBinding<S, T>(v1.name) else ProcedureValueBinding(v1.name, depth, offset)
 
                 if (!toplevel)
                     offset += 1

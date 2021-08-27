@@ -16,12 +16,13 @@ data class Program<S, T>(val values: List<String>, val declarations: List<Declar
 
 sealed interface Declaration<S, T> : Yamlable
 
-data class Procedure<S, T>(val name: String, val arguments: List<String>, val offsets: Int, val es: Expressions<S, T>) : Declaration<S, T>, Expression<S, T> {
+data class Procedure<S, T>(val name: String, val parameters: List<String>, val depth: Int, val offsets: Int, val es: Expressions<S, T>) : Declaration<S, T>, Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "procedure", mapOf(
                 Pair("name", name),
-                Pair("arguments", arguments),
+                Pair("parameters", parameters),
+                Pair("depth", depth),
                 Pair("offsets", offsets),
                 Pair("es", es.map { it.yaml() })
             )

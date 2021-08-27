@@ -7,7 +7,8 @@
       procedures:
         - procedure:
             name: _main
-            arguments: [ ]
+            parameters: [ ]
+            depth: 0
             offsets: 0
             es:
               - call-procedure:
@@ -34,7 +35,8 @@
             procedures:
               - procedure:
                   name: _main
-                  arguments: [ ]
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es:
                     - assign:
@@ -50,9 +52,10 @@
             procedures:
               - procedure:
                   name: add
-                  arguments:
+                  parameters:
                     - a
                     - b
+                  depth: 0
                   offsets: 2
                   es:
                     - call-procedure:
@@ -61,13 +64,16 @@
                         es:
                           - parameter:
                               name: a
+                              depth: 0
                               offset: 0
                           - parameter:
                               name: b
+                              depth: 0
                               offset: 1
               - procedure:
                   name: _main
-                  arguments: [ ]
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es: [ ]
       - name: Procedure with duplicate parameter names
@@ -85,19 +91,21 @@
           )
         output:
           program:
-            values: []
+            values: [ ]
             procedures:
               - procedure:
                   name: double-sum
-                  arguments:
+                  parameters:
                     - a
                     - b
+                  depth: 0
                   offsets: 3
                   es:
                     - assign:
                         symbol:
                           procedure-value:
                             name: sum
+                            depth: 0
                             offset: 2
                         e:
                           call-procedure:
@@ -106,9 +114,11 @@
                             es:
                               - parameter:
                                   name: a
+                                  depth: 0
                                   offset: 0
                               - parameter:
                                   name: b
+                                  depth: 0
                                   offset: 1
                     - call-procedure:
                         procedure:
@@ -116,15 +126,136 @@
                         es:
                           - procedure-value:
                               name: sum
+                              depth: 0
                               offset: 2
                           - procedure-value:
                               name: sum
+                              depth: 0
                               offset: 2
               - procedure:
                   name: _main
-                  arguments: [ ]
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es: [ ]
+      - name: Nested procedures with free variables
+        input: |
+          (const (f a b)
+              (const sum (+ a b))
+
+              (const (g x)
+                  (const sum2 (+ a b sum))
+
+                  (+ sum2 x)
+              )
+
+              (g sum)
+          )
+
+          (println (f 1 2))
+        output:
+          program:
+            values: [ ]
+            procedures:
+              - procedure:
+                  name: f
+                  parameters:
+                    - a
+                    - b
+                  depth: 0
+                  offsets: 3
+                  es:
+                    - assign:
+                        symbol:
+                          procedure-value:
+                            name: sum
+                            depth: 0
+                            offset: 2
+                        e:
+                          call-procedure:
+                            procedure:
+                              external-procedure: +
+                            es:
+                              - parameter:
+                                  name: a
+                                  depth: 0
+                                  offset: 0
+                              - parameter:
+                                  name: b
+                                  depth: 0
+                                  offset: 1
+                    - procedure:
+                        name: g
+                        parameters:
+                          - x
+                        depth: 1
+                        offsets: 2
+                        es:
+                          - assign:
+                              symbol:
+                                procedure-value:
+                                  name: sum2
+                                  depth: 1
+                                  offset: 1
+                              e:
+                                call-procedure:
+                                  procedure:
+                                    external-procedure: +
+                                  es:
+                                    - parameter:
+                                        name: a
+                                        depth: 0
+                                        offset: 0
+                                    - parameter:
+                                        name: b
+                                        depth: 0
+                                        offset: 1
+                                    - procedure-value:
+                                        name: sum
+                                        depth: 0
+                                        offset: 2
+                          - call-procedure:
+                              procedure:
+                                external-procedure: +
+                              es:
+                                - procedure-value:
+                                    name: sum2
+                                    depth: 1
+                                    offset: 1
+                                - parameter:
+                                    name: x
+                                    depth: 1
+                                    offset: 0
+                    - call-procedure:
+                        procedure:
+                          declared-procedure:
+                            name: g
+                            parameter-count: 1
+                            depth: 1
+                        es:
+                          - procedure-value:
+                              name: sum
+                              depth: 0
+                              offset: 2
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 0
+                  es:
+                    - call-procedure:
+                        procedure:
+                          external-procedure: println
+                        es:
+                          - call-procedure:
+                              procedure:
+                                declared-procedure:
+                                  name: f
+                                  parameter-count: 2
+                                  depth: 0
+                              es:
+                                - 1
+                                - 2
 - scenario:
     name: Identifier Reference
     tests:
@@ -154,7 +285,8 @@
             procedures:
               - procedure:
                   name: _main
-                  arguments: [ ]
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es:
                     - assign:
@@ -180,7 +312,8 @@
             procedures:
               - procedure:
                   name: _main
-                  arguments: []
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es:
                     - assign:
@@ -208,9 +341,10 @@
             procedures:
               - procedure:
                   name: add
-                  arguments:
+                  parameters:
                     - a
                     - b
+                  depth: 0
                   offsets: 2
                   es:
                     - call-procedure:
@@ -219,13 +353,16 @@
                         es:
                           - parameter:
                               name: a
+                              depth: 0
                               offset: 0
                           - parameter:
                               name: b
+                              depth: 0
                               offset: 1
               - procedure:
                   name: _main
-                  arguments: [ ]
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es:
                     - call-procedure:
@@ -234,9 +371,10 @@
                         es:
                           - call-procedure:
                               procedure:
-                                toplevel-procedure:
+                                declared-procedure:
                                   name: add
                                   parameter-count: 2
+                                  depth: 0
                               es:
                                 - 1
                                 - 2
@@ -280,13 +418,15 @@
             procedures:
               - procedure:
                   name: f
-                  arguments: []
+                  parameters: [ ]
+                  depth: 0
                   offsets: 3
                   es:
                     - assign:
                         symbol:
                           procedure-value:
                             name: v1
+                            depth: 0
                             offset: 0
                         e:
                           toplevel-value: a
@@ -294,6 +434,7 @@
                         symbol:
                           procedure-value:
                             name: a
+                            depth: 0
                             offset: 1
                         e:
                           10
@@ -301,10 +442,12 @@
                         symbol:
                           procedure-value:
                             name: v2
+                            depth: 0
                             offset: 2
                         e:
                           procedure-value:
                             name: a
+                            depth: 0
                             offset: 1
                     - call-procedure:
                         procedure:
@@ -312,17 +455,19 @@
                         es:
                           - procedure-value:
                               name: v1
+                              depth: 0
                               offset: 0
                           - procedure-value:
                               name: v2
+                              depth: 0
                               offset: 2
               - procedure:
                   name: _main
-                  arguments: []
+                  parameters: [ ]
+                  depth: 0
                   offsets: 0
                   es:
                     - assign:
                         symbol:
                           toplevel-value: a
                         e: 9
-

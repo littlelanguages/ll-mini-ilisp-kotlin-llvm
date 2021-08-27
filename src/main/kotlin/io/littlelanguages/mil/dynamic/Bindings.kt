@@ -15,11 +15,12 @@ data class TopLevelValueBinding<S, T>(override val name: String) : Binding<S, T>
         singletonMap("toplevel-value", name)
 }
 
-data class ProcedureValueBinding<S, T>(override val name: String, val offset: Int) : Binding<S, T> {
+data class ProcedureValueBinding<S, T>(override val name: String, val depth: Int, val offset: Int) : Binding<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "procedure-value", mapOf(
                 Pair("name", name),
+                Pair("depth", depth),
                 Pair("offset", offset)
             )
         )
@@ -27,12 +28,13 @@ data class ProcedureValueBinding<S, T>(override val name: String, val offset: In
 
 sealed interface ProcedureBinding<S, T> : Binding<S, T>
 
-data class TopLevelProcedureBinding<S, T>(override val name: String, val parameterCount: Int) : ProcedureBinding<S, T> {
+data class DeclaredProcedureBinding<S, T>(override val name: String, val parameterCount: Int, val depth: Int) : ProcedureBinding<S, T> {
     override fun yaml(): Any =
         singletonMap(
-            "toplevel-procedure", mapOf(
+            "declared-procedure", mapOf(
                 Pair("name", name),
-                Pair("parameter-count", parameterCount)
+                Pair("parameter-count", parameterCount),
+                Pair("depth", depth)
             )
         )
 }
@@ -54,11 +56,12 @@ abstract class ExternalProcedureBinding<S, T>(
     abstract fun compile(builder: S, arguments: List<Expression<S, T>>): T?
 }
 
-data class ParameterBinding<S, T>(override val name: String, val offset: Int) : Binding<S, T> {
+data class ParameterBinding<S, T>(override val name: String, val depth: Int, val offset: Int) : Binding<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "parameter", mapOf(
                 Pair("name", name),
+                Pair("depth", depth),
                 Pair("offset", offset)
             )
         )

@@ -373,4 +373,20 @@
           (println (f))
         output: |
           (9 . 10)
+      - name: "!nested procedures with free variables"
+        input: |
+          (const (f a b)
+              (const sum (+ a b))
 
+              (const (g x)
+                  (const sum2 (+ a b sum))
+
+                  (+ sum2 x)
+              )
+
+              (g sum)
+          )
+
+          (println (f 1 2))
+        output: |
+          9
