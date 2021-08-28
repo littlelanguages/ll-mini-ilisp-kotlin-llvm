@@ -7,7 +7,6 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.compiler.llvm.FunctionBuilder
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.dynamic.Binding
@@ -36,11 +35,11 @@ class CompilerTests : FunSpec({
     }
 })
 
-fun compile(builtinBindings: List<Binding<FunctionBuilder, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
+fun compile(builtinBindings: List<Binding<CompileState, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
     parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "test", it) }
 
 suspend fun parserConformanceTest(
-    builtinBindings: List<Binding<FunctionBuilder, LLVMValueRef>>,
+    builtinBindings: List<Binding<CompileState, LLVMValueRef>>,
     context: Context,
     ctx: FunSpecContainerContext,
     scenarios: List<*>

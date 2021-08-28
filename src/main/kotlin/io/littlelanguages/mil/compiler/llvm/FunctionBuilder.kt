@@ -43,10 +43,10 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, nextName()), PointerPointer(c0i64, c0i64), 2))
         )
 
-    fun buildGetFrameValue(frame: LLVMValueRef, index: Int, name: String? = null): LLVMValueRef =
+    fun buildGetFrameValue(frame: LLVMValueRef, relativeDepth: Int, index: Int, name: String? = null): LLVMValueRef =
         buildCall(
             getNamedFunction("_get_frame_value", listOf(structValueP, i32, i32), structValueP),
-            listOf(frame, LLVM.LLVMConstInt(i32, 0.toLong(), 0), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
+            listOf(frame, LLVM.LLVMConstInt(i32, 0.toLong(), relativeDepth), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
             name
         )
 

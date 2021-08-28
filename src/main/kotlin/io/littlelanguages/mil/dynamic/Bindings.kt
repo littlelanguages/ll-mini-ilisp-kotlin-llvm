@@ -37,13 +37,16 @@ data class DeclaredProcedureBinding<S, T>(override val name: String, val paramet
                 Pair("depth", depth)
             )
         )
+
+    fun isToplevel(): Boolean =
+        depth == 0
 }
 
 abstract class ExternalValueBinding<S, T>(override val name: String) : Binding<S, T> {
     override fun yaml(): Any =
         singletonMap("external-value", name)
 
-    abstract fun compile(builder: S): T?
+    abstract fun compile(state: S): T?
 }
 
 abstract class ExternalProcedureBinding<S, T>(
@@ -53,7 +56,7 @@ abstract class ExternalProcedureBinding<S, T>(
         singletonMap("external-procedure", name)
 
     abstract fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors?
-    abstract fun compile(builder: S, arguments: List<Expression<S, T>>): T?
+    abstract fun compile(state: S, arguments: List<Expression<S, T>>): T?
 }
 
 data class ParameterBinding<S, T>(override val name: String, val depth: Int, val offset: Int) : Binding<S, T> {

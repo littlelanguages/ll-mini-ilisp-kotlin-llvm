@@ -319,7 +319,7 @@
                 #t
 
 - scenario:
-    name: Declarations
+    name: "Declarations"
     tests:
       - name: Toplevel value declaration
         input: |
@@ -373,18 +373,18 @@
           (println (f))
         output: |
           (9 . 10)
-      - name: "!Nested procedures with free variables"
+      - name: "Nested procedures with free variables"
         input: |
           (const (f a b)
-              (const sum (+ a b))
+            (const sum (+ a b))
 
-              (const (g x)
-                  (const sum2 (+ a b sum))
+            (const (g x)
+                (const sum2 (+ a b sum))
 
-                  (+ sum2 x)
-              )
+                (+ sum2 x)
+            )
 
-              (g sum)
+            (g sum)
           )
 
           (println (f 1 2))

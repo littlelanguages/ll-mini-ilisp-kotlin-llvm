@@ -30,16 +30,20 @@ class Module(moduleID: String, private var context: Context) {
             functionType(parameterTypes, resultType)
         )
 
-    fun addFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): FunctionBuilder {
+    fun addFunctionHeader(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef) {
+        LLVM.LLVMAddFunction(
+            module,
+            name,
+            functionType(parameterTypes, resultType)
+        )
+    }
+
+    fun addFunctionBody(name: String): FunctionBuilder {
         val functionBuilder = FunctionBuilder(
             context,
             this,
             builder,
-            LLVM.LLVMAddFunction(
-                module,
-                name,
-                functionType(parameterTypes, resultType)
-            )
+            getNamedFunction(name)!!
         )
 
         LLVM.LLVMSetFunctionCallConv(functionBuilder.procedure, LLVM.LLVMCCallConv)
