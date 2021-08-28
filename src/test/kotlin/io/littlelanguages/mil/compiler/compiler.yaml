@@ -405,8 +405,53 @@
             (nested-nested a')
           )
 
+          (const (range min max)
+            (if (< min max) (pair min (range (+ min 1) max))
+                ()
+            )
+          )
+
+          (const (max a b)
+              (if (< a b) b a)
+          )
+
+          (const (maxs items)
+              (const (max-helper largest rest)
+                  (if (null? rest)
+                          largest
+                      (max-helper (max largest (car rest)) (cdr rest))
+                  )
+              )
+
+              (if (null? items)
+                      ()
+                  (max-helper (car items) (cdr items))
+              )
+          )
+
+          (const (count items)
+            (if (null? items) 0
+                (+ 1 (count (cdr items)))
+            )
+          )
+
+          (const (sum items)
+            (if (null? items) 0
+                (+ (car items) (sum (cdr items)))
+            )
+          )
+
           (println (f 1 2))
           (println (nested 1))
+
+          (const lots (range 0 100000))
+
+          (println "count: " (count lots))
+          (println "sum: " (sum lots))
+          (println "max: " (maxs lots))
         output: |
           9
           15
+          count: 100000
+          sum: 704982704
+          max: 99999
