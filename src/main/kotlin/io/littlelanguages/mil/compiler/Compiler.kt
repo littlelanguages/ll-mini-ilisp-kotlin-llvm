@@ -271,7 +271,7 @@ private class CompileExpression(val compileState: CompileState) {
                                 else if (compileState.depth > symbol.depth)
                                     functionBuilder.buildGetFrameValue(
                                         functionBuilder.getParam(0),
-                                        compileState.depth - symbol.depth,
+                                        compileState.depth - symbol.depth - 1,
                                         symbol.offset + 1
                                     )
                                 else
@@ -283,7 +283,7 @@ private class CompileExpression(val compileState: CompileState) {
                             is ProcedureValueBinding ->
                                 functionBuilder.buildGetFrameValue(
                                     functionBuilder.getParam(0),
-                                    compileState.depth - symbol.depth,
+                                    compileState.depth - symbol.depth - 1,
                                     symbol.offset + 1
                                 )
 

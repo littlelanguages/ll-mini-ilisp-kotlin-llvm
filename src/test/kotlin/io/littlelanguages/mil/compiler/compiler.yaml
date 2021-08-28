@@ -387,6 +387,26 @@
             (g sum)
           )
 
+          (const (nested a)
+            (const a' (+ a 1))
+
+            (const (nested-nested b)
+              (const b' (+ b 1))
+
+              (const (nested-nested-nested c)
+                (const c' (+ c 1))
+
+                (+ a b c a' b' c')
+              )
+
+              (nested-nested-nested b')
+            )
+
+            (nested-nested a')
+          )
+
           (println (f 1 2))
+          (println (nested 1))
         output: |
           9
+          15

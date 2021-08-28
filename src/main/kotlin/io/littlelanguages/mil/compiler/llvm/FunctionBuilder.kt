@@ -46,7 +46,7 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildGetFrameValue(frame: LLVMValueRef, relativeDepth: Int, index: Int, name: String? = null): LLVMValueRef =
         buildCall(
             getNamedFunction("_get_frame_value", listOf(structValueP, i32, i32), structValueP),
-            listOf(frame, LLVM.LLVMConstInt(i32, 0.toLong(), relativeDepth), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
+            listOf(frame, LLVM.LLVMConstInt(i32, relativeDepth.toLong(), 0), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
             name
         )
 
