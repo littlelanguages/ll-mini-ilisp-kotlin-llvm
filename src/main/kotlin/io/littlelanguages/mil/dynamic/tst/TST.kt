@@ -16,7 +16,8 @@ data class Program<S, T>(val values: List<String>, val declarations: List<Declar
 
 sealed interface Declaration<S, T> : Yamlable
 
-data class Procedure<S, T>(val name: String, val parameters: List<String>, val depth: Int, val offsets: Int, val es: Expressions<S, T>) : Declaration<S, T>, Expression<S, T> {
+data class Procedure<S, T>(val name: String, val parameters: List<String>, val depth: Int, val offsets: Int, val es: Expressions<S, T>) :
+    Declaration<S, T>, Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "procedure", mapOf(
@@ -33,12 +34,12 @@ typealias  Expressions<S, T> = List<Expression<S, T>>
 
 interface Expression<S, T> : Yamlable
 
-data class AssignExpression<S, T>(val symbol: Binding<S, T>, val e: Expression<S, T>) : Expression<S, T> {
+data class AssignExpression<S, T>(val symbol: Binding<S, T>, val es: Expressions<S, T>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "assign", mapOf(
                 Pair("symbol", symbol.yaml()),
-                Pair("e", e.yaml())
+                Pair("es", es.map { it.yaml() })
             )
         )
 }
@@ -63,13 +64,13 @@ data class CallValueExpression<S, T>(val operand: Expression<S, T>, val es: Expr
         )
 }
 
-data class IfExpression<S, T>(val e1: Expression<S, T>, val e2: Expression<S, T>, val e3: Expression<S, T>) : Expression<S, T> {
+data class IfExpression<S, T>(val e1: List<Expression<S, T>>, val e2: List<Expression<S, T>>, val e3: List<Expression<S, T>>) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "if", mapOf(
-                Pair("e1", e1.yaml()),
-                Pair("e2", e2.yaml()),
-                Pair("e3", e3.yaml())
+                Pair("e1", e1.map { it.yaml() }),
+                Pair("e2", e2.map { it.yaml() }),
+                Pair("e3", e3.map { it.yaml() })
             )
         )
 }

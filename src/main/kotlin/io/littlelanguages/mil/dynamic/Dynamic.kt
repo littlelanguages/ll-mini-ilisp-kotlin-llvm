@@ -3,7 +3,10 @@ package io.littlelanguages.mil.dynamic
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
-import io.littlelanguages.mil.*
+import io.littlelanguages.mil.ArgumentMismatchError
+import io.littlelanguages.mil.DuplicateParameterNameError
+import io.littlelanguages.mil.Errors
+import io.littlelanguages.mil.UnknownSymbolError
 import io.littlelanguages.mil.dynamic.tst.*
 
 fun <S, T> translate(builtinBindings: List<Binding<S, T>>, p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program<S, T>> =
@@ -33,7 +36,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
         val expressions = mutableListOf<Expression<S, T>>()
         val names = mutableListOf<String>()
 
-        es.map { expressionToTST(it) }.forEach {
+        es.flatMap { expressionToTST(it) }.forEach {
             if (it is Procedure<S, T>)
                 declarations.add(it)
             else
@@ -48,55 +51,96 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
         return Program(names, declarations)
     }
 
-    private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): Expression<S, T> =
+    private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression): List<Expression<S, T>> =
         when (e) {
-            is io.littlelanguages.mil.static.ast.SExpression ->
-                if (e.expressions.isEmpty())
-                    LiteralUnit()
-                else if (e.isConst())
-                    constToTST(e)
-                else {
-                    val first = e.expressions[0]
+            is io.littlelanguages.mil.static.ast.ConstProcedure -> {
+                val name = e.symbol.name
+                val parameters = e.parameters
 
-                    if (first is io.littlelanguages.mil.static.ast.Symbol) {
-                        val arguments = e.expressions.drop(1).map { expressionToTST(it) }
+                val parameterNames = mutableListOf<String>()
 
-                        when (first.name) {
-                            "if" ->
-                                ifToTST(arguments)
-                            else ->
-                                when (val binding = bindings.get(first.name)) {
-                                    null ->
-                                        reportError(UnknownSymbolError(first.name, first.position))
+                val oldOffset = offset
 
-                                    is DeclaredProcedureBinding ->
-                                        if (binding.parameterCount == arguments.size)
-                                            CallProcedureExpression(binding, arguments)
-                                        else
-                                            reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
+                depth += 1
+                bindings.add(name, DeclaredProcedureBinding(name, parameters.size, depth))
+                offset = parameters.size
+                bindings.open()
+                parameters.forEachIndexed { index, symbol ->
+                    val parameterName = symbol.name
 
-                                    is ExternalProcedureBinding ->
-                                        when (val error = binding.validateArguments(e, first.name, arguments)) {
-                                            null ->
-                                                CallProcedureExpression(binding, arguments)
-                                            else ->
-                                                reportError(error)
-                                        }
-
-                                    else ->
-                                        CallValueExpression(SymbolReferenceExpression(binding), arguments)
-                                }
-
-                        }
-                    } else
-                        TODO()
+                    parameterNames.add(parameterName)
+                    if (bindings.inCurrentNesting(parameterName))
+                        reportError(DuplicateParameterNameError(parameterName, symbol.position()))
+                    bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
                 }
+                bindings.open()
+                val expressions = e.expressions.flatMap { expressionToTST(it) }
+                val procedure = Procedure(name, parameterNames, depth, offset, expressions)
+                bindings.close()
+                bindings.close()
+
+                depth -= 1
+                offset = oldOffset
+
+                listOf(procedure)
+            }
+
+            is io.littlelanguages.mil.static.ast.ConstValue -> {
+                val name = e.symbol.name
+                val expressions = e.expressions
+
+                val binding = if (isToplevel()) TopLevelValueBinding<S, T>(name) else ProcedureValueBinding(name, depth, offset)
+
+                if (!isToplevel())
+                    offset += 1
+
+                bindings.add(name, binding)
+
+                listOf(AssignExpression(binding, expressions.flatMap { expressionToTST(it) }))
+            }
+
+            is io.littlelanguages.mil.static.ast.IfExpression ->
+                ifToTST(e.expressions.map { ee -> ee.flatMap { expressionToTST(it) } })
+
+            is io.littlelanguages.mil.static.ast.SExpression -> {
+                val first = e.expressions[0]
+
+                if (first is io.littlelanguages.mil.static.ast.Symbol) {
+                    val arguments = e.expressions.drop(1).flatMap { expressionToTST(it) }
+
+                    when (val binding = bindings.get(first.name)) {
+                        null ->
+                            reportError(UnknownSymbolError(first.name, first.position))
+
+                        is DeclaredProcedureBinding ->
+                            if (binding.parameterCount == arguments.size)
+                                listOf(CallProcedureExpression(binding, arguments))
+                            else
+                                reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
+
+                        is ExternalProcedureBinding ->
+                            when (val error = binding.validateArguments(e, first.name, arguments)) {
+                                null ->
+                                    listOf(CallProcedureExpression(binding, arguments))
+                                else ->
+                                    reportError(error)
+                            }
+
+                        else ->
+                            listOf(CallValueExpression(SymbolReferenceExpression(binding), arguments))
+                    }
+                } else
+                    TODO(e.toString())
+            }
 
             is io.littlelanguages.mil.static.ast.LiteralInt ->
-                LiteralInt(e.value.toInt())
+                listOf(LiteralInt(e.value.toInt()))
 
             is io.littlelanguages.mil.static.ast.LiteralString ->
-                translateLiteralString(e)
+                listOf(translateLiteralString(e))
+
+            is io.littlelanguages.mil.static.ast.LiteralUnit ->
+                listOf(LiteralUnit())
 
             is io.littlelanguages.mil.static.ast.Symbol -> {
                 val binding = bindings.get(e.name)
@@ -104,81 +148,21 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 if (binding == null)
                     reportError(UnknownSymbolError(e.name, e.position))
                 else
-                    SymbolReferenceExpression(binding)
+                    listOf(SymbolReferenceExpression(binding))
             }
         }
 
-    private fun constToTST(e: io.littlelanguages.mil.static.ast.SExpression) =
-        if (e.expressions.size > 1) {
-            val v1 = e.expressions[1]
-
-            if (v1 is io.littlelanguages.mil.static.ast.SExpression && v1.expressions.isNotEmpty()) {
-                val v1v0 = v1.expressions[0]
-
-                if (v1v0 is io.littlelanguages.mil.static.ast.Symbol) {
-                    val parameters = v1.expressions.drop(1)
-
-                    if (parameters.all { it is io.littlelanguages.mil.static.ast.Symbol }) {
-                        val parameterNames = mutableListOf<String>()
-
-                        val oldOffset = offset
-
-                        depth += 1
-                        bindings.add(v1v0.name, DeclaredProcedureBinding(v1v0.name, parameters.size, depth))
-                        offset = parameters.size
-                        bindings.open()
-                        parameters.forEachIndexed { index, symbol ->
-                            if (symbol is io.littlelanguages.mil.static.ast.Symbol) {
-                                val parameterName = symbol.name
-
-                                parameterNames.add(parameterName)
-                                if (bindings.inCurrentNesting(parameterName))
-                                    reportError(DuplicateParameterNameError(parameterName, symbol.position()))
-                                bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
-                            } else
-                                reportError(InvalidConstFormError(e.position()))
-                        }
-                        bindings.open()
-                        val expressions = e.expressions.drop(2).map { expressionToTST(it) }
-                        val procedure = Procedure(v1v0.name, parameterNames, depth, offset, expressions)
-                        bindings.close()
-                        bindings.close()
-
-                        depth -= 1
-                        offset = oldOffset
-
-                        procedure
-                    } else
-                        reportError(InvalidConstFormError(e.position()))
-                } else
-                    reportError(InvalidConstFormError(e.position()))
-            } else if (v1 is io.littlelanguages.mil.static.ast.Symbol && e.expressions.size == 3) {
-                val v2 = e.expressions[2]
-
-                val binding = if (isToplevel()) TopLevelValueBinding<S, T>(v1.name) else ProcedureValueBinding(v1.name, depth, offset)
-
-                if (!isToplevel())
-                    offset += 1
-
-                bindings.add(v1.name, binding)
-                val expression = AssignExpression(binding, expressionToTST(v2))
-                expression
-            } else
-                reportError(InvalidConstFormError(e.position()))
-        } else
-            reportError(InvalidConstFormError(e.position()))
-
-    private fun ifToTST(es: List<Expression<S, T>>): Expression<S, T> =
+    private fun ifToTST(es: List<List<Expression<S, T>>>): List<Expression<S, T>> =
         when (es.size) {
-            0 -> LiteralUnit()
+            0 -> listOf(LiteralUnit())
             1 -> es[0]
-            2 -> IfExpression(es[0], es[1], LiteralUnit())
-            else -> IfExpression(es[0], es[1], ifToTST(es.drop(2)))
+            2 -> listOf(IfExpression(es[0], es[1], listOf(LiteralUnit())))
+            else -> listOf(IfExpression(es[0], es[1], ifToTST(es.drop(2))))
         }
 
-    private fun reportError(error: Errors): Expression<S, T> {
+    private fun reportError(error: Errors): List<Expression<S, T>> {
         errors.add(error)
-        return LiteralUnit()
+        return listOf()
     }
 
     private fun isToplevel(): Boolean =

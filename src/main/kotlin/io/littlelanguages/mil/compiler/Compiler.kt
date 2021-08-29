@@ -58,7 +58,7 @@ class Compiler(private val module: Module) {
     private fun addFunctionsFromExpression(e: Expression<CompileState, LLVMValueRef>) {
         when (e) {
             is AssignExpression ->
-                addFunctionsFromExpression(e.e)
+                addFunctionsFromExpressions(e.es)
 
             is CallProcedureExpression ->
                 when (val procedure = e.procedure) {
@@ -73,9 +73,9 @@ class Compiler(private val module: Module) {
                 }
 
             is IfExpression -> {
-                addFunctionsFromExpression(e.e1)
-                addFunctionsFromExpression(e.e2)
-                addFunctionsFromExpression(e.e3)
+                addFunctionsFromExpressions(e.e1)
+                addFunctionsFromExpressions(e.e2)
+                addFunctionsFromExpressions(e.e3)
             }
 
             is Procedure ->
@@ -163,6 +163,11 @@ private fun compileEForce(compileState: CompileState, e: Expression<CompileState
 private class CompileExpression(val compileState: CompileState) {
     val functionBuilder = compileState.functionBuilder
 
+    fun compileExpressionsForce(es: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef =
+        es.fold(null as LLVMValueRef?) { _, b: Expression<CompileState, LLVMValueRef> ->
+            compileE(b)
+        } ?: functionBuilder.buildVNull()
+
     fun compileEForce(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef =
         compileE(e) ?: functionBuilder.buildVNull()
 
@@ -171,13 +176,13 @@ private class CompileExpression(val compileState: CompileState) {
             is AssignExpression -> {
                 when (val symbol = e.symbol) {
                     is TopLevelValueBinding -> {
-                        val operand = compileEForce(e.e)
+                        val operand = compileExpressionsForce(e.es)
                         functionBuilder.buildStore(operand, functionBuilder.getNamedGlobal(symbol.name)!!)
                         functionBuilder.addBindingToScope(symbol.name, operand)
                     }
 
                     is ProcedureValueBinding -> {
-                        val operand = compileEForce(e.e)
+                        val operand = compileExpressionsForce(e.es)
                         functionBuilder.buildSetFrameValue(functionBuilder.getBindingValue("_frame")!!, symbol.offset + 1, operand)
                         functionBuilder.addBindingToScope(symbol.name, operand)
                     }
@@ -221,7 +226,7 @@ private class CompileExpression(val compileState: CompileState) {
                 }
 
             is IfExpression -> {
-                val e1op = compileEForce(e.e1)
+                val e1op = compileExpressionsForce(e.e1)
                 val falseOp = functionBuilder.buildVFalse()
 
                 val e1Compare = functionBuilder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp)
@@ -233,12 +238,12 @@ private class CompileExpression(val compileState: CompileState) {
                 functionBuilder.buildCondBr(e1Compare, ifThen, ifElse)
 
                 functionBuilder.positionAtEnd(ifThen)
-                val e2op = compileEForce(e.e2)
+                val e2op = compileExpressionsForce(e.e2)
                 functionBuilder.buildBr(ifEnd)
                 val fromThen = functionBuilder.getCurrentBasicBlock()
 
                 functionBuilder.positionAtEnd(ifElse)
-                val e3op = compileEForce(e.e3)
+                val e3op = compileExpressionsForce(e.e3)
                 functionBuilder.buildBr(ifEnd)
                 val fromElse = functionBuilder.getCurrentBasicBlock()
 

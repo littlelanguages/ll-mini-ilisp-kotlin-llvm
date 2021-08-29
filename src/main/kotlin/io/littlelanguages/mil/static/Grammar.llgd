@@ -3,10 +3,20 @@ uses "./Scanner.llld";
 Program: {Expression};
 
 Expression
-  : "(" {Expression} ")"
+  : "(" [ExpressionBody] ")"
   | Symbol
   | LiteralInt
   | LiteralString
-  | "#t"
-  | "#f"
+  ;
+
+ExpressionBody
+  : "if" {Expression}
+  | "do" {Expression}
+  | "const" ConstBody
+  | Expression {Expression}
+  ;
+
+ConstBody
+  : Symbol Expression
+  | "(" Symbol {Symbol} ")" {Expression}
   ;

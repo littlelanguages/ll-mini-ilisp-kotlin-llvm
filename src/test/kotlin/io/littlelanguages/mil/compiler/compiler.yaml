@@ -1,15 +1,33 @@
-- name: Hello 42
-  input: |
-    (println 42)
-  output: |
-    42
-- name: Hello World
-  input: |
-    (println "Hello World")
-  output: |
-    Hello World
 - scenario:
-    name: Expressions
+    name: "Greetings"
+    tests:
+      - name: "Hello 42"
+        input: |
+          (println 42)
+        output: |
+          42
+      - name: "Hello #t"
+        input: |
+          (println #t)
+        output: |
+          #t
+      - name: "Hello ()"
+        input: |
+          (println ())
+        output: |
+          ()
+      - name: "Hello (pair 1 (pair 2 3)))"
+        input: |
+          (println (pair 1 (pair 2 3)))
+        output: |
+          (1 2 . 3)
+      - name: "Hello World"
+        input: |
+          (println "Hello World")
+        output: |
+          Hello World
+- scenario:
+    name: "Expressions"
     tests:
       - scenario:
           name: Literal Value
@@ -318,6 +336,34 @@
                 #f
                 #t
 
+- scenario:
+    name: "Forms"
+    tests:
+      - scenario:
+          name: "do"
+          tests:
+            - name: if
+              input: |
+                (if #t
+                  (do (println "Hello")
+                      (println "World")
+                  )
+                )
+              output: |
+                Hello
+                World
+            - name: declaration
+              input: |
+                (do (const x 1)
+                    (do (const y 2)
+                    )
+                )
+
+                (println x)
+                (println y)
+              output: |
+                1
+                2
 - scenario:
     name: "Declarations"
     tests:

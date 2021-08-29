@@ -19,12 +19,6 @@
 - scenario:
     name: Declaration
     tests:
-      - name: Invalid Form - too many arguments
-        input: |
-          (const x 10 20)
-        output:
-          - InvalidConstFormError:
-              location: 0:1:1-14:1:15
       - name: Top-level constant
         input: |
           (const x 10)
@@ -42,7 +36,8 @@
                     - assign:
                         symbol:
                           toplevel-value: x
-                        e: 10
+                        es:
+                          - 10
       - name: Top-level procedure
         input: |
           (const (add a b) (+ a b))
@@ -107,19 +102,19 @@
                             name: sum
                             depth: 0
                             offset: 2
-                        e:
-                          call-procedure:
-                            procedure:
-                              external-procedure: +
-                            es:
-                              - parameter:
-                                  name: a
-                                  depth: 0
-                                  offset: 0
-                              - parameter:
-                                  name: b
-                                  depth: 0
-                                  offset: 1
+                        es:
+                          - call-procedure:
+                              procedure:
+                                external-procedure: +
+                              es:
+                                - parameter:
+                                    name: a
+                                    depth: 0
+                                    offset: 0
+                                - parameter:
+                                    name: b
+                                    depth: 0
+                                    offset: 1
                     - call-procedure:
                         procedure:
                           external-procedure: +
@@ -171,19 +166,19 @@
                             name: sum
                             depth: 0
                             offset: 2
-                        e:
-                          call-procedure:
-                            procedure:
-                              external-procedure: +
-                            es:
-                              - parameter:
-                                  name: a
-                                  depth: 0
-                                  offset: 0
-                              - parameter:
-                                  name: b
-                                  depth: 0
-                                  offset: 1
+                        es:
+                          - call-procedure:
+                              procedure:
+                                external-procedure: +
+                              es:
+                                - parameter:
+                                    name: a
+                                    depth: 0
+                                    offset: 0
+                                - parameter:
+                                    name: b
+                                    depth: 0
+                                    offset: 1
                     - procedure:
                         name: g
                         parameters:
@@ -197,23 +192,23 @@
                                   name: sum2
                                   depth: 1
                                   offset: 1
-                              e:
-                                call-procedure:
-                                  procedure:
-                                    external-procedure: +
-                                  es:
-                                    - parameter:
-                                        name: a
-                                        depth: 0
-                                        offset: 0
-                                    - parameter:
-                                        name: b
-                                        depth: 0
-                                        offset: 1
-                                    - procedure-value:
-                                        name: sum
-                                        depth: 0
-                                        offset: 2
+                              es:
+                                - call-procedure:
+                                    procedure:
+                                      external-procedure: +
+                                    es:
+                                      - parameter:
+                                          name: a
+                                          depth: 0
+                                          offset: 0
+                                      - parameter:
+                                          name: b
+                                          depth: 0
+                                          offset: 1
+                                      - procedure-value:
+                                          name: sum
+                                          depth: 0
+                                          offset: 2
                           - call-procedure:
                               procedure:
                                 external-procedure: +
@@ -292,7 +287,8 @@
                     - assign:
                         symbol:
                           toplevel-value: x
-                        e: 10
+                        es:
+                          - 10
                     - call-procedure:
                         procedure:
                           external-procedure: println
@@ -319,11 +315,13 @@
                     - assign:
                         symbol:
                           toplevel-value: v1
-                        e: 1
+                        es:
+                          - 1
                     - assign:
                         symbol:
                           toplevel-value: v2
-                        e: Hello world
+                        es:
+                          - Hello world
                     - call-procedure:
                         procedure:
                           external-procedure: println
@@ -401,7 +399,7 @@
               expected: 2
               actual: 3
               location: 70:5:10-80:5:20
-      - name: local forward declaration
+      - name: Local forward declaration
         input: |
           (const a 9)
 
@@ -428,27 +426,27 @@
                             name: v1
                             depth: 0
                             offset: 0
-                        e:
-                          toplevel-value: a
+                        es:
+                          - toplevel-value: a
                     - assign:
                         symbol:
                           procedure-value:
                             name: a
                             depth: 0
                             offset: 1
-                        e:
-                          10
+                        es:
+                          - 10
                     - assign:
                         symbol:
                           procedure-value:
                             name: v2
                             depth: 0
                             offset: 2
-                        e:
-                          procedure-value:
-                            name: a
-                            depth: 0
-                            offset: 1
+                        es:
+                          - procedure-value:
+                              name: a
+                              depth: 0
+                              offset: 1
                     - call-procedure:
                         procedure:
                           external-procedure: +
@@ -470,4 +468,5 @@
                     - assign:
                         symbol:
                           toplevel-value: a
-                        e: 9
+                        es:
+                          - 9

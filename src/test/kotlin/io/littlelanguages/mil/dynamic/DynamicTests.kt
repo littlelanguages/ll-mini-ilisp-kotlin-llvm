@@ -44,7 +44,7 @@ private class DummyVariableArityExternalProcedure(
 ) : ExternalProcedureBinding<S, T>(name) {
     override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors? = null
 
-    override fun compile(builder: S, arguments: List<Expression<S, T>>): T? = null
+    override fun compile(state: S, arguments: List<Expression<S, T>>): T? = null
 }
 
 fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =
