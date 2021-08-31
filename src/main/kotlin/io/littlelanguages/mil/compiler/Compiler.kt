@@ -29,8 +29,6 @@ class Compiler(private val module: Module) {
     private val toCompile = mutableListOf<Declaration<CompileState, LLVMValueRef>>()
 
     fun compile(program: Program<CompileState, LLVMValueRef>) {
-        println(program)
-
         addFunctions(program.declarations)
 
         program.values.forEach {

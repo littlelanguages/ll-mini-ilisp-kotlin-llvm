@@ -87,11 +87,6 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 val name = e.symbol.name
                 val expressions = e.expressions
 
-                if (name == "xb") {
-                    println("e: $e")
-                    println("bindings: $bindings")
-                }
-
                 if (bindings.inCurrentNesting(name))
                     reportError(DuplicateNameError(name, e.symbol.position))
                 else {
