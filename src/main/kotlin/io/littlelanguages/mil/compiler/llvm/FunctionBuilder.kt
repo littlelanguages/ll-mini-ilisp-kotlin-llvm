@@ -181,4 +181,5 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
 
     fun getBindingValue(key: Any): LLVMValueRef? =
         bindings.get(key)
+//        if (key == "_frame") bindings.get(key) else null
 }

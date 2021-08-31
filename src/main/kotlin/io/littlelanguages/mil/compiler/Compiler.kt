@@ -312,11 +312,18 @@ private class CompileExpression(val compileState: CompileState) {
                                 symbol.compile(compileState)!!
 
                             is ProcedureValueBinding ->
-                                functionBuilder.buildGetFrameValue(
-                                    functionBuilder.getParam(0),
-                                    compileState.depth - symbol.depth - 1,
-                                    symbol.offset + 1
-                                )
+                                if (compileState.depth == symbol.depth)
+                                    functionBuilder.buildGetFrameValue(
+                                        functionBuilder.getBindingValue("_frame")!!,
+                                        0,
+                                        symbol.offset + 1
+                                    )
+                                else
+                                    functionBuilder.buildGetFrameValue(
+                                        functionBuilder.getParam(0),
+                                        compileState.depth - symbol.depth - 1,
+                                        symbol.offset + 1
+                                    )
 
                             else ->
                                 functionBuilder.buildLoad(functionBuilder.getNamedGlobal(symbol.name)!!)
