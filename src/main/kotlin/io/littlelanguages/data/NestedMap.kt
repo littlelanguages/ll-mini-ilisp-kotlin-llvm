@@ -10,7 +10,7 @@ class NestedMap<K, V> {
     }
 
     fun close() {
-        scope.dropLast(1)
+        scope.removeAt(scope.size-1)
         last = scope.last()
     }
 
@@ -31,4 +31,7 @@ class NestedMap<K, V> {
 
         return null
     }
+
+    override fun toString(): String =
+        scope.toString()
 }

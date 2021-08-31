@@ -179,6 +179,6 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun addBindingToScope(key: Any, value: LLVMValueRef) =
         bindings.add(key, value)
 
-    fun getBindingValue(key: Any) =
+    fun getBindingValue(key: Any): LLVMValueRef? =
         bindings.get(key)
 }

@@ -470,3 +470,94 @@
                           toplevel-value: a
                         es:
                           - 9
+      - name: Top-level declaration with embedded declaration
+        input: |
+          (const a (do (const b 1)
+                       (+ b 1)
+                   )
+          )
+        output:
+          program:
+            values:
+              - a
+            procedures:
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 1
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: a
+                        es:
+                          - assign:
+                              symbol:
+                                procedure-value:
+                                  name: b
+                                  depth: 0
+                                  offset: 0
+                              es:
+                                - 1
+                          - call-procedure:
+                              procedure:
+                                external-procedure: +
+                              es:
+                                - procedure-value:
+                                    name: b
+                                    depth: 0
+                                    offset: 0
+                                - 1
+      - name: Top-level declaration with embedded replacement declaration
+        input: |
+          (const b 1)
+          (const a (do (const b 10)
+                       (+ b 1)
+                   )
+          )
+          (const c b)
+        output:
+          program:
+            values:
+              - b
+              - a
+              - c
+            procedures:
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 1
+                  es:
+                    - assign:
+                        symbol:
+                          toplevel-value: b
+                        es:
+                          - 1
+                    - assign:
+                        symbol:
+                          toplevel-value: a
+                        es:
+                          - assign:
+                              symbol:
+                                procedure-value:
+                                  name: b
+                                  depth: 0
+                                  offset: 0
+                              es:
+                                - 10
+                          - call-procedure:
+                              procedure:
+                                external-procedure: +
+                              es:
+                                - procedure-value:
+                                    name: b
+                                    depth: 0
+                                    offset: 0
+                                - 1
+                    - assign:
+                        symbol:
+                          toplevel-value: c
+                        es:
+                          - toplevel-value: b
+

@@ -29,6 +29,8 @@ class Compiler(private val module: Module) {
     private val toCompile = mutableListOf<Declaration<CompileState, LLVMValueRef>>()
 
     fun compile(program: Program<CompileState, LLVMValueRef>) {
+        println(program)
+
         addFunctions(program.declarations)
 
         program.values.forEach {
@@ -157,32 +159,56 @@ private fun <S, T> Procedure<S, T>.isTopLevel(): Boolean =
 private fun compileE(compileState: CompileState, e: Expression<CompileState, LLVMValueRef>): LLVMValueRef? =
     CompileExpression(compileState).compileE(e)
 
-private fun compileEForce(compileState: CompileState, e: Expression<CompileState, LLVMValueRef>): LLVMValueRef =
-    CompileExpression(compileState).compileEForce(e)
+private fun compileScopedE(compileState: CompileState, e: Expression<CompileState, LLVMValueRef>): LLVMValueRef? =
+    CompileExpression(compileState).compileScopedE(e)
+
+private fun compileScopedEForce(compileState: CompileState, e: Expression<CompileState, LLVMValueRef>): LLVMValueRef =
+    CompileExpression(compileState).compileScopedEForce(e)
 
 private class CompileExpression(val compileState: CompileState) {
     val functionBuilder = compileState.functionBuilder
+
+    fun compileScopedExpressionsForce(es: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef {
+        functionBuilder.openScope()
+        val op = compileExpressionsForce(es)
+        functionBuilder.closeScope()
+        return op
+    }
 
     fun compileExpressionsForce(es: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef =
         es.fold(null as LLVMValueRef?) { _, b: Expression<CompileState, LLVMValueRef> ->
             compileE(b)
         } ?: functionBuilder.buildVNull()
 
+    fun compileScopedEForce(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef {
+        functionBuilder.openScope()
+        val op = compileEForce(e)
+        functionBuilder.closeScope()
+        return op
+    }
+
     fun compileEForce(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef =
         compileE(e) ?: functionBuilder.buildVNull()
+
+    fun compileScopedE(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef? {
+        functionBuilder.openScope()
+        val op = compileE(e)
+        functionBuilder.closeScope()
+        return op
+    }
 
     fun compileE(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
                 when (val symbol = e.symbol) {
                     is TopLevelValueBinding -> {
-                        val operand = compileExpressionsForce(e.es)
+                        val operand = compileScopedExpressionsForce(e.es)
                         functionBuilder.buildStore(operand, functionBuilder.getNamedGlobal(symbol.name)!!)
                         functionBuilder.addBindingToScope(symbol.name, operand)
                     }
 
                     is ProcedureValueBinding -> {
-                        val operand = compileExpressionsForce(e.es)
+                        val operand = compileScopedExpressionsForce(e.es)
                         functionBuilder.buildSetFrameValue(functionBuilder.getBindingValue("_frame")!!, symbol.offset + 1, operand)
                         functionBuilder.addBindingToScope(symbol.name, operand)
                     }
@@ -203,7 +229,7 @@ private class CompileExpression(val compileState: CompileState) {
                         if (functionBuilder.getNamedFunction(procedure.name) == null)
                             null
                         else if (procedure.isToplevel())
-                            functionBuilder.buildCall(functionBuilder.getNamedFunction(procedure.name)!!, e.es.map { compileEForce(it) })
+                            functionBuilder.buildCall(functionBuilder.getNamedFunction(procedure.name)!!, e.es.map { compileScopedEForce(it) })
                         else {
                             val frame = if (compileState.depth == procedure.depth)
                                 functionBuilder.getParam(0)
@@ -218,7 +244,7 @@ private class CompileExpression(val compileState: CompileState) {
 
                             functionBuilder.buildCall(
                                 functionBuilder.getNamedFunction(procedure.name)!!,
-                                listOf(frame) + e.es.map { compileEForce(it) })
+                                listOf(frame) + e.es.map { compileScopedEForce(it) })
                         }
 
                     else ->
@@ -226,7 +252,7 @@ private class CompileExpression(val compileState: CompileState) {
                 }
 
             is IfExpression -> {
-                val e1op = compileExpressionsForce(e.e1)
+                val e1op = compileScopedExpressionsForce(e.e1)
                 val falseOp = functionBuilder.buildVFalse()
 
                 val e1Compare = functionBuilder.buildICmp(LLVM.LLVMIntNE, e1op, falseOp)
@@ -238,12 +264,12 @@ private class CompileExpression(val compileState: CompileState) {
                 functionBuilder.buildCondBr(e1Compare, ifThen, ifElse)
 
                 functionBuilder.positionAtEnd(ifThen)
-                val e2op = compileExpressionsForce(e.e2)
+                val e2op = compileScopedExpressionsForce(e.e2)
                 functionBuilder.buildBr(ifEnd)
                 val fromThen = functionBuilder.getCurrentBasicBlock()
 
                 functionBuilder.positionAtEnd(ifElse)
-                val e3op = compileExpressionsForce(e.e3)
+                val e3op = compileScopedExpressionsForce(e.e3)
                 functionBuilder.buildBr(ifEnd)
                 val fromElse = functionBuilder.getCurrentBasicBlock()
 
@@ -351,7 +377,7 @@ private class FixedArityExternalProcedure(
             builder.structValueP
         )
 
-        return builder.buildCall(namedFunction, arguments.map { compileEForce(state, it) })
+        return builder.buildCall(namedFunction, arguments.map { compileScopedEForce(state, it) })
     }
 
 }
@@ -368,7 +394,7 @@ private class OperatorExternalProcedure(
 ) : VariableArityExternalProcedure(name) {
     override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef {
         val builder = state.functionBuilder
-        val ops = arguments.mapNotNull { compileE(state, it) }
+        val ops = arguments.mapNotNull { compileScopedE(state, it) }
 
         val namedFunction = builder.getNamedFunction(
             externalName,
@@ -388,7 +414,7 @@ private class OperatorExternalProcedure(
 private class PrintExternalProcedure(override val name: String) : VariableArityExternalProcedure(name) {
     override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef? {
         val builder = state.functionBuilder
-        arguments.forEach { builder.buildPrintValue(compileE(state, it)) }
+        arguments.forEach { builder.buildPrintValue(compileScopedE(state, it)) }
 
         return null
     }
