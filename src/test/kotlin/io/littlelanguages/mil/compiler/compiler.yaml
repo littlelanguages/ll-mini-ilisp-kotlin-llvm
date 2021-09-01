@@ -554,3 +554,93 @@
           3
           2
           2
+      - name: "Up to 10 arguments without frame"
+        input: |
+          (const (f0)
+            (println "f0")
+          )
+
+          (const (f1 a1)
+            (println "f1: " a1)
+          )
+
+          (const (f2 a1 a2)
+            (println "f2: " a1 ", " a2)
+          )
+
+          (const (f3 a1 a2 a3)
+            (println "f3: " a1 ", " a2 ", " a3)
+          )
+
+          (const (f4 a1 a2 a3 a4)
+            (println "f4: " a1 ", " a2 ", " a3 ", " a4)
+          )
+
+          (const (f5 a1 a2 a3 a4 a5)
+            (println "f5: " a1 ", " a2 ", " a3 ", " a4 ", " a5)
+          )
+
+          (const (f6 a1 a2 a3 a4 a5 a6)
+            (println "f6: " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6)
+          )
+
+          (const (f7 a1 a2 a3 a4 a5 a6 a7)
+            (println "f7: " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6 ", " a7)
+          )
+
+          (const (f8 a1 a2 a3 a4 a5 a6 a7 a8)
+            (println "f8: " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6 ", " a7 ", " a8)
+          )
+
+          (const (f9 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+            (println "f9: " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6 ", " a7 ", " a8 ", " a9)
+          )
+
+          (const (f10 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+            (println "f10: " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6 ", " a7 ", " a8 ", " a9 ", " a10)
+          )
+
+          (const v0 f0)
+          (v0)
+
+          (const v1 f1)
+          (v1 1)
+
+          (const v2 f2)
+          (v2 1 2)
+
+          (const v3 f3)
+          (v3 1 2 3)
+
+          (const v4 f4)
+          (v4 1 2 3 4)
+
+          (const v5 f5)
+          (v5 1 2 3 4 5)
+
+          (const v6 f6)
+          (v6 1 2 3 4 5 6)
+
+          (const v7 f7)
+          (v7 1 2 3 4 5 6 7)
+
+          (const v8 f8)
+          (v8 1 2 3 4 5 6 7 8)
+
+          (const v9 f9)
+          (v9 1 2 3 4 5 6 7 8 9)
+
+          (const v10 f10)
+          (v10 1 2 3 4 5 6 7 8 9 10)
+        output: |
+          f0
+          f1: 1
+          f2: 1, 2
+          f3: 1, 2, 3
+          f4: 1, 2, 3, 4
+          f5: 1, 2, 3, 4, 5
+          f6: 1, 2, 3, 4, 5, 6
+          f7: 1, 2, 3, 4, 5, 6, 7
+          f8: 1, 2, 3, 4, 5, 6, 7, 8
+          f9: 1, 2, 3, 4, 5, 6, 7, 8, 9
+          f10: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10

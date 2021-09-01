@@ -93,6 +93,12 @@ struct Value *_from_literal_string(char *s)
     return r;
 }
 
+struct Value *_wrap_native_0(void *native_procedure)
+{
+    struct Value *(*f)() = native_procedure;
+    return f();
+}
+
 struct Value *_wrap_native_1(void *native_procedure, struct Value *a1)
 {
     struct Value *(*f)(struct Value *) = native_procedure;
@@ -105,6 +111,54 @@ struct Value *_wrap_native_2(void *native_procedure, struct Value *a1, struct Va
     return f(a1, a2);
 }
 
+struct Value *_wrap_native_3(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3);
+}
+
+struct Value *_wrap_native_4(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4);
+}
+
+struct Value *_wrap_native_5(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5);
+}
+
+struct Value *_wrap_native_6(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5, a6);
+}
+
+struct Value *_wrap_native_7(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5, a6, a7);
+}
+
+struct Value *_wrap_native_8(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5, a6, a7, a8);
+}
+
+struct Value *_wrap_native_9(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5, a6, a7, a8, a9);
+}
+
+struct Value *_wrap_native_10(void *native_procedure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10)
+{
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+}
+
 struct Value *_from_native_procedure(void *procedure, int number_arguments)
 {
     struct Value *r = (struct Value *)malloc(sizeof(struct Value));
@@ -112,11 +166,38 @@ struct Value *_from_native_procedure(void *procedure, int number_arguments)
 
     switch (number_arguments)
     {
+      case 0:
+        r->native_closure.procedure = &_wrap_native_0;
+        break;
       case 1:
         r->native_closure.procedure = &_wrap_native_1;
         break;
       case 2:
         r->native_closure.procedure = &_wrap_native_2;
+        break;
+      case 3:
+        r->native_closure.procedure = &_wrap_native_3;
+        break;
+      case 4:
+        r->native_closure.procedure = &_wrap_native_4;
+        break;
+      case 5:
+        r->native_closure.procedure = &_wrap_native_5;
+        break;
+      case 6:
+        r->native_closure.procedure = &_wrap_native_6;
+        break;
+      case 7:
+        r->native_closure.procedure = &_wrap_native_7;
+        break;
+      case 8:
+        r->native_closure.procedure = &_wrap_native_8;
+        break;
+      case 9:
+        r->native_closure.procedure = &_wrap_native_9;
+        break;
+      case 10:
+        r->native_closure.procedure = &_wrap_native_10;
         break;
       default:
         fprintf(stderr, "Error: _from_native_procedure: Unable to wrap native with %d arguments\n", number_arguments);
@@ -237,6 +318,78 @@ struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Va
 //    printf("\n");
 //
 //    return result;
+}
+
+struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3)
+{
+    _assert_callable_closure(closure, 3);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3);
+}
+
+struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4)
+{
+    _assert_callable_closure(closure, 4);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4);
+}
+
+struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5)
+{
+    _assert_callable_closure(closure, 5);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5);
+}
+
+struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6)
+{
+    _assert_callable_closure(closure, 6);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6);
+}
+
+struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7)
+{
+    _assert_callable_closure(closure, 7);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7);
+}
+
+struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8)
+{
+    _assert_callable_closure(closure, 8);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8);
+}
+
+struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9)
+{
+    _assert_callable_closure(closure, 9);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+}
+
+struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10)
+{
+    _assert_callable_closure(closure, 10);
+
+    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 }
 
 struct Value *_mk_pair(struct Value *car, struct Value *cdr)

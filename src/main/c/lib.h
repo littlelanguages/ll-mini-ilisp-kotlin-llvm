@@ -63,8 +63,18 @@ extern struct Value *_mk_frame(struct Value *parent, int size);
 extern struct Value *_get_frame_value(struct Value *frame, int depth, int offset);
 extern void _set_frame_value(struct Value *frame, int depth, int offset, struct Value *value);
 extern struct Value *_get_frame(struct Value *frame, int depth);
+
+extern struct Value *_call_closure_0(struct Value *closure);
 extern struct Value *_call_closure_1(struct Value *closure, struct Value *a1);
 extern struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Value *a2);
+extern struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3);
+extern struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4);
+extern struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5);
+extern struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6);
+extern struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7);
+extern struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8);
+extern struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9);
+extern struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10);
 
 extern struct Value *_plus(struct Value *op1, struct Value *op2);
 extern struct Value *_minus(struct Value *op1, struct Value *op2);
