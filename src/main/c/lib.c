@@ -99,11 +99,30 @@ struct Value *_wrap_native_1(void *native_procedure, struct Value *a1)
     return f(a1);
 }
 
+struct Value *_wrap_native_2(void *native_procedure, struct Value *a1, struct Value *a2)
+{
+    struct Value *(*f)(struct Value *, struct Value *) = native_procedure;
+    return f(a1, a2);
+}
+
 struct Value *_from_native_procedure(void *procedure, int number_arguments)
 {
     struct Value *r = (struct Value *)malloc(sizeof(struct Value));
     r->tag = NATIVE_CLOSURE_VALUE;
-    r->native_closure.procedure = &_wrap_native_1;
+
+    switch (number_arguments)
+    {
+      case 1:
+        r->native_closure.procedure = &_wrap_native_1;
+        break;
+      case 2:
+        r->native_closure.procedure = &_wrap_native_2;
+        break;
+      default:
+        fprintf(stderr, "Error: _from_native_procedure: Unable to wrap native with %d arguments\n", number_arguments);
+        exit(-1);
+    }
+
     r->native_closure.number_arguments = number_arguments;
     r->native_closure.native_procedure = procedure;
 
@@ -177,6 +196,15 @@ void _set_frame_value(struct Value *frame, int depth, int offset, struct Value *
     frame->vector.items[offset] = value;
 }
 
+struct Value *_call_closure_0(struct Value *closure)
+{
+    _assert_callable_closure(closure, 0);
+
+    struct Value *(*f)(struct Value *) = closure->dynamic_closure.procedure;
+
+    return f(closure->dynamic_closure.frame);
+}
+
 struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
 {
     _assert_callable_closure(closure, 1);
@@ -190,9 +218,25 @@ struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Va
 {
     _assert_callable_closure(closure, 2);
 
+//    printf("_call_closure_2:\n");
+//    printf("  v1: ");
+//    _print_value(a1);
+//    printf("\n");
+//    printf("  v2: ");
+//    _print_value(a2);
+//    printf("\n");
+
     struct Value *(*f)(struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
+//    struct Value *result = f(closure->dynamic_closure.frame, a1, a2);
+
     return f(closure->dynamic_closure.frame, a1, a2);
+
+//    printf("  result: ");
+//    _print_value(result);
+//    printf("\n");
+//
+//    return result;
 }
 
 struct Value *_mk_pair(struct Value *car, struct Value *cdr)

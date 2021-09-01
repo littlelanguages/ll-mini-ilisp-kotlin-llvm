@@ -249,6 +249,13 @@ private class CompileExpression(val compileState: CompileState) {
                         TODO(procedure.toString())
                 }
 
+            is CallValueExpression -> {
+                val op = compileScopedEForce(e.operand)
+                val es = e.es.map { compileScopedEForce(it) }
+
+                functionBuilder.buildCallClosure(op, es)
+            }
+
             is IfExpression -> {
                 val e1op = compileScopedExpressionsForce(e.e1)
                 val falseOp = functionBuilder.buildVFalse()
@@ -322,6 +329,13 @@ private class CompileExpression(val compileState: CompileState) {
                                         compileState.depth - symbol.depth - 1,
                                         symbol.offset + 1
                                     )
+
+                            is DeclaredProcedureBinding ->
+                                if (symbol.depth == 0)
+                                    functionBuilder.buildFromNativeProcedure(symbol.name, symbol.parameterCount)
+                                else
+                                    TODO(e.toString())
+
 
                             else ->
                                 functionBuilder.buildLoad(functionBuilder.getNamedGlobal(symbol.name)!!)

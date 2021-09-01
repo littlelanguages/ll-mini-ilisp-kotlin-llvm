@@ -530,3 +530,27 @@
           2
           3
           4
+
+- scenario:
+    name: "Higher-order functions"
+    tests:
+      - name: "Declared without frame"
+        input: |
+          (const (plus a b)
+              (+ a b)
+          )
+
+          (const plusp plus)
+
+          (const (inc a) (plus 1 a))
+          (const (incp a) (plusp 1 a))
+
+          (println (plus 1 2))
+          (println (plusp 1 2))
+          (println (inc 1))
+          (println (incp 1))
+        output: |
+          3
+          3
+          2
+          2

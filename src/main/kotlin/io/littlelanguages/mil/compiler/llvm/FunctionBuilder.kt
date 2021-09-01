@@ -28,6 +28,16 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             name ?: nextName()
         )
 
+    fun buildCallClosure(closureRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String? = null): LLVMValueRef {
+        val numberOfArguments = arguments.size
+
+        return buildCall(
+            getNamedFunction("_call_closure_$numberOfArguments", List(1 + numberOfArguments) { structValueP }, structValueP),
+            listOf(closureRef) + arguments,
+            name
+        )
+    }
+
     fun buildCondBr(ifOp: LLVMValueRef, thenOp: LLVMBasicBlockRef, elseOp: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildCondBr(builder, ifOp, thenOp, elseOp)
 
@@ -35,6 +45,16 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
         buildCall(
             getNamedFunction("_from_literal_int", listOf(i32), structValueP),
             listOf(LLVM.LLVMConstInt(i32, n.toLong(), 0)),
+        )
+
+    fun buildFromNativeProcedure(functionName: String, numberOfArguments: Int, name: String? = null): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_from_native_procedure", listOf(i8P, i32), structValueP),
+            listOf(
+                LLVM.LLVMConstBitCast(getNamedFunction(functionName, List(numberOfArguments) { structValueP }, structValueP), i8P),
+                LLVM.LLVMConstInt(i32, numberOfArguments.toLong(), 0)
+            ),
+            name
         )
 
     fun buildFromLiteralString(s: String): LLVMValueRef =
