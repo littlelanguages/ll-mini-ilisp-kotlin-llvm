@@ -91,4 +91,6 @@ extern struct Value *_integerp(struct Value *v);
 extern struct Value *_stringp(struct Value *v);
 extern struct Value *_pairp(struct Value *v);
 
+extern struct Value* _plus_variable(int num, ...);
+
 #endif

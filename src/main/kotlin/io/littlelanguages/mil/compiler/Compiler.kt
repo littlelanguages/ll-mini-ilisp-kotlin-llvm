@@ -2,7 +2,6 @@ package io.littlelanguages.mil.compiler
 
 import io.littlelanguages.data.Either
 import io.littlelanguages.data.Right
-import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.CompilationError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Context
@@ -11,7 +10,6 @@ import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.compiler.llvm.VerifyError
 import io.littlelanguages.mil.dynamic.*
 import io.littlelanguages.mil.dynamic.tst.*
-import io.littlelanguages.mil.static.ast.SExpression
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
@@ -313,6 +311,9 @@ private class CompileExpression(val compileState: CompileState) {
                                 else
                                     TODO("depth mismatch")
 
+                            is FixedArityExternalProcedure ->
+                                functionBuilder.buildFromNativeProcedure(symbol.externalName, symbol.arity)
+
                             is ExternalValueBinding ->
                                 symbol.compile(compileState)!!
 
@@ -336,9 +337,11 @@ private class CompileExpression(val compileState: CompileState) {
                                 else
                                     TODO(e.toString())
 
+                            is TopLevelValueBinding ->
+                                functionBuilder.buildLoad(functionBuilder.getNamedGlobal(symbol.name)!!)
 
                             else ->
-                                functionBuilder.buildLoad(functionBuilder.getNamedGlobal(symbol.name)!!)
+                                TODO(e.toString())
                         }
 
                     functionBuilder.addBindingToScope(symbol.name, newResult)
@@ -378,15 +381,9 @@ val builtinBindings = listOf(
 
 private class FixedArityExternalProcedure(
     override val name: String,
-    private val arity: Int,
-    private val externalName: String
-) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name) {
-    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<CompileState, LLVMValueRef>>): Errors? =
-        if (arity == arguments.size)
-            null
-        else
-            ArgumentMismatchError(name, arity, arguments.size, e.position)
-
+    override val arity: Int,
+    val externalName: String
+) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, arity) {
     override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef {
         val builder = state.functionBuilder
 
@@ -398,12 +395,9 @@ private class FixedArityExternalProcedure(
 
         return builder.buildCall(namedFunction, arguments.map { compileScopedEForce(state, it) })
     }
-
 }
 
-private abstract class VariableArityExternalProcedure(override val name: String) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name) {
-    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<CompileState, LLVMValueRef>>): Errors? = null
-}
+private abstract class VariableArityExternalProcedure(override val name: String) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null)
 
 private class OperatorExternalProcedure(
     override val name: String,

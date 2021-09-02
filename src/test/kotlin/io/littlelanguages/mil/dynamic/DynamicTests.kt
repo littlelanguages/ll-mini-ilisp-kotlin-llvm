@@ -41,9 +41,7 @@ class DynamicTests : FunSpec({
 
 private class DummyVariableArityExternalProcedure(
     override val name: String
-) : ExternalProcedureBinding<S, T>(name) {
-    override fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors? = null
-
+) : ExternalProcedureBinding<S, T>(name, null) {
     override fun compile(state: S, arguments: List<Expression<S, T>>): T? = null
 }
 

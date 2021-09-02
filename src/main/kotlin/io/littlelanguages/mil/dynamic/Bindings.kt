@@ -2,6 +2,7 @@ package io.littlelanguages.mil.dynamic
 
 import io.littlelanguages.data.NestedMap
 import io.littlelanguages.data.Yamlable
+import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.dynamic.tst.Expression
 import io.littlelanguages.mil.static.ast.SExpression
@@ -51,11 +52,18 @@ abstract class ExternalValueBinding<S, T>(override val name: String) : Binding<S
 
 abstract class ExternalProcedureBinding<S, T>(
     override val name: String,
+    open val arity: Int?
 ) : ProcedureBinding<S, T> {
     override fun yaml(): Any =
         singletonMap("external-procedure", name)
 
-    abstract fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors?
+    fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors? =
+        when (arity) {
+            null -> null
+            arguments.size -> null
+            else -> ArgumentMismatchError(name, arity!!, arguments.size, e.position)
+        }
+
     abstract fun compile(state: S, arguments: List<Expression<S, T>>): T?
 }
 

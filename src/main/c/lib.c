@@ -1,6 +1,7 @@
 /* Library to link into compiled code
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -634,4 +635,18 @@ void _fail(struct Value *msg)
 {
     printf("x = %s\n", msg->string);
     exit(1);
+}
+
+struct Value* _plus_variable(int num, ...)
+{
+  va_list valist;
+
+  struct Value *result = _from_literal_int(0);
+  va_start(valist, num);
+  for (int i = 0; i < num; i++) {
+    result = _plus(result, va_arg(valist, struct Value *));
+  }
+  va_end(valist);
+
+  return result;
 }
