@@ -409,8 +409,7 @@ private class VariableArityExternalProcedure(
 
         return builder.buildCall(
             builder.getNamedFunction(externalName, listOf(builder.i32), builder.structValueP, true),
-            listOf(LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)) + arguments.mapNotNull { compileScopedE(state, it) },
-            ""
+            listOf(LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)) + arguments.mapNotNull { compileScopedE(state, it) }
         )
     }
 }
