@@ -20,3 +20,4 @@ build
 
 /src/main/c/*.o
 /test.*
+/src/main/c/testmain

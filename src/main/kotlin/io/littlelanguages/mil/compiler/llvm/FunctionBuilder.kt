@@ -57,6 +57,15 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             name
         )
 
+    fun buildFromNativeVarArgProcedure(functionName: String, name: String = ""): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_from_native_var_arg_procedure", listOf(i8P), structValueP),
+            listOf(
+                LLVM.LLVMConstBitCast(getNamedFunction(functionName, listOf(i32), structValueP, true), i8P)
+            ),
+            name
+        )
+
     fun buildFromLiteralString(s: String): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_literal_string", listOf(i8P), structValueP),

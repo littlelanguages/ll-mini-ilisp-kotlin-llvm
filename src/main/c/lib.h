@@ -8,7 +8,8 @@
 #define PAIR_VALUE 4
 #define VECTOR_VALUE 5
 #define NATIVE_CLOSURE_VALUE 6
-#define DYNAMIC_CLOSURE_VALUE 7
+#define NATIVE_VAR_ARG_CLOSURE_VALUE 7
+#define DYNAMIC_CLOSURE_VALUE 8
 
 struct Value
 {
@@ -34,6 +35,10 @@ struct Value
             int number_arguments;
             void *native_procedure;
         } native_closure;
+        struct NativeVarArgClosure
+        {
+            void *native_procedure;
+        } native_var_arg_closure;
         struct DynamicClosure
         {
             void *procedure;
@@ -55,6 +60,7 @@ extern void _print_newline(void);
 extern struct Value *_from_literal_int(int v);
 extern struct Value *_from_literal_string(char *s);
 extern struct Value *_mk_pair(struct Value *car, struct Value *cdr);
+extern struct Value *_from_native_var_arg_procedure(void *procedure);
 extern struct Value *_from_native_procedure(void *procedure, int number_arguments);
 extern struct Value *_from_dynamic_procedure(void *procedure, int number_arguments, struct Value *frame);
 
@@ -92,6 +98,9 @@ extern struct Value *_stringp(struct Value *v);
 extern struct Value *_pairp(struct Value *v);
 
 extern struct Value* _plus_variable(int num, ...);
+extern struct Value* _multiply_variable(int num, ...);
+extern struct Value* _minus_variable(int num, ...);
+extern struct Value* _divide_variable(int num, ...);
 extern struct Value* _println(int num, ...);
 extern struct Value* _print(int num, ...);
 

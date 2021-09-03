@@ -72,6 +72,12 @@ void _print_value(struct Value *value)
         printf(")");
         break;
     }
+    case NATIVE_CLOSURE_VALUE:
+        printf("#NATIVE_CLOSURE/%d", value->native_closure.number_arguments);
+        break;
+    case NATIVE_VAR_ARG_CLOSURE_VALUE:
+        printf("#VAR_ARG_CLOSURE");
+        break;
     default:
         fprintf(stderr, "Error: _print_value: Unknown Tag: %d\n", value->tag);
         exit(-1);
@@ -92,17 +98,6 @@ struct Value *_from_literal_string(char *s)
     r->tag = STRING_VALUE;
     r->string = strdup(s);
     return r;
-}
-
-struct Value *_wrap_native_variable(void *native_procedure, int num, ...)
-{
-    struct Value *(*f)(int num, ...) = native_procedure;
-    va_list arguments;
-    va_start(arguments, num);
-    struct Value *result = f(num, arguments);
-    va_end(arguments);
-
-    return result;
 }
 
 struct Value *_wrap_native_0(void *native_procedure)
@@ -171,6 +166,15 @@ struct Value *_wrap_native_10(void *native_procedure, struct Value *a1, struct V
     return f(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 }
 
+struct Value *_from_native_var_arg_procedure(void *procedure)
+{
+    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    r->tag = NATIVE_VAR_ARG_CLOSURE_VALUE;
+    r->native_var_arg_closure.native_procedure = procedure;
+
+    return r;
+}
+
 struct Value *_from_native_procedure(void *procedure, int number_arguments)
 {
     struct Value *r = (struct Value *)malloc(sizeof(struct Value));
@@ -178,40 +182,40 @@ struct Value *_from_native_procedure(void *procedure, int number_arguments)
 
     switch (number_arguments)
     {
-      case 0:
+    case 0:
         r->native_closure.procedure = &_wrap_native_0;
         break;
-      case 1:
+    case 1:
         r->native_closure.procedure = &_wrap_native_1;
         break;
-      case 2:
+    case 2:
         r->native_closure.procedure = &_wrap_native_2;
         break;
-      case 3:
+    case 3:
         r->native_closure.procedure = &_wrap_native_3;
         break;
-      case 4:
+    case 4:
         r->native_closure.procedure = &_wrap_native_4;
         break;
-      case 5:
+    case 5:
         r->native_closure.procedure = &_wrap_native_5;
         break;
-      case 6:
+    case 6:
         r->native_closure.procedure = &_wrap_native_6;
         break;
-      case 7:
+    case 7:
         r->native_closure.procedure = &_wrap_native_7;
         break;
-      case 8:
+    case 8:
         r->native_closure.procedure = &_wrap_native_8;
         break;
-      case 9:
+    case 9:
         r->native_closure.procedure = &_wrap_native_9;
         break;
-      case 10:
+    case 10:
         r->native_closure.procedure = &_wrap_native_10;
         break;
-      default:
+    default:
         fprintf(stderr, "Error: _from_native_procedure: Unable to wrap native with %d arguments\n", number_arguments);
         exit(-1);
     }
@@ -291,117 +295,205 @@ void _set_frame_value(struct Value *frame, int depth, int offset, struct Value *
 
 struct Value *_call_closure_0(struct Value *closure)
 {
-    _assert_callable_closure(closure, 0);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(0);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 0);
 
-    struct Value *(*f)(struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame);
+        return f(closure->dynamic_closure.frame);
+    }
 }
 
 struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
 {
-    _assert_callable_closure(closure, 1);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(1, a1);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 1);
 
-    struct Value *(*f)(struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1);
+        return f(closure->dynamic_closure.frame, a1);
+    }
 }
 
 struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Value *a2)
 {
-    _assert_callable_closure(closure, 2);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(2, a1, a2);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 2);
 
-//    printf("_call_closure_2:\n");
-//    printf("  v1: ");
-//    _print_value(a1);
-//    printf("\n");
-//    printf("  v2: ");
-//    _print_value(a2);
-//    printf("\n");
+        //    printf("_call_closure_2:\n");
+        //    printf("  v1: ");
+        //    _print_value(a1);
+        //    printf("\n");
+        //    printf("  v2: ");
+        //    _print_value(a2);
+        //    printf("\n");
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-//    struct Value *result = f(closure->dynamic_closure.frame, a1, a2);
+        //    struct Value *result = f(closure->dynamic_closure.frame, a1, a2);
 
-    return f(closure->dynamic_closure.frame, a1, a2);
+        return f(closure->dynamic_closure.frame, a1, a2);
 
-//    printf("  result: ");
-//    _print_value(result);
-//    printf("\n");
-//
-//    return result;
+        //    printf("  result: ");
+        //    _print_value(result);
+        //    printf("\n");
+        //
+        //    return result;
+    }
 }
 
 struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3)
 {
-    _assert_callable_closure(closure, 3);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(3, a1, a2, a3);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 3);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3);
+        return f(closure->dynamic_closure.frame, a1, a2, a3);
+    }
 }
 
 struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4)
 {
-    _assert_callable_closure(closure, 4);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(4, a1, a2, a3, a4);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 4);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4);
+    }
 }
 
 struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5)
 {
-    _assert_callable_closure(closure, 5);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(5, a1, a2, a3, a4, a5);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 5);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5);
+    }
 }
 
 struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6)
 {
-    _assert_callable_closure(closure, 6);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(6, a1, a2, a3, a4, a5, a6);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 6);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6);
+    }
 }
 
 struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7)
 {
-    _assert_callable_closure(closure, 7);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(7, a1, a2, a3, a4, a5, a6, a7);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 7);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7);
+    }
 }
 
 struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8)
 {
-    _assert_callable_closure(closure, 8);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(8, a1, a2, a3, a4, a5, a6, a7, a8);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 8);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8);
+    }
 }
 
 struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9)
 {
-    _assert_callable_closure(closure, 9);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(9, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 9);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    }
 }
 
 struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10)
 {
-    _assert_callable_closure(closure, 10);
+    if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
+    {
+        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        return f(10, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    }
+    else
+    {
+        _assert_callable_closure(closure, 10);
 
-    struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-    return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+        return f(closure->dynamic_closure.frame, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    }
 }
 
 struct Value *_mk_pair(struct Value *car, struct Value *cdr)
@@ -648,134 +740,139 @@ void _fail(struct Value *msg)
     exit(1);
 }
 
-struct Value* _plus_variable(int num, ...)
+struct Value *_plus_variable(int num, ...)
 {
-  if (num == 0)
-    return _from_literal_int(0);
-  else
-  {
-    va_list arguments;
+    if (num == 0)
+        return _from_literal_int(0);
+    else
+    {
+        va_list arguments;
 
-    va_start(arguments, num);
-    struct Value *result = va_arg(arguments, struct Value *);
-    for (int i = 1; i < num; i++) {
-      result = _plus(result, va_arg(arguments, struct Value *));
+        va_start(arguments, num);
+        struct Value *result = va_arg(arguments, struct Value *);
+        for (int i = 1; i < num; i++)
+        {
+            result = _plus(result, va_arg(arguments, struct Value *));
+        }
+        va_end(arguments);
+
+        return result;
     }
-    va_end(arguments);
-
-    return result;
-  }
 }
 
-struct Value* _multiply_variable(int num, ...)
+struct Value *_multiply_variable(int num, ...)
 {
-  if (num == 0)
-    return _from_literal_int(1);
-  else
-  {
-    va_list arguments;
+    if (num == 0)
+        return _from_literal_int(1);
+    else
+    {
+        va_list arguments;
 
-    va_start(arguments, num);
-    struct Value *result = va_arg(arguments, struct Value *);
-    for (int i = 1; i < num; i++) {
-      result = _multiply(result, va_arg(arguments, struct Value *));
+        va_start(arguments, num);
+        struct Value *result = va_arg(arguments, struct Value *);
+        for (int i = 1; i < num; i++)
+        {
+            result = _multiply(result, va_arg(arguments, struct Value *));
+        }
+        va_end(arguments);
+
+        return result;
     }
-    va_end(arguments);
-
-    return result;
-  }
 }
 
-struct Value* _minus_variable(int num, ...)
+struct Value *_minus_variable(int num, ...)
 {
-  switch (num) {
+    switch (num)
+    {
     case 0:
-      return _from_literal_int(0);
+        return _from_literal_int(0);
     case 1:
     {
-      va_list arguments;
+        va_list arguments;
 
-      struct Value *value;
-      va_start(arguments, num);
-      struct Value *result = _minus(_from_literal_int(0), va_arg(arguments, struct Value *));
-      va_end(arguments);
+        struct Value *value;
+        va_start(arguments, num);
+        struct Value *result = _minus(_from_literal_int(0), va_arg(arguments, struct Value *));
+        va_end(arguments);
 
-      return result;
+        return result;
     }
     default:
     {
-      va_list arguments;
+        va_list arguments;
 
-      va_start(arguments, num);
-      struct Value *result = va_arg(arguments, struct Value *);
-      for (int i = 1; i < num; i++)
-      {
-        result = _minus(result, va_arg(arguments, struct Value *));
-      }
-      va_end(arguments);
+        va_start(arguments, num);
+        struct Value *result = va_arg(arguments, struct Value *);
+        for (int i = 1; i < num; i++)
+        {
+            result = _minus(result, va_arg(arguments, struct Value *));
+        }
+        va_end(arguments);
 
-      return result;
+        return result;
     }
-  }
+    }
 }
 
-struct Value* _divide_variable(int num, ...)
+struct Value *_divide_variable(int num, ...)
 {
-  switch (num)
-  {
+    switch (num)
+    {
     case 0:
-      return _from_literal_int(1);
+        return _from_literal_int(1);
     case 1:
     {
-      va_list arguments;
+        va_list arguments;
 
-      struct Value *value;
-      va_start(arguments, num);
-      struct Value *result = _divide(_from_literal_int(1), va_arg(arguments, struct Value *));
-      va_end(arguments);
+        struct Value *value;
+        va_start(arguments, num);
+        struct Value *result = _divide(_from_literal_int(1), va_arg(arguments, struct Value *));
+        va_end(arguments);
 
-      return result;
+        return result;
     }
     default:
     {
-      va_list arguments;
+        va_list arguments;
 
-      va_start(arguments, num);
-      struct Value *result = va_arg(arguments, struct Value *);
-      for (int i = 1; i < num; i++)
-      {
-        result = _divide(result, va_arg(arguments, struct Value *));
-      }
-      va_end(arguments);
+        va_start(arguments, num);
+        struct Value *result = va_arg(arguments, struct Value *);
+        for (int i = 1; i < num; i++)
+        {
+            result = _divide(result, va_arg(arguments, struct Value *));
+        }
+        va_end(arguments);
 
-      return result;
+        return result;
     }
-  }
+    }
 }
 
-struct Value* _println(int num, ...)
+struct Value *_println(int num, ...)
 {
-  va_list arguments;
+    va_list arguments;
 
-  va_start(arguments, num);
-  for (int i = 0; i < num; i++) {
-    _print_value(va_arg(arguments, struct Value *));
-  }
-  va_end(arguments);
-  printf("\n");
+    va_start(arguments, num);
+    for (int i = 0; i < num; i++)
+    {
+        _print_value(va_arg(arguments, struct Value *));
+    }
+    va_end(arguments);
+    printf("\n");
 
-  return _VNull;
+    return _VNull;
 }
 
-struct Value* _print(int num, ...)
+struct Value *_print(int num, ...)
 {
-  va_list arguments;
+    va_list arguments;
 
-  va_start(arguments, num);
-  for (int i = 0; i < num; i++) {
-    _print_value(va_arg(arguments, struct Value *));
-  }
-  va_end(arguments);
+    va_start(arguments, num);
+    for (int i = 0; i < num; i++)
+    {
+        _print_value(va_arg(arguments, struct Value *));
+    }
+    va_end(arguments);
 
-  return _VNull;
+    return _VNull;
 }

@@ -340,6 +340,9 @@ private class CompileExpression(val compileState: CompileState) {
                             is TopLevelValueBinding ->
                                 functionBuilder.buildLoad(functionBuilder.getNamedGlobal(symbol.name)!!)
 
+                            is VariableArityExternalProcedure ->
+                                functionBuilder.buildFromNativeVarArgProcedure(symbol.externalName)
+
                             else ->
                                 TODO(e.toString())
                         }
@@ -399,7 +402,7 @@ private class FixedArityExternalProcedure(
 
 private class VariableArityExternalProcedure(
     override val name: String,
-    private val externalName: String
+    val externalName: String
 ) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null) {
     override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef {
         val builder = state.functionBuilder
