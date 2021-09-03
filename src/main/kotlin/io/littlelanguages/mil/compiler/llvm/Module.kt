@@ -11,8 +11,6 @@ class Module(moduleID: String, private var context: Context) {
     private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)
     private val builder = LLVM.LLVMCreateBuilderInContext(context.context)
 
-    private var expressionName = 0
-
     fun dispose() {
         LLVM.LLVMDisposeBuilder(builder)
     }
@@ -23,18 +21,18 @@ class Module(moduleID: String, private var context: Context) {
     fun getNamedGlobal(name: String): LLVMValueRef? =
         LLVM.LLVMGetNamedGlobal(module, name)
 
-    fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
+    fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean = false): LLVMValueRef =
         LLVM.LLVMAddFunction(
             module,
             name,
-            functionType(parameterTypes, resultType)
+            functionType(parameterTypes, resultType, varArg)
         )
 
-    fun addFunctionHeader(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef) {
+    fun addFunctionHeader(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean = false) {
         LLVM.LLVMAddFunction(
             module,
             name,
-            functionType(parameterTypes, resultType)
+            functionType(parameterTypes, resultType, varArg)
         )
     }
 
@@ -51,12 +49,12 @@ class Module(moduleID: String, private var context: Context) {
         return functionBuilder
     }
 
-    private fun functionType(parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMTypeRef =
+    private fun functionType(parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean): LLVMTypeRef =
         LLVM.LLVMFunctionType(
             resultType,
             pointerPointerOf(parameterTypes),
             parameterTypes.size,
-            0
+            if (varArg) 1 else 0
         )
 
     fun addGlobal(name: String, type: LLVMTypeRef, global: Boolean = true): LLVMValueRef? {
@@ -104,12 +102,6 @@ class Module(moduleID: String, private var context: Context) {
         LLVM.LLVMSetInitializer(globalStringName, LLVM.LLVMConstStringInContext(context.context, BytePointer(value), value.length, 0))
 
         return globalStringName!!
-    }
-
-    fun nextName(): String {
-        val result = "_v$expressionName"
-        expressionName += 1
-        return result
     }
 
     val void get() = context.void

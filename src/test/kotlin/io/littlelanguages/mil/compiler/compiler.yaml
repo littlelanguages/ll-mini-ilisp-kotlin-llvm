@@ -656,3 +656,16 @@
         output: |
           (1 2 3)
           #t
+      - name: "!builtin procedure of variable arity"
+        input: |
+          (const aplus +)
+
+          (println (aplus))
+          (println (aplus 1))
+          (println (aplus 1 2))
+          (println (aplus 1 2 3 4 5))
+        output: |
+          0
+          1
+          3
+          15

@@ -19,16 +19,16 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildBr(basicBlock: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildBr(builder, basicBlock)
 
-    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String? = null): LLVMValueRef =
+    fun buildCall(functionRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String = ""): LLVMValueRef =
         LLVM.LLVMBuildCall(
             builder,
             functionRef,
             pointerPointerOf(arguments),
             arguments.size,
-            name ?: nextName()
+            name
         )
 
-    fun buildCallClosure(closureRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String? = null): LLVMValueRef {
+    fun buildCallClosure(closureRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String = ""): LLVMValueRef {
         val numberOfArguments = arguments.size
 
         return buildCall(
@@ -47,7 +47,7 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             listOf(LLVM.LLVMConstInt(i32, n.toLong(), 0)),
         )
 
-    fun buildFromNativeProcedure(functionName: String, numberOfArguments: Int, name: String? = null): LLVMValueRef =
+    fun buildFromNativeProcedure(functionName: String, numberOfArguments: Int, name: String = ""): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_native_procedure", listOf(i8P, i32), structValueP),
             listOf(
@@ -60,62 +60,40 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildFromLiteralString(s: String): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_literal_string", listOf(i8P), structValueP),
-            listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, nextName()), PointerPointer(c0i64, c0i64), 2))
+            listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, ""), PointerPointer(c0i64, c0i64), 2))
         )
 
-    fun buildGetFrameValue(frame: LLVMValueRef, relativeDepth: Int, index: Int, name: String? = null): LLVMValueRef =
+    fun buildGetFrameValue(frame: LLVMValueRef, relativeDepth: Int, index: Int, name: String = ""): LLVMValueRef =
         buildCall(
             getNamedFunction("_get_frame_value", listOf(structValueP, i32, i32), structValueP),
             listOf(frame, LLVM.LLVMConstInt(i32, relativeDepth.toLong(), 0), LLVM.LLVMConstInt(i32, index.toLong(), 0)),
             name
         )
 
-    fun buildICmp(op: Int, lhs: LLVMValueRef, rhs: LLVMValueRef, name: String? = null): LLVMValueRef =
-        LLVM.LLVMBuildICmp(builder, op, lhs, rhs, name ?: nextName())
+    fun buildICmp(op: Int, lhs: LLVMValueRef, rhs: LLVMValueRef, name: String = ""): LLVMValueRef =
+        LLVM.LLVMBuildICmp(builder, op, lhs, rhs, name)
 
-    fun buildLoad(valueRef: LLVMValueRef, name: String? = null): LLVMValueRef =
-        LLVM.LLVMBuildLoad(builder, valueRef, name ?: nextName())
+    fun buildLoad(valueRef: LLVMValueRef, name: String = ""): LLVMValueRef =
+        LLVM.LLVMBuildLoad(builder, valueRef, name)
 
-    private fun buildLoadNamedGlobal(globalName: String, name: String? = null): LLVMValueRef =
+    private fun buildLoadNamedGlobal(globalName: String, name: String = ""): LLVMValueRef =
         buildLoad(getNamedGlobal(globalName) ?: addGlobal(globalName, structValueP)!!, name)
 
-    fun buildMkFrame(parentFrame: LLVMValueRef, size: Int, name: String? = null): LLVMValueRef =
+    fun buildMkFrame(parentFrame: LLVMValueRef, size: Int, name: String = ""): LLVMValueRef =
         buildCall(
             getNamedFunction("_mk_frame", listOf(structValueP, i32), structValueP),
             listOf(parentFrame, LLVM.LLVMConstInt(i32, size.toLong(), 0)!!),
-            name ?: nextName()
+            name
         )
 
-    fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String? = null): LLVMValueRef {
-        val phi = LLVM.LLVMBuildPhi(builder, type, name ?: nextName())
+    fun buildPhi(type: LLVMTypeRef, incomingValues: List<LLVMValueRef>, incomingBlocks: List<LLVMBasicBlockRef>, name: String = ""): LLVMValueRef {
+        val phi = LLVM.LLVMBuildPhi(builder, type, name)
         LLVM.LLVMAddIncoming(phi, pointerPointerOf(incomingValues), pointerPointerOf(incomingBlocks), incomingValues.size)
         return phi
     }
 
-    fun buildPrintNewline(): LLVMValueRef? {
-        buildCall(
-            getNamedFunction("_print_newline", listOf(), void),
-            listOf(),
-            ""
-        )
-
-        return null
-    }
-
-    fun buildPrintValue(value: LLVMValueRef?): LLVMValueRef? {
-        if (value != null)
-            buildCall(
-                getNamedFunction("_print_value", listOf(structValueP), void),
-                listOf(value),
-                ""
-            )
-
-        return null
-    }
-
     fun buildRet(v: LLVMValueRef): LLVMValueRef =
         LLVM.LLVMBuildRet(builder, v)
-
 
     fun buildSetFrameValue(frame: LLVMValueRef, index: Int, operand: LLVMValueRef): LLVMValueRef =
         buildCall(
@@ -128,7 +106,7 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
         LLVM.LLVMBuildStore(builder, v1, v2)
     }
 
-    private fun buildNamedValue(valueName: String, name: String? = null): LLVMValueRef {
+    private fun buildNamedValue(valueName: String, name: String = ""): LLVMValueRef {
         val result = getBindingValue(valueName)
 
         return if (result == null) {
@@ -139,13 +117,13 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             result
     }
 
-    fun buildVNull(name: String? = null): LLVMValueRef =
+    fun buildVNull(name: String = ""): LLVMValueRef =
         buildNamedValue("_VNull", name)
 
-    fun buildVTrue(name: String? = null): LLVMValueRef =
+    fun buildVTrue(name: String = ""): LLVMValueRef =
         buildNamedValue("_VTrue", name)
 
-    fun buildVFalse(name: String? = null): LLVMValueRef =
+    fun buildVFalse(name: String = ""): LLVMValueRef =
         buildNamedValue("_VFalse", name)
 
     fun positionAtEnd(basicBlock: LLVMBasicBlockRef) {
@@ -159,11 +137,8 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun getParam(offset: Int): LLVMValueRef =
         LLVM.LLVMGetParam(procedure, offset)
 
-    fun appendBasicBlock(name: String? = null): LLVMBasicBlockRef =
-        LLVM.LLVMAppendBasicBlockInContext(context.context, procedure, name ?: nextName())
-
-    private fun nextName(): String =
-        module.nextName()
+    fun appendBasicBlock(name: String = ""): LLVMBasicBlockRef =
+        LLVM.LLVMAppendBasicBlockInContext(context.context, procedure, name)
 
     val void get() = context.void
     val structValueP get() = context.structValueP
@@ -181,11 +156,11 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun getNamedFunction(name: String): LLVMValueRef? =
         module.getNamedFunction(name)
 
-    fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
-        getNamedFunction(name) ?: addExternalFunction(name, parameterTypes, resultType)
+    fun getNamedFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean = false): LLVMValueRef =
+        getNamedFunction(name) ?: addExternalFunction(name, parameterTypes, resultType, varArg)
 
-    private fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef): LLVMValueRef =
-        module.addExternalFunction(name, parameterTypes, resultType)
+    private fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean = false): LLVMValueRef =
+        module.addExternalFunction(name, parameterTypes, resultType, varArg)
 
     private fun addGlobalString(value: String, name: String): LLVMValueRef =
         module.addGlobalString(value, name)

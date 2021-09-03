@@ -357,10 +357,10 @@ private class CompileExpression(val compileState: CompileState) {
 }
 
 val builtinBindings = listOf(
-    OperatorExternalProcedure("+", 0, "_plus", false),
-    OperatorExternalProcedure("-", 0, "_minus", true),
-    OperatorExternalProcedure("*", 1, "_multiply", false),
-    OperatorExternalProcedure("/", 1, "_divide", true),
+    VariableArityExternalProcedure("+", "_plus_variable"),
+    VariableArityExternalProcedure("-", "_minus_variable"),
+    VariableArityExternalProcedure("*", "_multiply_variable"),
+    VariableArityExternalProcedure("/", "_divide_variable"),
     FixedArityExternalProcedure("=", 2, "_equals"),
     FixedArityExternalProcedure("<", 2, "_less_than"),
     FixedArityExternalProcedure("boolean?", 1, "_booleanp"),
@@ -369,8 +369,8 @@ val builtinBindings = listOf(
     FixedArityExternalProcedure("integer?", 1, "_integerp"),
     FixedArityExternalProcedure("null?", 1, "_nullp"),
     FixedArityExternalProcedure("pair", 2, "_mk_pair"),
-    PrintExternalProcedure("print"),
-    PrintlnExternalProcedure("println"),
+    VariableArityExternalProcedure("print", "_print"),
+    VariableArityExternalProcedure("println", "_println"),
     FixedArityExternalProcedure("string?", 1, "_stringp"),
     FixedArityExternalProcedure("pair?", 1, "_pairp"),
 
@@ -397,48 +397,18 @@ private class FixedArityExternalProcedure(
     }
 }
 
-private abstract class VariableArityExternalProcedure(override val name: String) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null)
-
-private class OperatorExternalProcedure(
+private class VariableArityExternalProcedure(
     override val name: String,
-    private val unitValue: Int,
-    private val externalName: String,
-    private val explicitFirst: Boolean
-) : VariableArityExternalProcedure(name) {
+    private val externalName: String
+) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null) {
     override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef {
         val builder = state.functionBuilder
-        val ops = arguments.mapNotNull { compileScopedE(state, it) }
 
-        val namedFunction = builder.getNamedFunction(
-            externalName,
-            List(2) { builder.structValueP },
-            builder.structValueP
+        return builder.buildCall(
+            builder.getNamedFunction(externalName, listOf(builder.i32), builder.structValueP, true),
+            listOf(LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)) + arguments.mapNotNull { compileScopedE(state, it) },
+            ""
         )
-
-        return if (ops.isEmpty())
-            builder.buildFromLiteralInt(unitValue)
-        else if (explicitFirst && ops.size == 1)
-            builder.buildCall(namedFunction, listOf(builder.buildFromLiteralInt(unitValue), ops[0]))
-        else
-            ops.drop(1).fold(ops[0]) { op1, op2 -> builder.buildCall(namedFunction, listOf(op1, op2)) }
-    }
-}
-
-private class PrintExternalProcedure(override val name: String) : VariableArityExternalProcedure(name) {
-    override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef? {
-        val builder = state.functionBuilder
-        arguments.forEach { builder.buildPrintValue(compileScopedE(state, it)) }
-
-        return null
-    }
-}
-
-private class PrintlnExternalProcedure(override val name: String) : VariableArityExternalProcedure(name) {
-    override fun compile(state: CompileState, arguments: List<Expression<CompileState, LLVMValueRef>>): LLVMValueRef? {
-        val builder = state.functionBuilder
-        arguments.forEach { builder.buildPrintValue(compileE(state, it)) }
-
-        return builder.buildPrintNewline()
     }
 }
 

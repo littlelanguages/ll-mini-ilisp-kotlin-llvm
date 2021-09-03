@@ -94,6 +94,17 @@ struct Value *_from_literal_string(char *s)
     return r;
 }
 
+struct Value *_wrap_native_variable(void *native_procedure, int num, ...)
+{
+    struct Value *(*f)(int num, ...) = native_procedure;
+    va_list arguments;
+    va_start(arguments, num);
+    struct Value *result = f(num, arguments);
+    va_end(arguments);
+
+    return result;
+}
+
 struct Value *_wrap_native_0(void *native_procedure)
 {
     struct Value *(*f)() = native_procedure;
@@ -639,14 +650,132 @@ void _fail(struct Value *msg)
 
 struct Value* _plus_variable(int num, ...)
 {
-  va_list valist;
+  if (num == 0)
+    return _from_literal_int(0);
+  else
+  {
+    va_list arguments;
 
-  struct Value *result = _from_literal_int(0);
-  va_start(valist, num);
-  for (int i = 0; i < num; i++) {
-    result = _plus(result, va_arg(valist, struct Value *));
+    va_start(arguments, num);
+    struct Value *result = va_arg(arguments, struct Value *);
+    for (int i = 1; i < num; i++) {
+      result = _plus(result, va_arg(arguments, struct Value *));
+    }
+    va_end(arguments);
+
+    return result;
   }
-  va_end(valist);
+}
 
-  return result;
+struct Value* _multiply_variable(int num, ...)
+{
+  if (num == 0)
+    return _from_literal_int(1);
+  else
+  {
+    va_list arguments;
+
+    va_start(arguments, num);
+    struct Value *result = va_arg(arguments, struct Value *);
+    for (int i = 1; i < num; i++) {
+      result = _multiply(result, va_arg(arguments, struct Value *));
+    }
+    va_end(arguments);
+
+    return result;
+  }
+}
+
+struct Value* _minus_variable(int num, ...)
+{
+  switch (num) {
+    case 0:
+      return _from_literal_int(0);
+    case 1:
+    {
+      va_list arguments;
+
+      struct Value *value;
+      va_start(arguments, num);
+      struct Value *result = _minus(_from_literal_int(0), va_arg(arguments, struct Value *));
+      va_end(arguments);
+
+      return result;
+    }
+    default:
+    {
+      va_list arguments;
+
+      va_start(arguments, num);
+      struct Value *result = va_arg(arguments, struct Value *);
+      for (int i = 1; i < num; i++)
+      {
+        result = _minus(result, va_arg(arguments, struct Value *));
+      }
+      va_end(arguments);
+
+      return result;
+    }
+  }
+}
+
+struct Value* _divide_variable(int num, ...)
+{
+  switch (num)
+  {
+    case 0:
+      return _from_literal_int(1);
+    case 1:
+    {
+      va_list arguments;
+
+      struct Value *value;
+      va_start(arguments, num);
+      struct Value *result = _divide(_from_literal_int(1), va_arg(arguments, struct Value *));
+      va_end(arguments);
+
+      return result;
+    }
+    default:
+    {
+      va_list arguments;
+
+      va_start(arguments, num);
+      struct Value *result = va_arg(arguments, struct Value *);
+      for (int i = 1; i < num; i++)
+      {
+        result = _divide(result, va_arg(arguments, struct Value *));
+      }
+      va_end(arguments);
+
+      return result;
+    }
+  }
+}
+
+struct Value* _println(int num, ...)
+{
+  va_list arguments;
+
+  va_start(arguments, num);
+  for (int i = 0; i < num; i++) {
+    _print_value(va_arg(arguments, struct Value *));
+  }
+  va_end(arguments);
+  printf("\n");
+
+  return _VNull;
+}
+
+struct Value* _print(int num, ...)
+{
+  va_list arguments;
+
+  va_start(arguments, num);
+  for (int i = 0; i < num; i++) {
+    _print_value(va_arg(arguments, struct Value *));
+  }
+  va_end(arguments);
+
+  return _VNull;
 }

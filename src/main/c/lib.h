@@ -92,5 +92,7 @@ extern struct Value *_stringp(struct Value *v);
 extern struct Value *_pairp(struct Value *v);
 
 extern struct Value* _plus_variable(int num, ...);
+extern struct Value* _println(int num, ...);
+extern struct Value* _print(int num, ...);
 
 #endif
