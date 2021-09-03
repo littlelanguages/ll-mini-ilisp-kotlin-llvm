@@ -60,7 +60,7 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildFromLiteralString(s: String): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_literal_string", listOf(i8P), structValueP),
-            listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s, ""), PointerPointer(c0i64, c0i64), 2))
+            listOf(LLVM.LLVMConstInBoundsGEP(addGlobalString(s), PointerPointer(c0i64, c0i64), 2))
         )
 
     fun buildGetFrameValue(frame: LLVMValueRef, relativeDepth: Int, index: Int, name: String = ""): LLVMValueRef =
@@ -162,8 +162,8 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     private fun addExternalFunction(name: String, parameterTypes: List<LLVMTypeRef>, resultType: LLVMTypeRef, varArg: Boolean = false): LLVMValueRef =
         module.addExternalFunction(name, parameterTypes, resultType, varArg)
 
-    private fun addGlobalString(value: String, name: String): LLVMValueRef =
-        module.addGlobalString(value, name)
+    private fun addGlobalString(value: String): LLVMValueRef =
+        module.addGlobalString(value, "")
 
     fun openScope() =
         bindings.open()
