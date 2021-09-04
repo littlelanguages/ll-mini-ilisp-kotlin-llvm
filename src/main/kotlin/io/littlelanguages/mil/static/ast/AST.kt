@@ -90,6 +90,22 @@ data class IfExpression(
         )
 }
 
+data class ProcExpression(
+    override val position: Location,
+    val parameters: List<Symbol>,
+    val expressions: List<Expression>
+) : Expression(position) {
+    override fun yaml(): Any =
+        singletonMap(
+            "proc",
+            mapOf(
+                Pair("parameters", parameters.map { it.yaml() }),
+                Pair("expressions", expressions.map { it.yaml() }),
+                Pair("position", position.yaml())
+            )
+        )
+}
+
 data class LiteralInt(
     override val position: Location,
     val value: String

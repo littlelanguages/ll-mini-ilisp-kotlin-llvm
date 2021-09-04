@@ -15,7 +15,7 @@
                   procedure:
                     external-procedure: println
                   es:
-                    - 'Hello world'
+                    - [ 'Hello world' ]
 - scenario:
     name: Declaration
     tests:
@@ -57,14 +57,14 @@
                         procedure:
                           external-procedure: +
                         es:
-                          - parameter:
-                              name: a
-                              depth: 0
-                              offset: 0
-                          - parameter:
-                              name: b
-                              depth: 0
-                              offset: 1
+                          - - parameter:
+                                name: a
+                                depth: 0
+                                offset: 0
+                          - - parameter:
+                                name: b
+                                depth: 0
+                                offset: 1
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -107,26 +107,26 @@
                               procedure:
                                 external-procedure: +
                               es:
-                                - parameter:
-                                    name: a
-                                    depth: 0
-                                    offset: 0
-                                - parameter:
-                                    name: b
-                                    depth: 0
-                                    offset: 1
+                                - - parameter:
+                                      name: a
+                                      depth: 0
+                                      offset: 0
+                                - - parameter:
+                                      name: b
+                                      depth: 0
+                                      offset: 1
                     - call-procedure:
                         procedure:
                           external-procedure: +
                         es:
-                          - procedure-value:
-                              name: sum
-                              depth: 0
-                              offset: 2
-                          - procedure-value:
-                              name: sum
-                              depth: 0
-                              offset: 2
+                          - - procedure-value:
+                                name: sum
+                                depth: 0
+                                offset: 2
+                          - - procedure-value:
+                                name: sum
+                                depth: 0
+                                offset: 2
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -171,14 +171,14 @@
                               procedure:
                                 external-procedure: +
                               es:
-                                - parameter:
-                                    name: a
-                                    depth: 0
-                                    offset: 0
-                                - parameter:
-                                    name: b
-                                    depth: 0
-                                    offset: 1
+                                - - parameter:
+                                      name: a
+                                      depth: 0
+                                      offset: 0
+                                - - parameter:
+                                      name: b
+                                      depth: 0
+                                      offset: 1
                     - procedure:
                         name: g
                         parameters:
@@ -197,30 +197,30 @@
                                     procedure:
                                       external-procedure: +
                                     es:
-                                      - parameter:
-                                          name: a
-                                          depth: 0
-                                          offset: 0
-                                      - parameter:
-                                          name: b
-                                          depth: 0
-                                          offset: 1
-                                      - procedure-value:
-                                          name: sum
-                                          depth: 0
-                                          offset: 2
+                                      - - parameter:
+                                            name: a
+                                            depth: 0
+                                            offset: 0
+                                      - - parameter:
+                                            name: b
+                                            depth: 0
+                                            offset: 1
+                                      - - procedure-value:
+                                            name: sum
+                                            depth: 0
+                                            offset: 2
                           - call-procedure:
                               procedure:
                                 external-procedure: +
                               es:
-                                - procedure-value:
-                                    name: sum2
-                                    depth: 1
-                                    offset: 1
-                                - parameter:
-                                    name: x
-                                    depth: 1
-                                    offset: 0
+                                - - procedure-value:
+                                      name: sum2
+                                      depth: 1
+                                      offset: 1
+                                - - parameter:
+                                      name: x
+                                      depth: 1
+                                      offset: 0
                     - call-procedure:
                         procedure:
                           declared-procedure:
@@ -228,10 +228,10 @@
                             parameter-count: 1
                             depth: 1
                         es:
-                          - procedure-value:
-                              name: sum
-                              depth: 0
-                              offset: 2
+                          - - procedure-value:
+                                name: sum
+                                depth: 0
+                                offset: 2
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -242,15 +242,80 @@
                         procedure:
                           external-procedure: println
                         es:
-                          - call-procedure:
-                              procedure:
-                                declared-procedure:
-                                  name: f
-                                  parameter-count: 2
-                                  depth: 0
+                          - - call-procedure:
+                                procedure:
+                                  declared-procedure:
+                                    name: f
+                                    parameter-count: 2
+                                    depth: 0
+                                es:
+                                  - - 1
+                                  - - 2
+      - name: Lambda function without free variables
+        input: |
+          ((proc (a b c) (+ a (* b b) (* c c))) 1 2 3)
+        output:
+          program:
+            values: [ ]
+            procedures:
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 0
+                  es:
+                    - call-value:
+                        operand:
+                          - procedure:
+                              name: __n0
+                              parameters:
+                                - a
+                                - b
+                                - c
+                              depth: 0
+                              offsets: 3
                               es:
-                                - 1
-                                - 2
+                                - call-procedure:
+                                    procedure:
+                                      external-procedure: +
+                                    es:
+                                      - - parameter:
+                                            name: a
+                                            depth: 0
+                                            offset: 0
+                                      - - call-procedure:
+                                            procedure:
+                                              external-procedure: "*"
+                                            es:
+                                              - - parameter:
+                                                    name: b
+                                                    depth: 0
+                                                    offset: 1
+                                              - - parameter:
+                                                    name: b
+                                                    depth: 0
+                                                    offset: 1
+
+                                      - - call-procedure:
+                                            procedure:
+                                              external-procedure: "*"
+                                            es:
+                                              - - parameter:
+                                                    name: c
+                                                    depth: 0
+                                                    offset: 2
+                                              - - parameter:
+                                                    name: c
+                                                    depth: 0
+                                                    offset: 2
+                          - declared-procedure:
+                              name: __n0
+                              parameter-count: 3
+                              depth: 0
+                        es:
+                          - 1
+                          - 2
+                          - 3
 - scenario:
     name: Identifier Reference
     tests:
@@ -293,7 +358,7 @@
                         procedure:
                           external-procedure: println
                         es:
-                          - toplevel-value: x
+                          - - toplevel-value: x
       - name: Multiple top-level values
         input: |
           (const v1 1)
@@ -326,8 +391,8 @@
                         procedure:
                           external-procedure: println
                         es:
-                          - toplevel-value: v1
-                          - toplevel-value: v2
+                          - - toplevel-value: v1
+                          - - toplevel-value: v2
       - name: Top-level procedure
         input: |
           (const (add a b) (+ a b))
@@ -349,14 +414,14 @@
                         procedure:
                           external-procedure: +
                         es:
-                          - parameter:
-                              name: a
-                              depth: 0
-                              offset: 0
-                          - parameter:
-                              name: b
-                              depth: 0
-                              offset: 1
+                          - - parameter:
+                                name: a
+                                depth: 0
+                                offset: 0
+                          - - parameter:
+                                name: b
+                                depth: 0
+                                offset: 1
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -367,15 +432,15 @@
                         procedure:
                           external-procedure: println
                         es:
-                          - call-procedure:
-                              procedure:
-                                declared-procedure:
-                                  name: add
-                                  parameter-count: 2
-                                  depth: 0
-                              es:
-                                - 1
-                                - 2
+                          - - call-procedure:
+                                procedure:
+                                  declared-procedure:
+                                    name: add
+                                    parameter-count: 2
+                                    depth: 0
+                                es:
+                                  - - 1
+                                  - - 2
       - name: Top-level procedure with incorrect number of arguments
         input: |
           (const (add a b) (+ a b))
@@ -451,14 +516,14 @@
                         procedure:
                           external-procedure: +
                         es:
-                          - procedure-value:
-                              name: v1
-                              depth: 0
-                              offset: 0
-                          - procedure-value:
-                              name: v2
-                              depth: 0
-                              offset: 2
+                          - - procedure-value:
+                                name: v1
+                                depth: 0
+                                offset: 0
+                          - - procedure-value:
+                                name: v2
+                                depth: 0
+                                offset: 2
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -503,11 +568,11 @@
                               procedure:
                                 external-procedure: +
                               es:
-                                - procedure-value:
-                                    name: b
-                                    depth: 0
-                                    offset: 0
-                                - 1
+                                - - procedure-value:
+                                      name: b
+                                      depth: 0
+                                      offset: 0
+                                - - 1
       - name: Top-level declaration with embedded replacement declaration
         input: |
           (const b 1)
@@ -550,11 +615,11 @@
                               procedure:
                                 external-procedure: +
                               es:
-                                - procedure-value:
-                                    name: b
-                                    depth: 0
-                                    offset: 0
-                                - 1
+                                - - procedure-value:
+                                      name: b
+                                      depth: 0
+                                      offset: 0
+                                - - 1
                     - assign:
                         symbol:
                           toplevel-value: c

@@ -49,6 +49,10 @@ class Compiler(private val module: Module) {
         declarations.forEach { addFunction(it) }
     }
 
+    private fun addFunctionsFromExpressionss(es: List<List<Expression<CompileState, LLVMValueRef>>>) {
+        es.forEach { addFunctionsFromExpressions(it) }
+    }
+
     private fun addFunctionsFromExpressions(es: List<Expression<CompileState, LLVMValueRef>>) {
         es.forEach { addFunctionsFromExpression(it) }
     }
@@ -61,10 +65,10 @@ class Compiler(private val module: Module) {
             is CallProcedureExpression ->
                 when (val procedure = e.procedure) {
                     is ExternalProcedureBinding ->
-                        addFunctionsFromExpressions(e.es)
+                        addFunctionsFromExpressionss(e.es)
 
                     is DeclaredProcedureBinding ->
-                        addFunctionsFromExpressions(e.es)
+                        addFunctionsFromExpressionss(e.es)
 
                     else ->
                         TODO(procedure.toString())
@@ -196,22 +200,19 @@ private class CompileExpression(val compileState: CompileState) {
     fun compileE(e: Expression<CompileState, LLVMValueRef>): LLVMValueRef? =
         when (e) {
             is AssignExpression -> {
-                when (val symbol = e.symbol) {
-                    is TopLevelValueBinding -> {
-                        val operand = compileScopedExpressionsForce(e.es)
+                val symbol = e.symbol
+                val operand = compileScopedExpressionsForce(e.es)
+                when (symbol) {
+                    is TopLevelValueBinding ->
                         functionBuilder.buildStore(operand, functionBuilder.getNamedGlobal(symbol.name)!!)
-                        functionBuilder.addBindingToScope(symbol.name, operand)
-                    }
 
-                    is ProcedureValueBinding -> {
-                        val operand = compileScopedExpressionsForce(e.es)
+                    is ProcedureValueBinding ->
                         functionBuilder.buildSetFrameValue(functionBuilder.getBindingValue("_frame")!!, symbol.offset + 1, operand)
-                        functionBuilder.addBindingToScope(symbol.name, operand)
-                    }
 
                     else ->
                         TODO(e.toString())
                 }
+                functionBuilder.addBindingToScope(symbol.name, operand)
 
                 null
             }
@@ -219,13 +220,13 @@ private class CompileExpression(val compileState: CompileState) {
             is CallProcedureExpression ->
                 when (val procedure = e.procedure) {
                     is ExternalProcedureBinding ->
-                        procedure.compile(compileState, e.es)
+                        procedure.compile(compileState, e.es.flatten())
 
                     is DeclaredProcedureBinding ->
                         if (functionBuilder.getNamedFunction(procedure.name) == null)
                             null
                         else if (procedure.isToplevel())
-                            functionBuilder.buildCall(functionBuilder.getNamedFunction(procedure.name)!!, e.es.map { compileScopedEForce(it) })
+                            functionBuilder.buildCall(functionBuilder.getNamedFunction(procedure.name)!!, e.es.map { compileExpressionsForce(it) })
                         else {
                             val frame = if (compileState.depth == procedure.depth)
                                 functionBuilder.getParam(0)
@@ -240,7 +241,7 @@ private class CompileExpression(val compileState: CompileState) {
 
                             functionBuilder.buildCall(
                                 functionBuilder.getNamedFunction(procedure.name)!!,
-                                listOf(frame) + e.es.map { compileScopedEForce(it) })
+                                listOf(frame) + e.es.map { compileExpressionsForce(it) })
                         }
 
                     else ->
@@ -248,7 +249,7 @@ private class CompileExpression(val compileState: CompileState) {
                 }
 
             is CallValueExpression -> {
-                val op = compileScopedEForce(e.operand)
+                val op = compileScopedExpressionsForce(e.operand)
                 val es = e.es.map { compileScopedEForce(it) }
 
                 functionBuilder.buildCallClosure(op, es)

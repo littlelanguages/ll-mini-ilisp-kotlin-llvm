@@ -57,7 +57,7 @@ abstract class ExternalProcedureBinding<S, T>(
     override fun yaml(): Any =
         singletonMap("external-procedure", name)
 
-    fun validateArguments(e: SExpression, name: String, arguments: List<Expression<S, T>>): Errors? =
+    fun validateArguments(e: SExpression, name: String, arguments: List<List<Expression<S, T>>>): Errors? =
         when (arity) {
             null -> null
             arguments.size -> null

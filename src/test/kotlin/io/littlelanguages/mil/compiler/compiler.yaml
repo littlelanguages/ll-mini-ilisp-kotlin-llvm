@@ -700,3 +700,26 @@
           ()
           102345
           ()
+
+      - name: "anonymous procedure without frame"
+        input: |
+          (const (range min max)
+            (if (< min max) (pair min (range (+ min 1) max))
+                ()
+            )
+          )
+
+          (const (map p lst)
+            (if (null? lst) ()
+                (pair (p (car lst)) (map p (cdr lst)))
+             )
+          )
+
+          (const f (proc (n) (+ n n)))
+          (const values (range 1 10))
+
+          (println (map f values))
+          (println (map (proc (n) (+ n n)) (range 1 10)))
+        output: |
+          (2 4 6 8 10 12 14 16 18)
+          (2 4 6 8 10 12 14 16 18)

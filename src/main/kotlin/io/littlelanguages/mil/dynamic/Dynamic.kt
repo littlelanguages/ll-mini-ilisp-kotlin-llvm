@@ -14,6 +14,8 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
     val errors =
         mutableListOf<Errors>()
 
+    var nameGenerator = 0
+
     val bindings = Bindings<S, T>()
 
     var depth = -1
@@ -105,11 +107,47 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
             is io.littlelanguages.mil.static.ast.IfExpression ->
                 ifToTST(e.expressions.map { expressionsToTST(it) })
 
+            is io.littlelanguages.mil.static.ast.ProcExpression -> {
+                val name = nextName()
+                val parameters = e.parameters
+
+                val parameterNames = mutableListOf<String>()
+
+                val oldOffset = offset
+
+                depth += 1
+                val binding = DeclaredProcedureBinding<S, T>(name, parameters.size, depth)
+                bindings.add(name, binding)
+                offset = parameters.size
+                bindings.open()
+                parameters.forEachIndexed { index, symbol ->
+                    val parameterName = symbol.name
+
+                    parameterNames.add(parameterName)
+                    if (bindings.inCurrentNesting(parameterName))
+                        reportError(DuplicateParameterNameError(parameterName, symbol.position()))
+                    bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
+                }
+                bindings.open()
+                val expressions = expressionsToTST(e.expressions)
+                val procedure = Procedure(name, parameterNames, depth, offset, expressions)
+                bindings.close()
+                bindings.close()
+
+                depth -= 1
+                offset = oldOffset
+
+                listOf(
+                    procedure,
+                    SymbolReferenceExpression(binding)
+                )
+            }
+
             is io.littlelanguages.mil.static.ast.SExpression -> {
                 val first = e.expressions[0]
 
                 if (first is io.littlelanguages.mil.static.ast.Symbol) {
-                    val arguments = expressionsToTST(e.expressions.drop(1))
+                    val arguments = e.expressions.drop(1).map { expressionToTST(it) }
 
                     when (val binding = bindings.get(first.name)) {
                         null ->
@@ -131,10 +169,10 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                             }
 
                         else ->
-                            listOf(CallValueExpression(SymbolReferenceExpression(binding), arguments))
+                            listOf(CallValueExpression(listOf(SymbolReferenceExpression(binding)), arguments.flatten()))
                     }
                 } else
-                    TODO(e.toString())
+                    listOf(CallValueExpression(expressionToTST(e.expressions[0]), expressionsToTST(e.expressions.drop(1))))
             }
 
             is io.littlelanguages.mil.static.ast.LiteralInt ->
@@ -179,6 +217,10 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
 
     private fun isToplevel(): Boolean =
         depth == -1
+
+
+    private fun nextName() =
+        "__n${nameGenerator++}"
 }
 
 fun <S, T> translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralString): LiteralString<S, T> {

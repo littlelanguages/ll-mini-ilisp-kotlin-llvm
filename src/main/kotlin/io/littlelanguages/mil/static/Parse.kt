@@ -58,7 +58,10 @@ class ParseVisitor : Visitor<
     override fun visitExpressionBody3(a1: Token, a2: Expression): List<Expression> =
         listOf(a2)
 
-    override fun visitExpressionBody4(a1: List<Expression>, a2: List<List<Expression>>): List<Expression> {
+    override fun visitExpressionBody4(a1: Token, a2: Token, a3: List<Token>, a4: Token, a5: List<List<Expression>>): List<Expression> =
+        listOf(ProcExpression(locationOfs(a1.location + a4.location, a5), a3.map { Symbol(it.location, it.lexeme) }, a5.flatten()))
+
+    override fun visitExpressionBody5(a1: List<Expression>, a2: List<List<Expression>>): List<Expression> {
         val es = a1 + a2.flatten()
 
         return listOf(

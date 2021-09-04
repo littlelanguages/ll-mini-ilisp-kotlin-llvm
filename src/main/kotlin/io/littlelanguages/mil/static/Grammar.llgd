@@ -13,6 +13,7 @@ ExpressionBody
   : "if" {Expression}
   | "do" {Expression}
   | "const" ConstBody
+  | "proc" "(" {Symbol} ")" {Expression}
   | Expression {Expression}
   ;
 
