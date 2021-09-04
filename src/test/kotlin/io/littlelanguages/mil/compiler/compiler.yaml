@@ -1,5 +1,5 @@
 - scenario:
-    name: "!Greetings"
+    name: "Greetings"
     tests:
       - name: "Hello 42"
         input: |
@@ -27,7 +27,7 @@
         output: |
           Hello World
 - scenario:
-    name: "!Expressions"
+    name: "Expressions"
     tests:
       - scenario:
           name: Literal Value
@@ -337,7 +337,7 @@
                 #t
 
 - scenario:
-    name: "!Forms"
+    name: "Forms"
     tests:
       - scenario:
           name: "do"
@@ -365,7 +365,7 @@
                 1
                 2
 - scenario:
-    name: "!Declarations"
+    name: "Declarations"
     tests:
       - name: "Toplevel value declaration"
         input: |
