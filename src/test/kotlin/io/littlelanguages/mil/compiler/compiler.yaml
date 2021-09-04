@@ -554,6 +554,51 @@
           3
           2
           2
+      - name: "Declared with frame"
+        input: |
+          (const (n0 a)
+            (const a' (+ a 1))
+            (const (n0-nested b)
+              (const b' (+ b 1))
+              (const (n0-nested-nested c)
+                (const c' (+ c 1))
+
+                (const (n0-all)
+                  (pair a (pair a' (pair b (pair b' (pair c (pair c' ()))))))
+                )
+
+                n0-all
+              )
+              (n0-nested-nested (+ b 20))
+            )
+            (n0-nested (+ a 10))
+          )
+
+          (const (n1 a)
+            (const a' (+ a 1))
+            (const (n1-nested b)
+              (const b' (+ b 1))
+
+              (const (n1-all other)
+                (pair a (pair a' (pair b (pair b' (pair other ())))))
+              )
+
+              (const (n1-nested-nested c)
+                (const c' (+ c 1))
+
+                n1-all
+              )
+
+              (n1-nested-nested (+ b 20))
+            )
+            (n1-nested (+ a 10))
+          )
+
+          (println ((n0 0)))
+          (println ((n1 0) 30))
+        output: |
+          (0 1 10 11 30 31)
+          (0 1 10 11 30)
       - name: "Up to 10 arguments without frame"
         input: |
           (const (f0)

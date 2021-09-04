@@ -4,7 +4,7 @@ import io.littlelanguages.data.NestedMap
 import io.littlelanguages.data.Yamlable
 import io.littlelanguages.mil.ArgumentMismatchError
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.dynamic.tst.Expression
+import io.littlelanguages.mil.dynamic.tst.Expressionss
 import io.littlelanguages.mil.static.ast.SExpression
 
 sealed interface Binding<S, T> : Yamlable {
@@ -57,14 +57,14 @@ abstract class ExternalProcedureBinding<S, T>(
     override fun yaml(): Any =
         singletonMap("external-procedure", name)
 
-    fun validateArguments(e: SExpression, name: String, arguments: List<List<Expression<S, T>>>): Errors? =
+    fun validateArguments(e: SExpression, name: String, arguments: Expressionss<S, T>): Errors? =
         when (arity) {
             null -> null
             arguments.size -> null
             else -> ArgumentMismatchError(name, arity!!, arguments.size, e.position)
         }
 
-    abstract fun compile(state: S, arguments: List<Expression<S, T>>): T?
+    abstract fun compile(state: S, arguments: Expressionss<S, T>): T?
 }
 
 data class ParameterBinding<S, T>(override val name: String, val depth: Int, val offset: Int) : Binding<S, T> {

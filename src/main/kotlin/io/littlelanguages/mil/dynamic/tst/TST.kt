@@ -31,6 +31,7 @@ data class Procedure<S, T>(val name: String, val parameters: List<String>, val d
 }
 
 typealias  Expressions<S, T> = List<Expression<S, T>>
+typealias  Expressionss<S, T> = List<List<Expression<S, T>>>
 
 interface Expression<S, T> : Yamlable
 

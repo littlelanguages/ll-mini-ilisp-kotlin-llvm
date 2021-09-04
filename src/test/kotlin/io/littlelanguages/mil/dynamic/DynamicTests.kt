@@ -7,7 +7,7 @@ import io.littlelanguages.data.Either
 import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
-import io.littlelanguages.mil.dynamic.tst.Expression
+import io.littlelanguages.mil.dynamic.tst.Expressionss
 import io.littlelanguages.mil.dynamic.tst.Program
 import io.littlelanguages.mil.static.Scanner
 import io.littlelanguages.mil.static.parse
@@ -42,7 +42,7 @@ class DynamicTests : FunSpec({
 private class DummyVariableArityExternalProcedure(
     override val name: String
 ) : ExternalProcedureBinding<S, T>(name, null) {
-    override fun compile(state: S, arguments: List<Expression<S, T>>): T? = null
+    override fun compile(state: S, arguments: Expressionss<S, T>): T? = null
 }
 
 fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =

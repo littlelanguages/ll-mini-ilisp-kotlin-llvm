@@ -41,6 +41,17 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildCondBr(ifOp: LLVMValueRef, thenOp: LLVMBasicBlockRef, elseOp: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildCondBr(builder, ifOp, thenOp, elseOp)
 
+    fun buildFromDynamicProcedure(functionName: String, numberOfArguments: Int, frameRef: LLVMValueRef, name: String = ""): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_from_dynamic_procedure", listOf(i8P, i32, structValueP), structValueP),
+            listOf(
+                LLVM.LLVMConstBitCast(getNamedFunction(functionName, List(numberOfArguments) { structValueP }, structValueP), i8P),
+                LLVM.LLVMConstInt(i32, numberOfArguments.toLong(), 0),
+                frameRef
+            ),
+            name
+        )
+
     fun buildFromLiteralInt(n: Int): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_literal_int", listOf(i32), structValueP),
