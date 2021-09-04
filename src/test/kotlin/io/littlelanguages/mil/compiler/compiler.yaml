@@ -1,5 +1,5 @@
 - scenario:
-    name: "Greetings"
+    name: "!Greetings"
     tests:
       - name: "Hello 42"
         input: |
@@ -27,7 +27,7 @@
         output: |
           Hello World
 - scenario:
-    name: "Expressions"
+    name: "!Expressions"
     tests:
       - scenario:
           name: Literal Value
@@ -337,7 +337,7 @@
                 #t
 
 - scenario:
-    name: "Forms"
+    name: "!Forms"
     tests:
       - scenario:
           name: "do"
@@ -365,7 +365,7 @@
                 1
                 2
 - scenario:
-    name: "Declarations"
+    name: "!Declarations"
     tests:
       - name: "Toplevel value declaration"
         input: |
@@ -768,3 +768,29 @@
         output: |
           (2 4 6 8 10 12 14 16 18)
           (2 4 6 8 10 12 14 16 18)
+      - name: "anonymous procedure with frame"
+        input: |
+          (const (range min max)
+            (if (< min max) (pair min (range (+ min 1) max))
+                ()
+            )
+          )
+
+          (const (filter p lst)
+            (if (null? lst) ()
+                (p (car lst)) (pair (car lst) (filter p (cdr lst)))
+                (filter p (cdr lst))
+             )
+          )
+
+          (const values (range 1 10))
+
+          (const (less-than n lst)
+            (filter (proc (v) (< v n)) lst)
+          )
+
+          (println (filter (proc (n) (< n 5)) values))
+          (println (less-than 5 values))
+        output: |
+          (1 2 3 4)
+          (1 2 3 4)
