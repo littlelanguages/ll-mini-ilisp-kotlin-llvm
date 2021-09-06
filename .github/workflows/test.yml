@@ -25,5 +25,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.15
-      - name: Build p0-kotlin
+      - name: Build mini-ilisp-kotlin-llvm
         run: .bin/build.sh
+      - name: Install distribution mini-ilisp-kotlin-llvm
+        run: .bin/dist.sh
+      - name: Make samples
+        run: ( cd ./samples ; make )
+      - name: Run hello
+        run: ./samples/hello

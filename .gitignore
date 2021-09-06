@@ -8,8 +8,7 @@
 .gradle
 build
 
-./samples/*.class
-./samples/*.yaml
+ll-mini-ilisp-kotlin-llvm/
 
 /src/main/kotlin/io/littlelanguages/data/Tuple.kt
 /src/main/kotlin/io/littlelanguages/data/Union.kt
@@ -21,3 +20,7 @@ build
 /src/main/c/*.o
 /test.*
 /src/main/c/testmain
+
+/samples/hello
+/samples/hello.bc
+/samples/hello.ll

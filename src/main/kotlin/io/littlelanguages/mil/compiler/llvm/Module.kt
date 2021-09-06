@@ -8,11 +8,19 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
 class Module(moduleID: String, private var context: Context) {
-    private val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)
+    val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)
     private val builder = LLVM.LLVMCreateBuilderInContext(context.context)
 
     fun dispose() {
         LLVM.LLVMDisposeBuilder(builder)
+    }
+
+    init {
+        setTargetTripleToTarget()
+    }
+
+    private fun setTargetTripleToTarget() {
+        LLVM.LLVMSetTarget(module, LLVM.LLVMGetDefaultTargetTriple())
     }
 
     fun getNamedFunction(name: String): LLVMValueRef? =

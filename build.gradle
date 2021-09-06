@@ -3,6 +3,8 @@ plugins {
     id 'application'
 }
 
+//apply plugin: 'kotlin-kapt'
+
 application {
     mainClass.set("io.littlelanguages.mil.bin.CLIKt")
 }
@@ -31,7 +33,15 @@ dependencies {
     testImplementation "org.ow2.asm:asm-util:$vASM"
     testImplementation "io.kotest:kotest-runner-junit5-jvm:$vKotest"
     testImplementation "io.kotest:kotest-assertions-core-jvm:$vKotest"
+
+//    kapt "info.picocli:picocli-codegen:$vPicoCLI"
 }
+
+//kapt {
+//    arguments {
+//        arg("project", "${project.group}/${project.name}")
+//    }
+//}
 
 repositories {
     mavenCentral()

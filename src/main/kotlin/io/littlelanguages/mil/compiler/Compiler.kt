@@ -20,6 +20,12 @@ fun compile(context: Context, moduleID: String, program: Program<CompileState, L
 
     Compiler(module).compile(program)
 
+    val pm = LLVM.LLVMCreatePassManager()
+    LLVM.LLVMAddAggressiveInstCombinerPass(pm)
+    LLVM.LLVMAddNewGVNPass(pm)
+    LLVM.LLVMAddCFGSimplificationPass(pm)
+    LLVM.LLVMRunPassManager(pm, module.module)
+
     return Right(module)
 }
 
