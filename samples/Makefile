@@ -9,4 +9,4 @@ hello: hello.bc
 	../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm $<
 
 clean:
-	rm -i *.bc
+	rm -f *.bc
