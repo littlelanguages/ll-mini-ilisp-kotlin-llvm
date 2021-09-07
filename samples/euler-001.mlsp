@@ -1,0 +1,52 @@
+; https://projecteuler.net
+;
+; Euler 1: https://projecteuler.net/problem=1
+; If we list all the natural numbers below 10 that are multiples of 3 or 5, we 
+; get 3, 5, 6 and 9. The sum of these multiples is 23.
+;
+; Find the sum of all the multiples of 3 or 5 below 1000.
+
+(const (multiple? m n)
+    (const remainder
+        (- m (* (/ m n) n))
+    )
+
+    (= remainder 0)
+)
+
+(const (or a b)
+    (if a #t
+        b #t
+        #f
+    )
+)
+
+(const (range min max)
+    (if (< min max)
+            (pair min (range (+ min 1) max))
+        ()
+    )
+)
+
+(const (filter f lst)
+    (if (null? lst)
+            ()
+        (do (const first (car lst))
+            (const rest (filter f (cdr lst)))
+
+            (if (f first)
+                    (pair first rest)
+                rest
+            )
+        )
+    )
+)
+
+(const (sum lst)
+    (if (null? lst)
+            0
+        (+ (car lst) (sum (cdr lst)))
+    )
+)
+
+(println (sum (filter (proc (n) (or (multiple? n 5) (multiple? n 3))) (range 0 1000))))

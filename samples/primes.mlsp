@@ -1,0 +1,32 @@
+(const (multiple? m n)
+    (const remainder
+        (- m (* (/ m n) n))
+    )
+
+    (= remainder 0)
+)
+
+(const (primes min max)
+    (const (divisible-by? n lst)
+        (if (null? lst)
+                #f
+            (multiple? n (car lst))
+                #t
+            (divisible-by? n (cdr lst))
+        )
+    )
+
+    (const (sieve n p')
+        (if (< max n)
+                p'
+            (divisible-by? n p')
+                (sieve (+ n 1) p')
+            (sieve (+ n 1) (pair n p'))
+        )
+    )
+
+    (sieve min ())
+)
+
+
+(println (primes 2 1000))
