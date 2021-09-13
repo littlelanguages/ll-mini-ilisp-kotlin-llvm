@@ -76,8 +76,14 @@ fun formatToken(token: Token): String =
 
 fun formatLocation(location: Location): String =
     when (location) {
-        is LocationCoordinate -> "(${location.line}, ${location.column})"
-        is LocationRange -> "(${location.start.line}, ${location.start.column})-(${location.end.line}, ${location.end.column})"
+        is LocationCoordinate ->
+            "(${location.line}, ${location.column})"
+
+        is LocationRange ->
+            if (location.start.line == location.end.line)
+                "(${location.start.line}, ${location.start.column}-${location.end.column})"
+            else
+                "(${location.start.line}, ${location.start.column})-(${location.end.line}, ${location.end.column})"
     }
 
 fun formatError(error: Errors): String =
