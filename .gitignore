@@ -24,3 +24,5 @@ ll-mini-ilisp-kotlin-llvm/
 /samples/hello
 /samples/hello.bc
 /samples/hello.ll
+/samples/euler-001
+/samples/primes

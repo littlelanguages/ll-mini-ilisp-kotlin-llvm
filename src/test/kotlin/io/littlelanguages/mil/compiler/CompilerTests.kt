@@ -25,7 +25,7 @@ class CompilerTests : FunSpec({
         val context = Context()
         val content = File("./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml").readText()
 
-        val scenarios: Any = yaml.load(content)
+        val scenarios: Any = /*emptyList<String>() */ yaml.load(content)
 
         if (scenarios is List<*>) {
             parserConformanceTest(builtinBindings, context, this, scenarios)
