@@ -22,7 +22,7 @@ ll-mini-ilisp-kotlin-llvm/
 /src/main/c/testmain
 
 /samples/hello
-/samples/hello.bc
-/samples/hello.ll
+/samples/*.bc
+/samples/*.ll
 /samples/euler-001
 /samples/primes
