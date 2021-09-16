@@ -9,6 +9,7 @@ import io.littlelanguages.data.Right
 import io.littlelanguages.mil.Errors
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.compiler.llvm.targetTriple
 import io.littlelanguages.mil.dynamic.Binding
 import io.littlelanguages.mil.dynamic.translate
 import io.littlelanguages.mil.static.Scanner
@@ -22,7 +23,7 @@ private val yaml = Yaml()
 
 class CompilerTests : FunSpec({
     context("Conformance Tests") {
-        val context = Context()
+        val context = Context(targetTriple())
         val content = File("./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml").readText()
 
         val scenarios: Any = /*emptyList<String>() */ yaml.load(content)

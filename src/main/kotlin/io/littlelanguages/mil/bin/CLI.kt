@@ -8,6 +8,7 @@ import io.littlelanguages.mil.compiler.CompileState
 import io.littlelanguages.mil.compiler.builtinBindings
 import io.littlelanguages.mil.compiler.llvm.Context
 import io.littlelanguages.mil.compiler.llvm.Module
+import io.littlelanguages.mil.compiler.llvm.targetTriple
 import io.littlelanguages.mil.dynamic.Binding
 import io.littlelanguages.mil.dynamic.translate
 import io.littlelanguages.mil.static.Scanner
@@ -112,8 +113,8 @@ fun formatError(error: Errors): String =
             "Unknown Symbol: ${formatLocation(error.location)}: Reference to unknown symbol \"${error.name}\""
     }
 
-fun compile(input: File, output: File) {
-    val context = Context()
+fun compile(input: File, triple: String, output: File) {
+    val context = Context(triple)
 
     when (val compiledResult = compile(builtinBindings, context, input)) {
         is Left -> {
@@ -128,8 +129,11 @@ fun compile(input: File, output: File) {
 
 @Command(name = "ll-mini-ilisp-kotlin-llvm", version = ["0.1"], mixinStandardHelpOptions = true, description = ["A mini iLisp compiler."])
 class CLI : Callable<Int> {
-    @Parameters(paramLabel = "FILE", description = ["File to compile.  File must exist and have a .mlsp extension"], arity = "1")
+    @Parameters(paramLabel = "FILE", description = ["File to compile.  File must exist and have a .mlsp extension."], arity = "1")
     private lateinit var file: File
+
+    @CommandLine.Option(names = ["-t", "--triple"], paramLabel = "TRIPLE", description = ["Module target triple embedded into the compiled code."])
+    private var triple = targetTriple()
 
     private fun failOnError(error: String) {
         println("Error: $error")
@@ -143,7 +147,7 @@ class CLI : Callable<Int> {
         if (file.extension != "mlsp")
             failOnError("Invalid input file: $file requires a .mlsp extension")
 
-        compile(file, changeExtension(file, ".bc"))
+        compile(file, triple, changeExtension(file, ".bc"))
 
         return 0
     }

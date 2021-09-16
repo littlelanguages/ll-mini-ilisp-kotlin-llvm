@@ -4,7 +4,7 @@ import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMContextRef
 import org.bytedeco.llvm.global.LLVM
 
-class Context {
+class Context(val triple: String) {
     init {
         LLVM.LLVMInitializeCore(LLVM.LLVMGetGlobalPassRegistry())
         LLVM.LLVMLinkInMCJIT()
@@ -99,4 +99,18 @@ class Context {
 
     fun module(moduleID: String) =
         Module(moduleID, this)
+}
+
+fun targetTriple(): String {
+    val llvmGetDefaultTargetTriple = LLVM.LLVMGetDefaultTargetTriple()
+    val result = llvmGetDefaultTargetTriple.string
+    LLVM.LLVMDisposeMessage(llvmGetDefaultTargetTriple)
+
+    return when (result) {
+        "x86_64-apple-darwin20.6.0" ->
+            "x86_64-apple-macosx11.0.0"
+        
+        else ->
+            result
+    }
 }
