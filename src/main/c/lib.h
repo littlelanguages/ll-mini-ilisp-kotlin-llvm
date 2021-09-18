@@ -61,7 +61,7 @@ extern struct Value *_from_literal_int(int v);
 extern struct Value *_from_literal_string(char *s);
 extern struct Value *_mk_pair(struct Value *car, struct Value *cdr);
 extern struct Value *_from_native_var_arg_procedure(void *procedure);
-extern struct Value *_from_native_procedure(void *procedure, int number_arguments);
+extern struct Value *_from_native_procedure(char *file_name, int line_number, void *procedure, int number_arguments);
 extern struct Value *_from_dynamic_procedure(void *procedure, int number_arguments, struct Value *frame);
 
 extern void _assert_callable_closure(struct Value *closure, int number_arguments);

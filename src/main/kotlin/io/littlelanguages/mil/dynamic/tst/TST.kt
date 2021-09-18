@@ -78,7 +78,7 @@ data class IfExpression<S, T>(val e1: List<Expression<S, T>>, val e2: List<Expre
         )
 }
 
-data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>) : Expression<S, T> {
+data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>, val lineNumber: Int) : Expression<S, T> {
     override fun yaml(): Any =
         symbol.yaml()
 }

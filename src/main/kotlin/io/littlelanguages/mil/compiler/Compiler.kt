@@ -298,7 +298,13 @@ private class CompileExpression(val compileState: CompileState) {
                                     TODO("depth mismatch")
 
                             is FixedArityExternalProcedure ->
-                                functionBuilder.buildFromNativeProcedure(symbol.externalName, symbol.arity)
+                                functionBuilder.buildFromNativeProcedure(
+                                    LLVM.LLVMConstInBoundsGEP(
+                                        functionBuilder.getNamedGlobal("_filename")!!,
+                                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
+                                        2
+                                    ), e.lineNumber, symbol.externalName, symbol.arity
+                                )
 
                             is ExternalValueBinding ->
                                 symbol.compile(compileState)!!
@@ -319,7 +325,13 @@ private class CompileExpression(val compileState: CompileState) {
 
                             is DeclaredProcedureBinding ->
                                 if (symbol.depth == 0)
-                                    functionBuilder.buildFromNativeProcedure(symbol.name, symbol.parameterCount)
+                                    functionBuilder.buildFromNativeProcedure(
+                                        LLVM.LLVMConstInBoundsGEP(
+                                            functionBuilder.getNamedGlobal("_filename")!!,
+                                            PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
+                                            2
+                                        ), e.lineNumber, symbol.name, symbol.parameterCount
+                                    )
                                 else
                                     functionBuilder.buildFromDynamicProcedure(
                                         symbol.name,

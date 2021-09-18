@@ -58,10 +58,18 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             listOf(LLVM.LLVMConstInt(i32, n.toLong(), 0)),
         )
 
-    fun buildFromNativeProcedure(functionName: String, numberOfArguments: Int, name: String = ""): LLVMValueRef =
+    fun buildFromNativeProcedure(
+        fileName: LLVMValueRef,
+        lineNumber: Int,
+        functionName: String,
+        numberOfArguments: Int,
+        name: String = ""
+    ): LLVMValueRef =
         buildCall(
-            getNamedFunction("_from_native_procedure", listOf(i8P, i32), structValueP),
+            getNamedFunction("_from_native_procedure", listOf(i8P, i32, i8P, i32), structValueP),
             listOf(
+                fileName,
+                LLVM.LLVMConstInt(i32, lineNumber.toLong(), 0),
                 LLVM.LLVMConstBitCast(getNamedFunction(functionName, List(numberOfArguments) { structValueP }, structValueP), i8P),
                 LLVM.LLVMConstInt(i32, numberOfArguments.toLong(), 0)
             ),
@@ -196,5 +204,5 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
 
     fun getBindingValue(key: Any): LLVMValueRef? =
         bindings.get(key)
-//        if (key == "_frame") bindings.get(key) else null
+//        if (key == "_frame" || key == "_filename") bindings.get(key) else null
 }

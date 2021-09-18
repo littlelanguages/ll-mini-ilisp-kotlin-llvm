@@ -142,7 +142,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
 
                 listOf(
                     procedure,
-                    SymbolReferenceExpression(binding)
+                    SymbolReferenceExpression(binding, lineNumber(e.position))
                 )
             }
 
@@ -172,7 +172,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                             }
 
                         else ->
-                            listOf(CallValueExpression(listOf(SymbolReferenceExpression(binding)), arguments.flatten()))
+                            listOf(CallValueExpression(listOf(SymbolReferenceExpression(binding, lineNumber(e.position))), arguments.flatten()))
                     }
                 } else
                     listOf(CallValueExpression(expressionToTST(e.expressions[0]), expressionsToTST(e.expressions.drop(1))))
@@ -193,7 +193,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 if (binding == null)
                     reportError(UnknownSymbolError(e.name, e.position))
                 else
-                    listOf(SymbolReferenceExpression(binding))
+                    listOf(SymbolReferenceExpression(binding, lineNumber(e.position)))
             }
         }
 
@@ -266,15 +266,6 @@ fun <S, T> translateLiteralString(e: io.littlelanguages.mil.static.ast.LiteralSt
 
 private fun Char.isHexDigit(): Boolean =
     this.isDigit() || this.uppercaseChar() in 'A'..'F'
-
-private fun io.littlelanguages.mil.static.ast.SExpression.isConst() =
-    if (this.expressions.isEmpty())
-        false
-    else {
-        val e1 = this.expressions[0]
-
-        e1 is io.littlelanguages.mil.static.ast.Symbol && e1.name == "const"
-    }
 
 private fun lineNumber(p: Location): Int =
     when (p) {

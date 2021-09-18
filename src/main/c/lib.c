@@ -175,7 +175,7 @@ struct Value *_from_native_var_arg_procedure(void *procedure)
     return r;
 }
 
-struct Value *_from_native_procedure(void *procedure, int number_arguments)
+struct Value *_from_native_procedure(char *file_name, int line_number, void *procedure, int number_arguments)
 {
     struct Value *r = (struct Value *)malloc(sizeof(struct Value));
     r->tag = NATIVE_CLOSURE_VALUE;
@@ -216,7 +216,7 @@ struct Value *_from_native_procedure(void *procedure, int number_arguments)
         r->native_closure.procedure = &_wrap_native_10;
         break;
     default:
-        fprintf(stderr, "Error: _from_native_procedure: Unable to wrap native with %d arguments\n", number_arguments);
+        fprintf(stderr, "Error: %s: %d: _from_native_procedure: Unable to wrap native with %d arguments\n", file_name, line_number, number_arguments);
         exit(-1);
     }
 
