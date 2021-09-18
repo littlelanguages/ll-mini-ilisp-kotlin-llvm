@@ -16,6 +16,7 @@
                     external-procedure: println
                   es:
                     - [ 'Hello world' ]
+                  line-number: 1
 - scenario:
     name: Declaration
     tests:
@@ -65,6 +66,7 @@
                                 name: b
                                 depth: 0
                                 offset: 1
+                        line-number: 1
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -115,6 +117,7 @@
                                       name: b
                                       depth: 0
                                       offset: 1
+                              line-number: 2
                     - call-procedure:
                         procedure:
                           external-procedure: +
@@ -127,6 +130,7 @@
                                 name: sum
                                 depth: 0
                                 offset: 2
+                        line-number: 3
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -179,6 +183,7 @@
                                       name: b
                                       depth: 0
                                       offset: 1
+                              line-number: 2
                     - procedure:
                         name: g
                         parameters:
@@ -209,6 +214,7 @@
                                             name: sum
                                             depth: 0
                                             offset: 2
+                                    line-number: 5
                           - call-procedure:
                               procedure:
                                 external-procedure: +
@@ -221,6 +227,7 @@
                                       name: x
                                       depth: 1
                                       offset: 0
+                              line-number: 7
                     - call-procedure:
                         procedure:
                           declared-procedure:
@@ -232,6 +239,7 @@
                                 name: sum
                                 depth: 0
                                 offset: 2
+                        line-number: 10
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -251,6 +259,8 @@
                                 es:
                                   - - 1
                                   - - 2
+                                line-number: 13
+                        line-number: 13
       - name: Lambda function without free variables
         input: |
           ((proc (a b c) (+ a (* b b) (* c c))) 1 2 3)
@@ -295,7 +305,7 @@
                                                     name: b
                                                     depth: 0
                                                     offset: 1
-
+                                            line-number: 1
                                       - - call-procedure:
                                             procedure:
                                               external-procedure: "*"
@@ -308,6 +318,8 @@
                                                     name: c
                                                     depth: 0
                                                     offset: 2
+                                            line-number: 1
+                                    line-number: 1
                           - declared-procedure:
                               name: __n0
                               parameter-count: 3
@@ -359,6 +371,7 @@
                           external-procedure: println
                         es:
                           - - toplevel-value: x
+                        line-number: 3
       - name: Multiple top-level values
         input: |
           (const v1 1)
@@ -393,6 +406,7 @@
                         es:
                           - - toplevel-value: v1
                           - - toplevel-value: v2
+                        line-number: 4
       - name: Top-level procedure
         input: |
           (const (add a b) (+ a b))
@@ -422,6 +436,7 @@
                                 name: b
                                 depth: 0
                                 offset: 1
+                        line-number: 1
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -441,6 +456,8 @@
                                 es:
                                   - - 1
                                   - - 2
+                                line-number: 3
+                        line-number: 3
       - name: Top-level procedure with incorrect number of arguments
         input: |
           (const (add a b) (+ a b))
@@ -524,6 +541,7 @@
                                 name: v2
                                 depth: 0
                                 offset: 2
+                        line-number: 7
               - procedure:
                   name: _main
                   parameters: [ ]
@@ -573,6 +591,7 @@
                                       depth: 0
                                       offset: 0
                                 - - 1
+                              line-number: 2
       - name: Top-level declaration with embedded replacement declaration
         input: |
           (const b 1)
@@ -620,9 +639,9 @@
                                       depth: 0
                                       offset: 0
                                 - - 1
+                              line-number: 3
                     - assign:
                         symbol:
                           toplevel-value: c
                         es:
                           - toplevel-value: b
-
