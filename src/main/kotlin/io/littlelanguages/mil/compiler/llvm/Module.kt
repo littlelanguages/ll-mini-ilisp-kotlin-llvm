@@ -7,7 +7,7 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-class Module(moduleID: String, private var context: Context) {
+class Module(val moduleID: String, private var context: Context) {
     val module = LLVM.LLVMModuleCreateWithNameInContext(moduleID, context.context)!!
     private val builder = LLVM.LLVMCreateBuilderInContext(context.context)
 

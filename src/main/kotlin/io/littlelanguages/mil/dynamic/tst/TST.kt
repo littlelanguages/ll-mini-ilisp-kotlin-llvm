@@ -45,12 +45,14 @@ data class AssignExpression<S, T>(val symbol: Binding<S, T>, val es: Expressions
         )
 }
 
-data class CallProcedureExpression<S, T>(val procedure: ProcedureBinding<S, T>, val es: List<Expressions<S, T>>) : Expression<S, T> {
+data class CallProcedureExpression<S, T>(val procedure: ProcedureBinding<S, T>, val es: List<Expressions<S, T>>, val lineNumber: Int) :
+    Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "call-procedure", mapOf(
                 Pair("procedure", procedure.yaml()),
-                Pair("es", es.map { e -> e.map { it.yaml() } })
+                Pair("es", es.map { e -> e.map { it.yaml() } }),
+                Pair("line-number", lineNumber)
             )
         )
 }

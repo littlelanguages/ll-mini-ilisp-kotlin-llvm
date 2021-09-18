@@ -42,7 +42,7 @@ class DynamicTests : FunSpec({
 private class DummyVariableArityExternalProcedure(
     override val name: String
 ) : ExternalProcedureBinding<S, T>(name, null) {
-    override fun compile(state: S, arguments: Expressionss<S, T>): T? = null
+    override fun compile(state: S, lineNumber: Int, arguments: Expressionss<S, T>): T? = null
 }
 
 fun translate(builtinBindings: List<Binding<S, T>>, input: String): Either<List<Errors>, Program<S, T>> =

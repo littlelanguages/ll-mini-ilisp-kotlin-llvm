@@ -639,21 +639,21 @@ static char *_value_type_name(int tag)
     }
 }
 
-struct Value *_pair_car(struct Value *pair)
+struct Value *_pair_car(char *file_name, int line_number, struct Value *pair)
 {
     if (pair->tag == PAIR_VALUE)
         return pair->pair.car;
 
-    fprintf(stderr, "Error: car: Unable to get car of %s value.\n", _value_type_name(pair->tag));
+    fprintf(stderr, "Error: %s: %d: car: Unable to get car of %s value.\n", file_name, line_number, _value_type_name(pair->tag));
     exit(-1);
 }
 
-struct Value *_pair_cdr(struct Value *pair)
+struct Value *_pair_cdr(char *file_name, int line_number, struct Value *pair)
 {
     if (pair->tag == PAIR_VALUE)
         return pair->pair.cdr;
 
-    fprintf(stderr, "Error: cdr: Unable to get cdr of %s value.\n", _value_type_name(pair->tag));
+    fprintf(stderr, "Error: %s: %d: cdr: Unable to get cdr of %s value.\n", file_name, line_number, _value_type_name(pair->tag));
     exit(-1);
 }
 

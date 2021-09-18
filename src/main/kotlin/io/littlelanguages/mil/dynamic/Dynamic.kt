@@ -5,6 +5,9 @@ import io.littlelanguages.data.Left
 import io.littlelanguages.data.Right
 import io.littlelanguages.mil.*
 import io.littlelanguages.mil.dynamic.tst.*
+import io.littlelanguages.scanpiler.Location
+import io.littlelanguages.scanpiler.LocationCoordinate
+import io.littlelanguages.scanpiler.LocationRange
 import java.lang.Integer.max
 
 fun <S, T> translate(builtinBindings: List<Binding<S, T>>, p: io.littlelanguages.mil.static.ast.Program): Either<List<Errors>, Program<S, T>> =
@@ -155,14 +158,14 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
 
                         is DeclaredProcedureBinding ->
                             if (binding.parameterCount == arguments.size)
-                                listOf(CallProcedureExpression(binding, arguments))
+                                listOf(CallProcedureExpression(binding, arguments, lineNumber(e.position)))
                             else
                                 reportError(ArgumentMismatchError(first.name, binding.parameterCount, arguments.size, e.position))
 
                         is ExternalProcedureBinding ->
                             when (val error = binding.validateArguments(e, first.name, arguments)) {
                                 null ->
-                                    listOf(CallProcedureExpression(binding, arguments))
+                                    listOf(CallProcedureExpression(binding, arguments, lineNumber(e.position)))
 
                                 else ->
                                     reportError(error)
@@ -271,4 +274,10 @@ private fun io.littlelanguages.mil.static.ast.SExpression.isConst() =
         val e1 = this.expressions[0]
 
         e1 is io.littlelanguages.mil.static.ast.Symbol && e1.name == "const"
+    }
+
+private fun lineNumber(p: Location): Int =
+    when (p) {
+        is LocationCoordinate -> p.line
+        is LocationRange -> p.start.line
     }

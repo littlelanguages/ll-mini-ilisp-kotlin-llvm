@@ -10,6 +10,7 @@ import io.littlelanguages.mil.compiler.llvm.Module
 import io.littlelanguages.mil.compiler.llvm.VerifyError
 import io.littlelanguages.mil.dynamic.*
 import io.littlelanguages.mil.dynamic.tst.*
+import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
@@ -34,6 +35,8 @@ class Compiler(private val module: Module) {
 
     fun compile(program: Program<CompileState, LLVMValueRef>) {
         addFunctions(program.declarations)
+
+        module.addGlobalString(module.moduleID, "_filename")
 
         program.values.forEach {
             module.addGlobal(it, module.structValueP, LLVM.LLVMConstPointerNull(module.structValueP), false)
@@ -216,7 +219,7 @@ private class CompileExpression(val compileState: CompileState) {
             is CallProcedureExpression ->
                 when (val procedure = e.procedure) {
                     is ExternalProcedureBinding ->
-                        procedure.compile(compileState, e.es)
+                        procedure.compile(compileState, e.lineNumber, e.es)
 
                     is DeclaredProcedureBinding -> {
                         val functionRef = functionBuilder.getNamedFunction(procedure.name)!!
@@ -366,8 +369,8 @@ val builtinBindings = listOf(
     FixedArityExternalProcedure("=", 2, "_equals"),
     FixedArityExternalProcedure("<", 2, "_less_than"),
     FixedArityExternalProcedure("boolean?", 1, "_booleanp"),
-    FixedArityExternalProcedure("car", 1, "_pair_car"),
-    FixedArityExternalProcedure("cdr", 1, "_pair_cdr"),
+    FixedArityExternalPositionProcedure("car", 1, "_pair_car"),
+    FixedArityExternalPositionProcedure("cdr", 1, "_pair_cdr"),
     FixedArityExternalProcedure("integer?", 1, "_integerp"),
     FixedArityExternalProcedure("null?", 1, "_nullp"),
     FixedArityExternalProcedure("pair", 2, "_mk_pair"),
@@ -386,7 +389,7 @@ private class FixedArityExternalProcedure(
     override val arity: Int,
     val externalName: String
 ) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, arity) {
-    override fun compile(state: CompileState, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
+    override fun compile(state: CompileState, lineNumber: Int, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
         val builder = state.functionBuilder
 
         val namedFunction = builder.getNamedFunction(
@@ -399,11 +402,34 @@ private class FixedArityExternalProcedure(
     }
 }
 
+private class FixedArityExternalPositionProcedure(
+    override val name: String,
+    override val arity: Int,
+    val externalName: String
+) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, arity) {
+    override fun compile(state: CompileState, lineNumber: Int, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
+        val builder = state.functionBuilder
+
+        val namedFunction = builder.getNamedFunction(
+            externalName,
+            listOf(builder.i8P, builder.i32) + List(arguments.size) { builder.structValueP },
+            builder.structValueP
+        )
+
+        return builder.buildCall(
+            namedFunction,
+            listOf(
+                LLVM.LLVMConstInBoundsGEP(builder.getNamedGlobal("_filename")!!, PointerPointer(builder.c0i64, builder.c0i64), 2),
+                LLVM.LLVMConstInt(builder.i32, lineNumber.toLong(), 0)
+            ) + arguments.map { compileScopedExpressionsForce(state, it) })
+    }
+}
+
 private class VariableArityExternalProcedure(
     override val name: String,
     val externalName: String
 ) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null) {
-    override fun compile(state: CompileState, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
+    override fun compile(state: CompileState, lineNumber: Int, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
         val builder = state.functionBuilder
 
         return builder.buildCall(
@@ -414,16 +440,16 @@ private class VariableArityExternalProcedure(
 }
 
 private class VFalseExternalValue : ExternalValueBinding<CompileState, LLVMValueRef>("#f") {
-    override fun compile(state: CompileState): LLVMValueRef =
+    override fun compile(state: CompileState, lineNumber: Int): LLVMValueRef =
         state.functionBuilder.buildVFalse()
 }
 
 private class VTrueExternalValue : ExternalValueBinding<CompileState, LLVMValueRef>("#t") {
-    override fun compile(state: CompileState): LLVMValueRef =
+    override fun compile(state: CompileState, lineNumber: Int): LLVMValueRef =
         state.functionBuilder.buildVTrue()
 }
 
 private class VNullExternalValue : ExternalValueBinding<CompileState, LLVMValueRef>("()") {
-    override fun compile(state: CompileState): LLVMValueRef =
+    override fun compile(state: CompileState, lineNumber: Int): LLVMValueRef =
         state.functionBuilder.buildVNull()
 }

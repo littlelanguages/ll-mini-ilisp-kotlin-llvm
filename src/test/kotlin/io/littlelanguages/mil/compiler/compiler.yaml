@@ -261,6 +261,11 @@
               output: |
                 1
                 1
+            - name: car error
+              input: |
+                (println (car ()))
+              output: |
+                Error: ./test.mlsp: 1: car: Unable to get car of () value.
             - name: cdr
               input: |
                 (println (cdr (pair 1 2)))
@@ -270,6 +275,11 @@
                 2
                 (2)
                 (2 3)
+            - name: cdr error
+              input: |
+                (println (cdr ()))
+              output: |
+                Error: ./test.mlsp: 1: cdr: Unable to get cdr of () value.
             - name: null?
               input: |
                 (println (null? ()))

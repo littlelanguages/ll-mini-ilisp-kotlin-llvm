@@ -47,7 +47,7 @@ abstract class ExternalValueBinding<S, T>(override val name: String) : Binding<S
     override fun yaml(): Any =
         singletonMap("external-value", name)
 
-    abstract fun compile(state: S): T?
+    abstract fun compile(state: S, lineNumber: Int = -1): T?
 }
 
 abstract class ExternalProcedureBinding<S, T>(
@@ -64,7 +64,7 @@ abstract class ExternalProcedureBinding<S, T>(
             else -> ArgumentMismatchError(name, arity!!, arguments.size, e.position)
         }
 
-    abstract fun compile(state: S, arguments: Expressionss<S, T>): T?
+    abstract fun compile(state: S, lineNumber: Int = -1, arguments: Expressionss<S, T>): T?
 }
 
 data class ParameterBinding<S, T>(override val name: String, val depth: Int, val offset: Int) : Binding<S, T> {

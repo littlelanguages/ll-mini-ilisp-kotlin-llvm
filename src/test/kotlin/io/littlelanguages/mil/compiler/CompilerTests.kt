@@ -37,7 +37,7 @@ class CompilerTests : FunSpec({
 })
 
 fun compile(builtinBindings: List<Binding<CompileState, LLVMValueRef>>, context: Context, input: String): Either<List<Errors>, Module> =
-    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "test", it) }
+    parse(Scanner(StringReader(input))) mapLeft { listOf(it) } andThen { translate(builtinBindings, it) } andThen { compile(context, "./test.mlsp", it) }
 
 suspend fun parserConformanceTest(
     builtinBindings: List<Binding<CompileState, LLVMValueRef>>,
