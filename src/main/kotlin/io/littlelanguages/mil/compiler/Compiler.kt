@@ -47,7 +47,7 @@ class Compiler(private val module: Module) {
             compile(declaration)
         }
 
-        System.err.println(module.toString())
+//        System.err.println(module.toString())
 
         when (val result = module.verify()) {
             is VerifyError -> throw CompilationError(result.message)
