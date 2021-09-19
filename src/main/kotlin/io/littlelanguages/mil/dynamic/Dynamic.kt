@@ -172,10 +172,16 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                             }
 
                         else ->
-                            listOf(CallValueExpression(listOf(SymbolReferenceExpression(binding, lineNumber(e.position))), arguments.flatten()))
+                            listOf(
+                                CallValueExpression(
+                                    listOf(SymbolReferenceExpression(binding, lineNumber(e.position))),
+                                    arguments.flatten(),
+                                    lineNumber(e.position)
+                                )
+                            )
                     }
                 } else
-                    listOf(CallValueExpression(expressionToTST(e.expressions[0]), expressionsToTST(e.expressions.drop(1))))
+                    listOf(CallValueExpression(expressionToTST(e.expressions[0]), expressionsToTST(e.expressions.drop(1)), lineNumber(e.position)))
             }
 
             is io.littlelanguages.mil.static.ast.LiteralInt ->

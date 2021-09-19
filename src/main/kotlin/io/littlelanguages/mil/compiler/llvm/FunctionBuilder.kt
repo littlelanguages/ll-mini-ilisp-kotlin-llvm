@@ -28,12 +28,22 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
             name
         )
 
-    fun buildCallClosure(closureRef: LLVMValueRef, arguments: List<LLVMValueRef?>, name: String = ""): LLVMValueRef {
+    fun buildCallClosure(
+        fileName: LLVMValueRef,
+        lineNumber: Int,
+        closureRef: LLVMValueRef,
+        arguments: List<LLVMValueRef?>,
+        name: String = ""
+    ): LLVMValueRef {
         val numberOfArguments = arguments.size
 
         return buildCall(
-            getNamedFunction("_call_closure_$numberOfArguments", List(1 + numberOfArguments) { structValueP }, structValueP),
-            listOf(closureRef) + arguments,
+            getNamedFunction("_call_closure_$numberOfArguments", listOf(i8P, i32) + List(1 + numberOfArguments) { structValueP }, structValueP),
+            listOf(
+                fileName,
+                LLVM.LLVMConstInt(i32, lineNumber.toLong(), 0),
+                closureRef
+            ) + arguments,
             name
         )
     }

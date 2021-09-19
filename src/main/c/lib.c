@@ -254,16 +254,16 @@ struct Value *_from_dynamic_procedure(void *procedure, int number_arguments, str
     return r;
 }
 
-void _assert_callable_closure(struct Value *closure, int number_arguments)
+void _assert_callable_closure(char *file_name, int line_number, struct Value *closure, int number_arguments)
 {
     if (closure->tag != NATIVE_CLOSURE_VALUE && closure->tag != DYNAMIC_CLOSURE_VALUE)
     {
-        fprintf(stderr, "Error: call closure: Attempt to call value as if a closure: %d\n", closure->tag);
+        fprintf(stderr, "Error: call closure: %s: %d: Attempt to call value as if a closure: %d\n", file_name, line_number, closure->tag);
         exit(-1);
     }
     if (closure->native_closure.number_arguments != number_arguments)
     {
-        fprintf(stderr, "Error: call closure: Expected %d arguments but received %d\n", number_arguments, closure->native_closure.number_arguments);
+        fprintf(stderr, "Error: call closure: %s: %d: Expected %d arguments but received %d\n", file_name, line_number, number_arguments, closure->native_closure.number_arguments);
         exit(-1);
     }
 }
@@ -310,7 +310,7 @@ void _set_frame_value(struct Value *frame, int depth, int offset, struct Value *
     frame->vector.items[offset] = value;
 }
 
-struct Value *_call_closure_0(struct Value *closure)
+struct Value *_call_closure_0(char *file_name, int line_number, struct Value *closure)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -324,7 +324,7 @@ struct Value *_call_closure_0(struct Value *closure)
     }
     else
     {
-        _assert_callable_closure(closure, 0);
+        _assert_callable_closure(file_name, line_number, closure, 0);
 
         struct Value *(*f)(struct Value *) = closure->dynamic_closure.procedure;
 
@@ -332,7 +332,7 @@ struct Value *_call_closure_0(struct Value *closure)
     }
 }
 
-struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
+struct Value *_call_closure_1(char *file_name, int line_number, struct Value *closure, struct Value *a1)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -346,7 +346,7 @@ struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
     }
     else
     {
-        _assert_callable_closure(closure, 1);
+        _assert_callable_closure(file_name, line_number, closure, 1);
 
         struct Value *(*f)(struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -354,7 +354,7 @@ struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
     }
 }
 
-struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Value *a2)
+struct Value *_call_closure_2(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -368,7 +368,7 @@ struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 2);
+        _assert_callable_closure(file_name, line_number, closure, 2);
 
         //    printf("_call_closure_2:\n");
         //    printf("  v1: ");
@@ -392,7 +392,7 @@ struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3)
+struct Value *_call_closure_3(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -406,7 +406,7 @@ struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 3);
+        _assert_callable_closure(file_name, line_number, closure, 3);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -414,7 +414,7 @@ struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4)
+struct Value *_call_closure_4(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -428,7 +428,7 @@ struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 4);
+        _assert_callable_closure(file_name, line_number, closure, 4);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -436,7 +436,7 @@ struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5)
+struct Value *_call_closure_5(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -450,7 +450,7 @@ struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 5);
+        _assert_callable_closure(file_name, line_number, closure, 5);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -458,7 +458,7 @@ struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6)
+struct Value *_call_closure_6(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -472,7 +472,7 @@ struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 6);
+        _assert_callable_closure(file_name, line_number, closure, 6);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -480,7 +480,7 @@ struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7)
+struct Value *_call_closure_7(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -494,7 +494,7 @@ struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 7);
+        _assert_callable_closure(file_name, line_number, closure, 7);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -502,7 +502,7 @@ struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8)
+struct Value *_call_closure_8(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -516,7 +516,7 @@ struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 8);
+        _assert_callable_closure(file_name, line_number, closure, 8);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -524,7 +524,7 @@ struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9)
+struct Value *_call_closure_9(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -538,7 +538,7 @@ struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Va
     }
     else
     {
-        _assert_callable_closure(closure, 9);
+        _assert_callable_closure(file_name, line_number, closure, 9);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
@@ -546,7 +546,7 @@ struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Va
     }
 }
 
-struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10)
+struct Value *_call_closure_10(char *file_name, int line_number, struct Value *closure, struct Value *a1, struct Value *a2, struct Value *a3, struct Value *a4, struct Value *a5, struct Value *a6, struct Value *a7, struct Value *a8, struct Value *a9, struct Value *a10)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
@@ -560,7 +560,7 @@ struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct V
     }
     else
     {
-        _assert_callable_closure(closure, 10);
+        _assert_callable_closure(file_name, line_number, closure, 10);
 
         struct Value *(*f)(struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 

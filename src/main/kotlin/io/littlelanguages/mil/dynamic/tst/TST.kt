@@ -57,7 +57,7 @@ data class CallProcedureExpression<S, T>(val procedure: ProcedureBinding<S, T>, 
         )
 }
 
-data class CallValueExpression<S, T>(val operand: List<Expression<S, T>>, val es: Expressions<S, T>) : Expression<S, T> {
+data class CallValueExpression<S, T>(val operand: List<Expression<S, T>>, val es: Expressions<S, T>, val lineNumber: Int) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "call-value", mapOf(

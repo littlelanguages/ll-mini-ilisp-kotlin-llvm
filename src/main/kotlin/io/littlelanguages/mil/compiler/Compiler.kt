@@ -47,7 +47,7 @@ class Compiler(private val module: Module) {
             compile(declaration)
         }
 
-//        System.err.println(module.toString())
+        System.err.println(module.toString())
 
         when (val result = module.verify()) {
             is VerifyError -> throw CompilationError(result.message)
@@ -237,7 +237,15 @@ private class CompileExpression(val compileState: CompileState) {
                 val op = compileScopedExpressionsForce(e.operand)
                 val es = e.es.map { compileScopedExpressionForce(it) }
 
-                functionBuilder.buildCallClosure(op, es)
+                functionBuilder.buildCallClosure(
+                    LLVM.LLVMConstInBoundsGEP(
+                        functionBuilder.getNamedGlobal("_filename")!!,
+                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
+                        2
+                    ),
+                    e.lineNumber,
+                    op, es
+                )
             }
 
             is IfExpression -> {
