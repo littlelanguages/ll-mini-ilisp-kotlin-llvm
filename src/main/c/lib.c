@@ -26,7 +26,7 @@ void _initialise_lib()
     _VFalse->boolean = (1 == 0);
 }
 
-void _print_value(struct Value *value)
+void _print_value(char *file_name, int line_number, struct Value *value)
 {
     switch (value->tag)
     {
@@ -48,7 +48,7 @@ void _print_value(struct Value *value)
     case PAIR_VALUE:
     {
         printf("(");
-        _print_value(value->pair.car);
+        _print_value(file_name, line_number, value->pair.car);
 
         struct Value *runner = value->pair.cdr;
 
@@ -57,7 +57,7 @@ void _print_value(struct Value *value)
             if (runner->tag == PAIR_VALUE)
             {
                 printf(" ");
-                _print_value(runner->pair.car);
+                _print_value(file_name, line_number, runner->pair.car);
                 runner = runner->pair.cdr;
             }
             else if (runner->tag == NULL_VALUE)
@@ -65,7 +65,7 @@ void _print_value(struct Value *value)
             else
             {
                 printf(" . ");
-                _print_value(runner);
+                _print_value(file_name, line_number, runner);
                 break;
             }
         }
@@ -76,10 +76,16 @@ void _print_value(struct Value *value)
         printf("#NATIVE_CLOSURE/%d", value->native_closure.number_arguments);
         break;
     case NATIVE_VAR_ARG_CLOSURE_VALUE:
-        printf("#VAR_ARG_CLOSURE");
+        printf("#NATIVE_VAR_ARG_CLOSURE");
+        break;
+    case NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE:
+        printf("#NATIVE_VAR_ARG_POSITION_CLOSURE/%s/%d", value->native_var_arg_closure_position.file_name, value->native_var_arg_closure_position.line_number);
+        break;
+    case DYNAMIC_CLOSURE_VALUE:
+        printf("#DYNAMIC_CLOSURE/%d", value->dynamic_closure.number_arguments);
         break;
     default:
-        fprintf(stderr, "Error: _print_value: Unknown Tag: %d\n", value->tag);
+        fprintf(stderr, "Error: %s: %d: _print_value: Unknown Tag: %d\n", file_name, line_number, value->tag);
         exit(-1);
     }
 }
@@ -171,6 +177,17 @@ struct Value *_from_native_var_arg_procedure(void *procedure)
     struct Value *r = (struct Value *)malloc(sizeof(struct Value));
     r->tag = NATIVE_VAR_ARG_CLOSURE_VALUE;
     r->native_var_arg_closure.native_procedure = procedure;
+
+    return r;
+}
+
+struct Value *_from_native_var_arg_position_procedure(char *file_name, int line_number, void *procedure)
+{
+    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    r->tag = NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE;
+    r->native_var_arg_closure_position.native_procedure = procedure;
+    r->native_var_arg_closure_position.file_name = file_name;
+    r->native_var_arg_closure_position.line_number = line_number;
 
     return r;
 }
@@ -297,8 +314,13 @@ struct Value *_call_closure_0(struct Value *closure)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(0);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 0);
     }
     else
     {
@@ -314,8 +336,13 @@ struct Value *_call_closure_1(struct Value *closure, struct Value *a1)
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(1, a1);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 1, a1);
     }
     else
     {
@@ -331,8 +358,13 @@ struct Value *_call_closure_2(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(2, a1, a2);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 2, a1, a2);
     }
     else
     {
@@ -364,8 +396,13 @@ struct Value *_call_closure_3(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(3, a1, a2, a3);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 3, a1, a2, a3);
     }
     else
     {
@@ -381,8 +418,13 @@ struct Value *_call_closure_4(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(4, a1, a2, a3, a4);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 4, a1, a2, a3, a4);
     }
     else
     {
@@ -398,8 +440,13 @@ struct Value *_call_closure_5(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(5, a1, a2, a3, a4, a5);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 5, a1, a2, a3, a4, a5);
     }
     else
     {
@@ -415,8 +462,13 @@ struct Value *_call_closure_6(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(6, a1, a2, a3, a4, a5, a6);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 6, a1, a2, a3, a4, a5, a6);
     }
     else
     {
@@ -432,8 +484,13 @@ struct Value *_call_closure_7(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(7, a1, a2, a3, a4, a5, a6, a7);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 7, a1, a2, a3, a4, a5, a6, a7);
     }
     else
     {
@@ -449,8 +506,13 @@ struct Value *_call_closure_8(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(8, a1, a2, a3, a4, a5, a6, a7, a8);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 8, a1, a2, a3, a4, a5, a6, a7, a8);
     }
     else
     {
@@ -466,8 +528,13 @@ struct Value *_call_closure_9(struct Value *closure, struct Value *a1, struct Va
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(9, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 9, a1, a2, a3, a4, a5, a6, a7, a8, a9);
     }
     else
     {
@@ -483,8 +550,13 @@ struct Value *_call_closure_10(struct Value *closure, struct Value *a1, struct V
 {
     if (closure->tag == NATIVE_VAR_ARG_CLOSURE_VALUE)
     {
-        struct Value *(*f)(int, ...) = closure->dynamic_closure.procedure;
+        struct Value *(*f)(int, ...) = closure->native_var_arg_closure.native_procedure;
         return f(10, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    }
+    else if (closure->tag == NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE)
+    {
+        struct Value *(*f)(char *, int, int, ...) = closure->native_var_arg_closure_position.native_procedure;
+        return f(closure->native_var_arg_closure_position.file_name, closure->native_var_arg_closure_position.line_number, 10, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
     }
     else
     {
@@ -682,58 +754,6 @@ struct Value *_pairp(struct Value *v)
     return v->tag == PAIR_VALUE ? _VTrue : _VFalse;
 }
 
-void _assert_eq(struct Value *msg, struct Value *v1, struct Value *v2)
-{
-    if (_equals(v1, v2) != _VTrue)
-    {
-        printf("x = %s\n", msg->string);
-        exit(1);
-    }
-    else
-    {
-        printf("- = %s\n", msg->string);
-    }
-}
-
-void _assert_neq(struct Value *msg, struct Value *v1, struct Value *v2)
-{
-    if (_equals(v1, v2) != _VFalse)
-    {
-        printf("x = %s\n", msg->string);
-        exit(1);
-    }
-    else
-    {
-        printf("- = %s\n", msg->string);
-    }
-}
-
-void _assert_true(struct Value *msg, struct Value *v)
-{
-    if (_equals(v, _VTrue) != _VTrue)
-    {
-        printf("x = %s\n", msg->string);
-        exit(1);
-    }
-    else
-    {
-        printf("- = %s\n", msg->string);
-    }
-}
-
-void _assert_false(struct Value *msg, struct Value *v)
-{
-    if (_equals(v, _VFalse) != _VTrue)
-    {
-        printf("x = %s\n", msg->string);
-        exit(1);
-    }
-    else
-    {
-        printf("- = %s\n", msg->string);
-    }
-}
-
 void _fail(struct Value *msg)
 {
     printf("x = %s\n", msg->string);
@@ -848,14 +868,14 @@ struct Value *_divide_variable(int num, ...)
     }
 }
 
-struct Value *_println(int num, ...)
+struct Value *_println(char *file_name, int line_number, int num, ...)
 {
     va_list arguments;
 
     va_start(arguments, num);
     for (int i = 0; i < num; i++)
     {
-        _print_value(va_arg(arguments, struct Value *));
+        _print_value(file_name, line_number, va_arg(arguments, struct Value *));
     }
     va_end(arguments);
     printf("\n");
@@ -863,14 +883,14 @@ struct Value *_println(int num, ...)
     return _VNull;
 }
 
-struct Value *_print(int num, ...)
+struct Value *_print(char *file_name, int line_number, int num, ...)
 {
     va_list arguments;
 
     va_start(arguments, num);
     for (int i = 0; i < num; i++)
     {
-        _print_value(va_arg(arguments, struct Value *));
+        _print_value(file_name, line_number, va_arg(arguments, struct Value *));
     }
     va_end(arguments);
 

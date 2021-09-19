@@ -330,7 +330,10 @@ private class CompileExpression(val compileState: CompileState) {
                                             functionBuilder.getNamedGlobal("_filename")!!,
                                             PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
                                             2
-                                        ), e.lineNumber, symbol.name, symbol.parameterCount
+                                        ),
+                                        e.lineNumber,
+                                        symbol.name,
+                                        symbol.parameterCount
                                     )
                                 else
                                     functionBuilder.buildFromDynamicProcedure(
@@ -344,6 +347,17 @@ private class CompileExpression(val compileState: CompileState) {
 
                             is VariableArityExternalProcedure ->
                                 functionBuilder.buildFromNativeVarArgProcedure(symbol.externalName)
+
+                            is VariableArityExternalPositionProcedure ->
+                                functionBuilder.buildFromNativeVarArgPositionProcedure(
+                                    LLVM.LLVMConstInBoundsGEP(
+                                        functionBuilder.getNamedGlobal("_filename")!!,
+                                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
+                                        2
+                                    ),
+                                    e.lineNumber,
+                                    symbol.externalName
+                                )
 
                             else ->
                                 TODO(e.toString())
@@ -386,8 +400,8 @@ val builtinBindings = listOf(
     FixedArityExternalProcedure("integer?", 1, "_integerp"),
     FixedArityExternalProcedure("null?", 1, "_nullp"),
     FixedArityExternalProcedure("pair", 2, "_mk_pair"),
-    VariableArityExternalProcedure("print", "_print"),
-    VariableArityExternalProcedure("println", "_println"),
+    VariableArityExternalPositionProcedure("print", "_print"),
+    VariableArityExternalPositionProcedure("println", "_println"),
     FixedArityExternalProcedure("string?", 1, "_stringp"),
     FixedArityExternalProcedure("pair?", 1, "_pairp"),
 
@@ -447,6 +461,24 @@ private class VariableArityExternalProcedure(
         return builder.buildCall(
             builder.getNamedFunction(externalName, listOf(builder.i32), builder.structValueP, true),
             listOf(LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)) + arguments.map { compileScopedExpressionsForce(state, it) }
+        )
+    }
+}
+
+private class VariableArityExternalPositionProcedure(
+    override val name: String,
+    val externalName: String
+) : ExternalProcedureBinding<CompileState, LLVMValueRef>(name, null) {
+    override fun compile(state: CompileState, lineNumber: Int, arguments: Expressionss<CompileState, LLVMValueRef>): LLVMValueRef {
+        val builder = state.functionBuilder
+
+        return builder.buildCall(
+            builder.getNamedFunction(externalName, listOf(builder.i8P, builder.i32, builder.i32), builder.structValueP, true),
+            listOf(
+                LLVM.LLVMConstInBoundsGEP(builder.getNamedGlobal("_filename")!!, PointerPointer(builder.c0i64, builder.c0i64), 2),
+                LLVM.LLVMConstInt(builder.i32, lineNumber.toLong(), 0),
+                LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)
+            ) + arguments.map { compileScopedExpressionsForce(state, it) }
         )
     }
 }

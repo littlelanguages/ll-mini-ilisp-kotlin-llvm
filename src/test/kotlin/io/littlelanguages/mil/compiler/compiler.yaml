@@ -799,8 +799,9 @@
             (filter (proc (v) (< v n)) lst)
           )
 
-          (println (filter (proc (n) (< n 5)) values))
-          (println (less-than 5 values))
+          (const limit 5)
+          (println (filter (proc (n) (< n limit)) values))
+          (println (less-than limit values))
         output: |
           (1 2 3 4)
           (1 2 3 4)
