@@ -109,6 +109,13 @@
                 1
                 2
                 5
+            - name: slash by zero
+              input: |
+                (println (/ 500 50 2))
+                (println (/ 500 50 0 2))
+              output: |
+                5
+                Error: ./test.mlsp: 2: divide: Attempt to divide by 0.
             - scenario:
                 name: equals
                 tests:
@@ -345,7 +352,13 @@
                 #f
                 #f
                 #t
+            - name: exit
+              input: |
+                (const some-message "This is my message")
 
+                (exit some-message)
+              output: |
+                Error: Fail: ./test.mlsp: 3: This is my message
 - scenario:
     name: "Forms"
     tests:

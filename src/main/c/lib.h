@@ -93,7 +93,7 @@ extern struct Value *_call_closure_10(char *file_name, int line_number, struct V
 extern struct Value *_plus(struct Value *op1, struct Value *op2);
 extern struct Value *_minus(struct Value *op1, struct Value *op2);
 extern struct Value *_multiply(struct Value *op1, struct Value *op2);
-extern struct Value *_divide(struct Value *op1, struct Value *op2);
+extern struct Value *_divide(char *file_name, int line_number, struct Value *op1, struct Value *op2);
 extern struct Value *_equals(struct Value *op1, struct Value *op2);
 extern struct Value *_less_than(struct Value *op1, struct Value *op2);
 extern struct Value *_greater_than(struct Value *op1, struct Value *op2);
@@ -108,7 +108,7 @@ extern struct Value *_pairp(struct Value *v);
 extern struct Value* _plus_variable(int num, ...);
 extern struct Value* _multiply_variable(int num, ...);
 extern struct Value* _minus_variable(int num, ...);
-extern struct Value* _divide_variable(int num, ...);
+extern struct Value* _divide_variable(char *file_name, int line_number, int num, ...);
 extern struct Value* _println(char *file_name, int line_number, int num, ...);
 extern struct Value* _print(char *file_name, int line_number, int num, ...);
 

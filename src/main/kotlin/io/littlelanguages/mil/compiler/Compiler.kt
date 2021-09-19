@@ -399,7 +399,7 @@ val builtinBindings = listOf(
     VariableArityExternalProcedure("+", "_plus_variable"),
     VariableArityExternalProcedure("-", "_minus_variable"),
     VariableArityExternalProcedure("*", "_multiply_variable"),
-    VariableArityExternalProcedure("/", "_divide_variable"),
+    VariableArityExternalPositionProcedure("/", "_divide_variable"),
     FixedArityExternalProcedure("=", 2, "_equals"),
     FixedArityExternalProcedure("<", 2, "_less_than"),
     FixedArityExternalProcedure("boolean?", 1, "_booleanp"),
@@ -412,6 +412,7 @@ val builtinBindings = listOf(
     VariableArityExternalPositionProcedure("println", "_println"),
     FixedArityExternalProcedure("string?", 1, "_stringp"),
     FixedArityExternalProcedure("pair?", 1, "_pairp"),
+    FixedArityExternalPositionProcedure("exit", 1, "_fail"),
 
     VFalseExternalValue(),
     VTrueExternalValue(),

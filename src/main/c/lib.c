@@ -626,10 +626,15 @@ struct Value *_multiply(struct Value *op1, struct Value *op2)
     }
 }
 
-struct Value *_divide(struct Value *op1, struct Value *op2)
+struct Value *_divide(char *file_name, int line_number, struct Value *op1, struct Value *op2)
 {
     int v1 = op1->tag == INTEGER_VALUE ? op1->integer : 0;
     int v2 = op2->tag == INTEGER_VALUE ? op2->integer : 0;
+
+    if (v2 == 0) {
+      fprintf(stderr, "Error: %s: %d: divide: Attempt to divide by 0.\n", file_name, line_number);
+      exit(-1);
+    }
 
     return _from_literal_int((int)(v1 / v2));
 }
@@ -754,9 +759,10 @@ struct Value *_pairp(struct Value *v)
     return v->tag == PAIR_VALUE ? _VTrue : _VFalse;
 }
 
-void _fail(struct Value *msg)
+void _fail(char *file_name, int line_number, struct Value *msg)
 {
-    printf("x = %s\n", msg->string);
+    printf("Error: Fail: %s: %d: ", file_name, line_number);
+    _print_value(file_name, line_number,  msg);
     exit(1);
 }
 
@@ -834,7 +840,7 @@ struct Value *_minus_variable(int num, ...)
     }
 }
 
-struct Value *_divide_variable(int num, ...)
+struct Value *_divide_variable(char *file_name, int line_number, int num, ...)
 {
     switch (num)
     {
@@ -846,7 +852,7 @@ struct Value *_divide_variable(int num, ...)
 
         struct Value *value;
         va_start(arguments, num);
-        struct Value *result = _divide(_from_literal_int(1), va_arg(arguments, struct Value *));
+        struct Value *result = _divide(file_name, line_number, _from_literal_int(1), va_arg(arguments, struct Value *));
         va_end(arguments);
 
         return result;
@@ -859,7 +865,7 @@ struct Value *_divide_variable(int num, ...)
         struct Value *result = va_arg(arguments, struct Value *);
         for (int i = 1; i < num; i++)
         {
-            result = _divide(result, va_arg(arguments, struct Value *));
+            result = _divide(file_name, line_number, result, va_arg(arguments, struct Value *));
         }
         va_end(arguments);
 
