@@ -56,37 +56,8 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
 
     private fun expressionToTST(e: io.littlelanguages.mil.static.ast.Expression, toplevelValue: Boolean = false): List<Expression<S, T>> =
         when (e) {
-            is io.littlelanguages.mil.static.ast.ConstProcedure -> {
-                val name = e.symbol.name
-                val parameters = e.parameters
-
-                val parameterNames = mutableListOf<String>()
-
-                val oldOffset = offset
-
-                depth += 1
-                bindings.add(name, DeclaredProcedureBinding(name, parameters.size, depth))
-                offset = parameters.size
-                bindings.open()
-                parameters.forEachIndexed { index, symbol ->
-                    val parameterName = symbol.name
-
-                    parameterNames.add(parameterName)
-                    if (bindings.inCurrentNesting(parameterName))
-                        reportError(DuplicateParameterNameError(parameterName, symbol.position()))
-                    bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
-                }
-                bindings.open()
-                val expressions = expressionsToTST(e.expressions)
-                val procedure = Procedure(name, parameterNames, depth, offset, expressions)
-                bindings.close()
-                bindings.close()
-
-                depth -= 1
-                offset = oldOffset
-
-                listOf(procedure)
-            }
+            is io.littlelanguages.mil.static.ast.ConstProcedure ->
+                listOf(procedureToTST(e.symbol.name, e.parameters, e.expressions).first)
 
             is io.littlelanguages.mil.static.ast.ConstValue -> {
                 val name = e.symbol.name
@@ -111,39 +82,9 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 ifToTST(e.expressions.map { expressionsToTST(it) })
 
             is io.littlelanguages.mil.static.ast.ProcExpression -> {
-                val name = nextName()
-                val parameters = e.parameters
+                val tst = procedureToTST(nextName(), e.parameters, e.expressions)
 
-                val parameterNames = mutableListOf<String>()
-
-                val oldOffset = offset
-
-                depth += 1
-                val binding = DeclaredProcedureBinding<S, T>(name, parameters.size, depth)
-                bindings.add(name, binding)
-                offset = parameters.size
-                bindings.open()
-                parameters.forEachIndexed { index, symbol ->
-                    val parameterName = symbol.name
-
-                    parameterNames.add(parameterName)
-                    if (bindings.inCurrentNesting(parameterName))
-                        reportError(DuplicateParameterNameError(parameterName, symbol.position()))
-                    bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
-                }
-                bindings.open()
-                val expressions = expressionsToTST(e.expressions)
-                val procedure = Procedure(name, parameterNames, depth, offset, expressions)
-                bindings.close()
-                bindings.close()
-
-                depth -= 1
-                offset = oldOffset
-
-                listOf(
-                    procedure,
-                    SymbolReferenceExpression(binding, lineNumber(e.position))
-                )
+                listOf(tst.first, SymbolReferenceExpression(tst.second, lineNumber(e.position)))
             }
 
             is io.littlelanguages.mil.static.ast.SExpression -> {
@@ -209,6 +150,40 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
         bindings.close()
 
         return result
+    }
+
+    private fun procedureToTST(
+        name: String,
+        parameters: List<io.littlelanguages.mil.static.ast.Symbol>,
+        expressions: List<io.littlelanguages.mil.static.ast.Expression>
+    ): Pair<Procedure<S, T>, DeclaredProcedureBinding<S, T>> {
+        val parameterNames = mutableListOf<String>()
+
+        val oldOffset = offset
+
+        depth += 1
+        val binding = DeclaredProcedureBinding<S, T>(name, parameters.size, depth)
+        bindings.add(name, binding)
+        offset = parameters.size
+        bindings.open()
+        parameters.forEachIndexed { index, symbol ->
+            val parameterName = symbol.name
+
+            parameterNames.add(parameterName)
+            if (bindings.inCurrentNesting(parameterName))
+                reportError(DuplicateParameterNameError(parameterName, symbol.position()))
+            bindings.add(parameterName, ParameterBinding(parameterName, depth, index))
+        }
+        bindings.open()
+        val es = expressionsToTST(expressions)
+        val procedure = Procedure(name, parameterNames, depth, offset, es)
+        bindings.close()
+        bindings.close()
+
+        depth -= 1
+        offset = oldOffset
+
+        return Pair(procedure, binding)
     }
 
     private fun ifToTST(es: List<List<Expression<S, T>>>): List<Expression<S, T>> =
