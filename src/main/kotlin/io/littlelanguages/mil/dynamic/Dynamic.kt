@@ -202,7 +202,6 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
     private fun isToplevel(): Boolean =
         depth == -1
 
-
     private fun nextName() =
         "__n${nameGenerator++}"
 }

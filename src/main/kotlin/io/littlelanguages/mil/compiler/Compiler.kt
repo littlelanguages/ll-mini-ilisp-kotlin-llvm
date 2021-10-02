@@ -55,6 +55,59 @@ class Compiler(private val module: Module) {
     }
 
     private fun addFunctions(declarations: List<Declaration<CompileState, LLVMValueRef>>) {
+        DeclareFunction(module, toCompile).apply(declarations)
+    }
+
+    private fun compile(declaration: Declaration<CompileState, LLVMValueRef>) {
+        if (declaration is Procedure)
+            if (declaration.name == "_main")
+                compileMainProcedure(declaration)
+            else
+                compileProcedure(declaration)
+        else
+            TODO(declaration.toString())
+    }
+
+    private fun compileMainProcedure(declaration: Procedure<CompileState, LLVMValueRef>) {
+        val builder = module.addFunctionBody(declaration.name)
+        compileProcedureBody(builder, declaration)
+
+        builder.buildRet(LLVM.LLVMConstInt(module.i32, 0, 0))
+    }
+
+    private fun compileProcedure(declaration: Procedure<CompileState, LLVMValueRef>) {
+        val builder = module.addFunctionBody(declaration.name)
+        val result = compileProcedureBody(builder, declaration)
+
+        builder.buildRet(result ?: builder.buildVNull())
+    }
+
+    private fun compileProcedureBody(functionBuilder: FunctionBuilder, declaration: Procedure<CompileState, LLVMValueRef>): LLVMValueRef? {
+        val frame = functionBuilder.buildMkFrame(
+            if (declaration.isTopLevel()) functionBuilder.buildVNull() else functionBuilder.getParam(0),
+            declaration.offsets,
+            "_frame"
+        )
+
+        declaration.parameters.forEachIndexed { index, name ->
+            val op = functionBuilder.getParam(index + if (declaration.isTopLevel()) 0 else 1)
+            functionBuilder.buildSetFrameValue(frame, index + 1, op)
+            functionBuilder.addBindingToScope(name, op)
+        }
+        functionBuilder.addBindingToScope("_frame", frame)
+
+        functionBuilder.openScope()
+        val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression<CompileState, LLVMValueRef> ->
+            compileExpression(CompileState(this, functionBuilder, declaration.depth), b)
+        }
+        functionBuilder.closeScope()
+
+        return result
+    }
+}
+
+private class DeclareFunction(private val module: Module, val functions: MutableList<Declaration<CompileState, LLVMValueRef>>) {
+    fun apply(declarations: List<Declaration<CompileState, LLVMValueRef>>) {
         declarations.forEach { addFunction(it) }
     }
 
@@ -110,56 +163,10 @@ class Compiler(private val module: Module) {
         }
     }
 
-    private fun compile(declaration: Declaration<CompileState, LLVMValueRef>) {
-        if (declaration is Procedure)
-            if (declaration.name == "_main")
-                compileMainProcedure(declaration)
-            else
-                compileProcedure(declaration)
-        else
-            TODO(declaration.toString())
-    }
-
-    private fun compileMainProcedure(declaration: Procedure<CompileState, LLVMValueRef>) {
-        val builder = module.addFunctionBody(declaration.name)
-        compileProcedureBody(builder, declaration)
-
-        builder.buildRet(LLVM.LLVMConstInt(module.i32, 0, 0))
-    }
-
-    private fun compileProcedure(declaration: Procedure<CompileState, LLVMValueRef>) {
-        val builder = module.addFunctionBody(declaration.name)
-        val result = compileProcedureBody(builder, declaration)
-
-        builder.buildRet(result ?: builder.buildVNull())
-    }
-
-    private fun compileProcedureBody(functionBuilder: FunctionBuilder, declaration: Procedure<CompileState, LLVMValueRef>): LLVMValueRef? {
-        val frame = functionBuilder.buildMkFrame(
-            if (declaration.isTopLevel()) functionBuilder.buildVNull() else functionBuilder.getParam(0),
-            declaration.offsets,
-            "_frame"
-        )
-
-        declaration.parameters.forEachIndexed { index, name ->
-            val op = functionBuilder.getParam(index + if (declaration.isTopLevel()) 0 else 1)
-            functionBuilder.buildSetFrameValue(frame, index + 1, op)
-            functionBuilder.addBindingToScope(name, op)
-        }
-        functionBuilder.addBindingToScope("_frame", frame)
-
-        functionBuilder.openScope()
-        val result = declaration.es.fold(null as LLVMValueRef?) { _, b: Expression<CompileState, LLVMValueRef> ->
-            compileExpression(CompileState(this, functionBuilder, declaration.depth), b)
-        }
-        functionBuilder.closeScope()
-
-        return result
-    }
-
     private fun addProcedureToCompile(declaration: Procedure<CompileState, LLVMValueRef>) {
-        toCompile += declaration
+        functions += declaration
     }
+
 }
 
 private fun <S, T> Procedure<S, T>.isTopLevel(): Boolean =
