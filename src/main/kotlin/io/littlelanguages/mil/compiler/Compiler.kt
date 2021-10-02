@@ -31,10 +31,8 @@ fun compile(context: Context, moduleID: String, program: Program<CompileState, L
 }
 
 class Compiler(private val module: Module) {
-    private val toCompile = mutableListOf<Declaration<CompileState, LLVMValueRef>>()
-
     fun compile(program: Program<CompileState, LLVMValueRef>) {
-        addFunctions(program.declarations)
+        val procedures = declareProcedures(program.declarations)
 
         module.addGlobalString(module.moduleID, "_filename")
 
@@ -42,8 +40,7 @@ class Compiler(private val module: Module) {
             module.addGlobal(it, module.structValueP, LLVM.LLVMConstPointerNull(module.structValueP), false)
         }
 
-        while (toCompile.isNotEmpty()) {
-            val declaration = toCompile.removeAt(0)
+        procedures.forEach { declaration ->
             compile(declaration)
         }
 
@@ -54,9 +51,8 @@ class Compiler(private val module: Module) {
         }
     }
 
-    private fun addFunctions(declarations: List<Declaration<CompileState, LLVMValueRef>>) {
-        DeclareFunction(module, toCompile).apply(declarations)
-    }
+    private fun declareProcedures(declarations: List<Declaration<CompileState, LLVMValueRef>>): List<Declaration<CompileState, LLVMValueRef>> =
+        DeclareProcedures(module).apply(declarations)
 
     private fun compile(declaration: Declaration<CompileState, LLVMValueRef>) {
         if (declaration is Procedure)
@@ -106,9 +102,13 @@ class Compiler(private val module: Module) {
     }
 }
 
-private class DeclareFunction(private val module: Module, val functions: MutableList<Declaration<CompileState, LLVMValueRef>>) {
-    fun apply(declarations: List<Declaration<CompileState, LLVMValueRef>>) {
+private class DeclareProcedures(private val module: Module) {
+    private val functions = mutableListOf<Declaration<CompileState, LLVMValueRef>>()
+
+    fun apply(declarations: List<Declaration<CompileState, LLVMValueRef>>): List<Declaration<CompileState, LLVMValueRef>> {
         declarations.forEach { addFunction(it) }
+
+        return functions
     }
 
     private fun addFunctionsFromExpressionss(ess: Expressionss<CompileState, LLVMValueRef>) {
@@ -244,15 +244,7 @@ private class CompileExpression(val compileState: CompileState) {
                 val op = compileScopedExpressionsForce(e.operand)
                 val es = e.es.map { compileScopedExpressionForce(it) }
 
-                functionBuilder.buildCallClosure(
-                    LLVM.LLVMConstInBoundsGEP(
-                        functionBuilder.getNamedGlobal("_filename")!!,
-                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
-                        2
-                    ),
-                    e.lineNumber,
-                    op, es
-                )
+                functionBuilder.buildCallClosure(getFileName(functionBuilder), e.lineNumber, op, es)
             }
 
             is IfExpression -> {
@@ -314,11 +306,10 @@ private class CompileExpression(val compileState: CompileState) {
 
                             is FixedArityExternalProcedure ->
                                 functionBuilder.buildFromNativeProcedure(
-                                    LLVM.LLVMConstInBoundsGEP(
-                                        functionBuilder.getNamedGlobal("_filename")!!,
-                                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
-                                        2
-                                    ), e.lineNumber, symbol.externalName, symbol.arity
+                                    getFileName(functionBuilder),
+                                    e.lineNumber,
+                                    symbol.externalName,
+                                    symbol.arity
                                 )
 
                             is ExternalValueBinding ->
@@ -341,11 +332,7 @@ private class CompileExpression(val compileState: CompileState) {
                             is DeclaredProcedureBinding ->
                                 if (symbol.depth == 0)
                                     functionBuilder.buildFromNativeProcedure(
-                                        LLVM.LLVMConstInBoundsGEP(
-                                            functionBuilder.getNamedGlobal("_filename")!!,
-                                            PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
-                                            2
-                                        ),
+                                        getFileName(functionBuilder),
                                         e.lineNumber,
                                         symbol.name,
                                         symbol.parameterCount
@@ -365,11 +352,7 @@ private class CompileExpression(val compileState: CompileState) {
 
                             is VariableArityExternalPositionProcedure ->
                                 functionBuilder.buildFromNativeVarArgPositionProcedure(
-                                    LLVM.LLVMConstInBoundsGEP(
-                                        functionBuilder.getNamedGlobal("_filename")!!,
-                                        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
-                                        2
-                                    ),
+                                    getFileName(functionBuilder),
                                     e.lineNumber,
                                     symbol.externalName
                                 )
@@ -401,6 +384,13 @@ private class CompileExpression(val compileState: CompileState) {
                 0
             )
 }
+
+private fun getFileName(functionBuilder: FunctionBuilder): LLVMValueRef =
+    LLVM.LLVMConstInBoundsGEP(
+        functionBuilder.getNamedGlobal("_filename")!!,
+        PointerPointer(functionBuilder.c0i64, functionBuilder.c0i64),
+        2
+    )
 
 val builtinBindings = listOf(
     VariableArityExternalProcedure("+", "_plus_variable"),
@@ -461,7 +451,7 @@ private class FixedArityExternalPositionProcedure(
         return builder.buildCall(
             namedFunction,
             listOf(
-                LLVM.LLVMConstInBoundsGEP(builder.getNamedGlobal("_filename")!!, PointerPointer(builder.c0i64, builder.c0i64), 2),
+                getFileName(builder),
                 LLVM.LLVMConstInt(builder.i32, lineNumber.toLong(), 0)
             ) + arguments.map { compileScopedExpressionsForce(state, it) })
     }
@@ -491,7 +481,7 @@ private class VariableArityExternalPositionProcedure(
         return builder.buildCall(
             builder.getNamedFunction(externalName, listOf(builder.i8P, builder.i32, builder.i32), builder.structValueP, true),
             listOf(
-                LLVM.LLVMConstInBoundsGEP(builder.getNamedGlobal("_filename")!!, PointerPointer(builder.c0i64, builder.c0i64), 2),
+                getFileName(builder),
                 LLVM.LLVMConstInt(builder.i32, lineNumber.toLong(), 0),
                 LLVM.LLVMConstInt(builder.i32, arguments.size.toLong(), 0)
             ) + arguments.map { compileScopedExpressionsForce(state, it) }
