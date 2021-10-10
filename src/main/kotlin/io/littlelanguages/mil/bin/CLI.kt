@@ -62,7 +62,9 @@ fun formatTToken(token: TToken): String =
         TToken.TLParen -> "'('"
         TToken.TLiteralInt -> "Literal Int"
         TToken.TLiteralString -> "Literal String"
+        TToken.TSignal -> "'signal'"
         TToken.TSymbol -> "Symbol"
+        TToken.TTry -> "'try'"
         TToken.TEOS -> "End Of Stream"
         TToken.TERROR -> "<Error Token>"
     }
