@@ -30,8 +30,8 @@ data class Procedure<S, T>(val name: String, val parameters: List<String>, val d
         )
 }
 
-typealias  Expressions<S, T> = List<Expression<S, T>>
-typealias  Expressionss<S, T> = List<List<Expression<S, T>>>
+typealias Expressions<S, T> = List<Expression<S, T>>
+typealias Expressionss<S, T> = List<List<Expression<S, T>>>
 
 interface Expression<S, T> : Yamlable
 
@@ -78,9 +78,26 @@ data class IfExpression<S, T>(val e1: List<Expression<S, T>>, val e2: List<Expre
         )
 }
 
+data class SignalExpression<S, T>(val e: List<Expression<S, T>>) : Expression<S, T> {
+    override fun yaml(): Any =
+        singletonMap(
+            "signal", e.map { it.yaml() }
+        )
+}
+
 data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>, val lineNumber: Int) : Expression<S, T> {
     override fun yaml(): Any =
         symbol.yaml()
+}
+
+data class TryExpression<S, T>(val body: List<Expression<S, T>>, val catch: List<Expression<S, T>>) : Expression<S, T> {
+    override fun yaml(): Any =
+        singletonMap(
+            "try", mapOf(
+                Pair("body", body.map { it.yaml() }),
+                Pair("catch", catch.map { it.yaml() })
+            )
+        )
 }
 
 data class LiteralInt<S, T>(val value: Int) : Expression<S, T> {

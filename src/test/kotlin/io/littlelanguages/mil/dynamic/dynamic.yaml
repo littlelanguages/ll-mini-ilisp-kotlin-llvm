@@ -645,3 +645,61 @@
                           toplevel-value: c
                         es:
                           - toplevel-value: b
+- scenario:
+    name: Exceptions
+    tests:
+      - name: signal
+        input: |
+          (signal "hello world")
+        output:
+          program:
+            values: [ ]
+            procedures:
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 0
+                  es:
+                    - signal:
+                        - hello world
+      - name: try-catch
+        input: |
+          (try
+            "hello world"
+            (proc (c) "cool")
+          )
+        output:
+          program:
+            values: [ ]
+            procedures:
+              - procedure:
+                  name: _main
+                  parameters: [ ]
+                  depth: 0
+                  offsets: 0
+                  es:
+                    - try:
+                        body:
+                          - hello world
+                        catch:
+                          - procedure:
+                              name: __n0
+                              parameters:
+                                - c
+                              depth: 0
+                              offsets: 1
+                              es:
+                                - "cool"
+                          - declared-procedure:
+                              name: __n0
+                              parameter-count: 1
+                              depth: 0
+      - name: try-catch error
+        input: |
+          (try
+            "hello world"
+            "cool"
+          )
+        output:
+          - ExpressionNotProcedureError: "23:3:3-28:3:8"

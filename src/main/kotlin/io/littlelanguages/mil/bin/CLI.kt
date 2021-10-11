@@ -103,6 +103,9 @@ fun formatError(error: Errors): String =
         is DuplicateParameterNameError ->
             "Duplicate Parameter Name: ${formatLocation(error.location)}: Attempt to redefine \"${error.name}\""
 
+        is ExpressionNotProcedureError ->
+            "Expected Procedure Expression: ${formatLocation(error.location)}: try catch expression needs to be a procedure"
+
         is ParseError -> {
             val oneOfPhrase = if (error.expected.size == 1) "" else "one of "
             val expectedTokens = error.expected.joinToString { formatTToken(it) }

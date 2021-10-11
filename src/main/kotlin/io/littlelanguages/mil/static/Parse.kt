@@ -61,13 +61,11 @@ class ParseVisitor : Visitor<
     override fun visitExpressionBody4(a1: Token, a2: Token, a3: List<Token>, a4: Token, a5: List<List<Expression>>): List<Expression> =
         listOf(ProcExpression(locationOfs(a1.location + a4.location, a5), a3.map { Symbol(it.location, it.lexeme) }, a5.flatten()))
 
-    override fun visitExpressionBody5(a1: Token, a2: List<Expression>, a3: List<Expression>): List<Expression> {
-        TODO("Not yet implemented")
-    }
+    override fun visitExpressionBody5(a1: Token, a2: List<Expression>, a3: List<Expression>): List<Expression> =
+        listOf(TryExpression(locationOf(a1.location, a3), a2, a3))
 
-    override fun visitExpressionBody6(a1: Token, a2: List<Expression>): List<Expression> {
-        TODO("Not yet implemented")
-    }
+    override fun visitExpressionBody6(a1: Token, a2: List<Expression>): List<Expression> =
+        listOf(SignalExpression(locationOf(a1.location, a2), a2))
 
     override fun visitExpressionBody7(a1: List<Expression>, a2: List<List<Expression>>): List<Expression> {
         val es = a1 + a2.flatten()

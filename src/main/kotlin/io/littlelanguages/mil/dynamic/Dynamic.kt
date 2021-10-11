@@ -134,6 +134,19 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
             is io.littlelanguages.mil.static.ast.LiteralUnit ->
                 listOf(LiteralUnit())
 
+            is io.littlelanguages.mil.static.ast.SignalExpression ->
+                listOf(SignalExpression(expressionsToTST(e.expression)))
+
+            is io.littlelanguages.mil.static.ast.TryExpression -> {
+                val body = expressionsToTST(e.body)
+                val catch = expressionsToTST(e.catch)
+
+                if (!isProcedure(catch))
+                    reportError(ExpressionNotProcedureError(e.catch.drop(1).fold(e.catch[0].position) { a, b -> a + b.position }))
+                else
+                    listOf(TryExpression(body, catch))
+            }
+
             is io.littlelanguages.mil.static.ast.Symbol -> {
                 val binding = bindings.get(e.name)
 
@@ -251,4 +264,13 @@ private fun lineNumber(p: Location): Int =
     when (p) {
         is LocationCoordinate -> p.line
         is LocationRange -> p.start.line
+    }
+
+private fun <S, T> isProcedure(es: List<Expression<S, T>>): Boolean =
+    if (es.isEmpty())
+        false
+    else {
+        val e = es.last()
+
+        e is SymbolReferenceExpression && (e.symbol is ProcedureBinding || e.symbol is ProcedureValueBinding)
     }

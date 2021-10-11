@@ -57,6 +57,11 @@ data class DuplicateNameError(val name: String, val location: Location) : Errors
         )
 }
 
+data class ExpressionNotProcedureError(val location: Location) : Errors {
+    override fun yaml(): Any =
+        singletonMap("ExpressionNotProcedureError", location.yaml())
+}
+
 data class UnknownSymbolError(val name: String, val location: Location) : Errors {
     override fun yaml(): Any =
         singletonMap(
@@ -66,4 +71,3 @@ data class UnknownSymbolError(val name: String, val location: Location) : Errors
             )
         )
 }
-

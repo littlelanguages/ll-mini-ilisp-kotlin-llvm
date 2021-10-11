@@ -106,6 +106,36 @@ data class ProcExpression(
         )
 }
 
+data class SignalExpression(
+    override val position: Location,
+    val expression: List<Expression>
+) : Expression(position) {
+    override fun yaml(): Any =
+        singletonMap(
+            "Signal",
+            mapOf(
+                Pair("expression", expression.map { it.yaml() }),
+                Pair("position", position.yaml())
+            )
+        )
+}
+
+data class TryExpression(
+    override val position: Location,
+    val body: List<Expression>,
+    val catch: List<Expression>
+) : Expression(position) {
+    override fun yaml(): Any =
+        singletonMap(
+            "Try",
+            mapOf(
+                Pair("body", body.map { it.yaml() }),
+                Pair("catch", catch.map { it.yaml() }),
+                Pair("position", position.yaml())
+            )
+        )
+}
+
 data class LiteralInt(
     override val position: Location,
     val value: String
