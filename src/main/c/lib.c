@@ -632,8 +632,12 @@ struct Value *_divide(char *file_name, int line_number, struct Value *op1, struc
     int v2 = op2->tag == INTEGER_VALUE ? op2->integer : 0;
 
     if (v2 == 0) {
-      fprintf(stderr, "Error: %s: %d: divide: Attempt to divide by 0.\n", file_name, line_number);
-      exit(-1);
+      _exception_throw(
+        _mk_pair(_from_literal_string(file_name),
+          _mk_pair(_from_literal_int(line_number),
+            _mk_pair(_from_literal_string("DivideByZero"),
+           _VNull)
+      )));
     }
 
     return _from_literal_int((int)(v1 / v2));
@@ -901,4 +905,32 @@ struct Value *_print(char *file_name, int line_number, int num, ...)
     va_end(arguments);
 
     return _VNull;
+}
+
+struct ExceptionTryBlock _exception_try_blocks[100];
+int _exception_try_block_idx;
+
+void _exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler)
+{
+    _exception_try_block_idx += 1;
+    _exception_try_blocks[_exception_try_block_idx].exception = _VNull;
+    if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp)) {
+        _call_closure_1(file_name, line_number, body, _exception_try_blocks[_exception_try_block_idx].exception);
+    } else {
+        _call_closure_0(file_name, line_number, body);
+        _exception_try_block_idx -= 1;
+    }
+}
+
+void _exception_throw(struct Value *exception)
+{
+    _exception_try_blocks[_exception_try_block_idx].exception = exception;
+    longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
+}
+
+void _exception_rethrow(void)
+{
+    _exception_try_block_idx -= 1;
+    _exception_try_blocks[_exception_try_block_idx].exception = _exception_try_blocks[_exception_try_block_idx + 1].exception;
+    longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
 }

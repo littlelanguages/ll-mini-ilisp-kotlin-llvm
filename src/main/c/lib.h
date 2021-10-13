@@ -1,6 +1,8 @@
 #ifndef __LIB_H__
 #define __LIB_H__
 
+#include <setjmp.h>
+
 #define NULL_VALUE 0
 #define BOOLEAN_VALUE 1
 #define INTEGER_VALUE 2
@@ -111,5 +113,17 @@ extern struct Value* _minus_variable(int num, ...);
 extern struct Value* _divide_variable(char *file_name, int line_number, int num, ...);
 extern struct Value* _println(char *file_name, int line_number, int num, ...);
 extern struct Value* _print(char *file_name, int line_number, int num, ...);
+
+struct ExceptionTryBlock {
+  jmp_buf jmp;
+  struct Value *exception;
+};
+
+extern struct ExceptionTryBlock _exception_try_blocks[];
+extern int _exception_try_block_idx;
+
+extern void _exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler);
+extern void _exception_throw(struct Value *exception);
+extern void _exception_rethrow(void);
 
 #endif

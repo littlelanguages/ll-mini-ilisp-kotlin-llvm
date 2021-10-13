@@ -1,0 +1,7 @@
+(println "Hello worlds!")
+
+(const x 0)
+(const y (/ 10 x))
+
+(println "x: " x ", y: " y)
+

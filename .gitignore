@@ -21,8 +21,9 @@ ll-mini-ilisp-kotlin-llvm/
 /test.*
 /src/main/c/testmain
 
-/samples/hello
 /samples/*.bc
 /samples/*.ll
+/samples/hello
 /samples/euler-001
 /samples/primes
+/samples/divide-by-zero

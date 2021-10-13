@@ -1,4 +1,4 @@
-TARGETS=hello primes euler-001
+TARGETS=hello primes euler-001 divide-by-zero
 
 all: $(TARGETS)
 
