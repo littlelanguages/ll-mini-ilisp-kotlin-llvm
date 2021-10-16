@@ -114,7 +114,7 @@
                 (println (/ 500 50 0 2))
               output: |
                 5
-                Unhandled Exception: (./test.mlsp 2 DivideByZero)
+                Unhandled Exception: (DivideByZero ./test.mlsp 2)
             - scenario:
                 name: equals
                 tests:
@@ -846,7 +846,7 @@
         output: |
           10
           6
-          (./test.mlsp 4 DivideByZero)
+          (DivideByZero ./test.mlsp 4)
           0
       - name: signal
         input: |
@@ -869,5 +869,41 @@
           (println (something 0))
         output: |
           20
-          Caught exception: (./test.mlsp 5 SomethingElse)
-          Unhandled Exception: (./test.mlsp 3 Something)
+          Caught exception: (SomethingElse ./test.mlsp 5)
+          Unhandled Exception: (Something ./test.mlsp 3)
+      - name: signal with try-catch and signal
+        input: |
+          (const (something a)
+            (if (= a 0)
+                  (signal "Something")
+                (= a 1)
+                  (signal "SomethingElse")
+                (* a 2)
+            )
+          )
+
+          (const (fix-something a)
+            (try
+              (something a)
+              (proc (c)
+                (if (= a 0)
+                      0
+                    (signal c)
+                )
+              )
+            )
+          )
+
+          (println (fix-something 10))
+          (try
+            (fix-something 1)
+            (proc (c)
+              (println "Caught exception: " c)
+            )
+          )
+          (println (fix-something 0))
+        output: |
+          20
+          Caught exception: ((SomethingElse ./test.mlsp 5) ./test.mlsp 16)
+          0
+

@@ -910,9 +910,9 @@ struct Value *_exception_try(char *file_name, int line_number, struct Value *bod
     _exception_try_block_idx += 1;
     _exception_try_blocks[_exception_try_block_idx].exception = _VNull;
     if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp)) {
-        struct Value *result = _call_closure_1(file_name, line_number, handler, _exception_try_blocks[_exception_try_block_idx].exception);
+        struct Value *exception = _exception_try_blocks[_exception_try_block_idx].exception;
         _exception_try_block_idx -= 1;
-        return result;
+        return _call_closure_1(file_name, line_number, handler, exception);
     } else {
         struct Value *result = _call_closure_0(file_name, line_number, body);
         _exception_try_block_idx -= 1;
@@ -922,25 +922,18 @@ struct Value *_exception_try(char *file_name, int line_number, struct Value *bod
 
 void _exception_throw(char *file_name, int line_number, struct Value *exception)
 {
-   struct Value *exception_value =
+    struct Value *exception_value =
         _mk_pair(
-          _from_literal_string(file_name),
-          _mk_pair(
-            _from_literal_int(line_number),
+            exception,
             _mk_pair(
-              exception,
-              _VNull
+              _from_literal_string(file_name),
+              _mk_pair(
+                _from_literal_int(line_number),
+                _VNull
+              )
             )
-          )
         );
 
     _exception_try_blocks[_exception_try_block_idx].exception = exception_value;
-    longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
-}
-
-void _exception_rethrow(void)
-{
-    _exception_try_block_idx -= 1;
-    _exception_try_blocks[_exception_try_block_idx].exception = _exception_try_blocks[_exception_try_block_idx + 1].exception;
     longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
 }

@@ -124,6 +124,5 @@ extern int _exception_try_block_idx;
 
 extern struct Value *_exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler);
 extern void _exception_throw(char *file_name, int line_number, struct Value *exception);
-extern void _exception_rethrow(void);
 
 #endif
