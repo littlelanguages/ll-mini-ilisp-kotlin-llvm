@@ -368,6 +368,14 @@ private class CompileExpression(val compileState: CompileState) {
 
             }
 
+            is TryExpression ->
+                functionBuilder.buildExceptionTry(
+                    getFileName(functionBuilder),
+                    e.lineNumber,
+                    compileExpressionForce(e.body),
+                    compileExpressionForce(e.catch)
+                )
+
             else ->
                 TODO(e.toString())
         }

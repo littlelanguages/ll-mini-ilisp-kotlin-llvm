@@ -90,12 +90,12 @@ data class SymbolReferenceExpression<S, T>(val symbol: Binding<S, T>, val lineNu
         symbol.yaml()
 }
 
-data class TryExpression<S, T>(val body: List<Expression<S, T>>, val catch: List<Expression<S, T>>) : Expression<S, T> {
+data class TryExpression<S, T>(val body: SymbolReferenceExpression<S, T>, val catch: SymbolReferenceExpression<S, T>, val lineNumber: Int) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "try", mapOf(
-                Pair("body", body.map { it.yaml() }),
-                Pair("catch", catch.map { it.yaml() })
+                Pair("body", body.yaml()),
+                Pair("catch", catch.yaml())
             )
         )
 }

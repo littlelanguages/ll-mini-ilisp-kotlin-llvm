@@ -122,7 +122,7 @@ struct ExceptionTryBlock {
 extern struct ExceptionTryBlock _exception_try_blocks[];
 extern int _exception_try_block_idx;
 
-extern void _exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler);
+extern struct Value *_exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler);
 extern void _exception_throw(struct Value *exception);
 extern void _exception_rethrow(void);
 

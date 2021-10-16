@@ -138,13 +138,19 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 listOf(SignalExpression(expressionsToTST(e.expression)))
 
             is io.littlelanguages.mil.static.ast.TryExpression -> {
-                val body = expressionsToTST(e.body)
+                val body = procedureToTST(nextName(), emptyList(), e.body)
                 val catch = expressionsToTST(e.catch)
 
                 if (!isProcedure(catch))
                     reportError(ExpressionNotProcedureError(e.catch.drop(1).fold(e.catch[0].position) { a, b -> a + b.position }))
                 else
-                    listOf(TryExpression(body, catch))
+                    listOf(body.first) + catch.dropLast(1) + listOf(
+                        TryExpression(
+                            SymbolReferenceExpression(body.second, lineNumber(e.position)),
+                            catch.last() as SymbolReferenceExpression<S, T>,
+                            lineNumber(e.position)
+                        )
+                    )
             }
 
             is io.littlelanguages.mil.static.ast.Symbol -> {

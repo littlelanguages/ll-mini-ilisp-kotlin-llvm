@@ -30,6 +30,7 @@ class DynamicTests : FunSpec({
             DummyVariableArityExternalProcedure("+"),
             DummyVariableArityExternalProcedure("-"),
             DummyVariableArityExternalProcedure("*"),
+            DummyVariableArityExternalProcedure("/"),
             DummyVariableArityExternalProcedure("println")
         )
 

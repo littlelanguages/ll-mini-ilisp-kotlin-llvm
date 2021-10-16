@@ -818,3 +818,29 @@
         output: |
           (1 2 3 4)
           (1 2 3 4)
+
+- scenario:
+    name: "Exceptions"
+    tests:
+      - name: try-catch
+        input: |
+          (const (safe-divide a b)
+            (try
+              (do (const a2 (+ a a))
+                  (/ a2 b)
+              )
+              (proc (c)
+                (println c)
+                0
+              )
+            )
+          )
+
+          (println (safe-divide 10 2))
+          (println (safe-divide 10 3))
+          (println (safe-divide 10 0))
+        output: |
+          10
+          6
+          (./test.mlsp 4 DivideByZero)
+          0

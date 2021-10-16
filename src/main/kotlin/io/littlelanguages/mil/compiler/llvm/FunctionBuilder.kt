@@ -51,6 +51,24 @@ class FunctionBuilder(private val context: Context, private val module: Module, 
     fun buildCondBr(ifOp: LLVMValueRef, thenOp: LLVMBasicBlockRef, elseOp: LLVMBasicBlockRef): LLVMValueRef =
         LLVM.LLVMBuildCondBr(builder, ifOp, thenOp, elseOp)
 
+    fun buildExceptionTry(
+        fileName: LLVMValueRef,
+        lineNumber: Int,
+        tryProc: LLVMValueRef,
+        catchProc: LLVMValueRef,
+        name: String = ""
+    ): LLVMValueRef =
+        buildCall(
+            getNamedFunction("_exception_try", listOf(i8P, i32, structValueP, structValueP), structValueP),
+            listOf(
+                fileName,
+                LLVM.LLVMConstInt(i32, lineNumber.toLong(), 0),
+                tryProc,
+                catchProc
+            ),
+            name
+        )
+
     fun buildFromDynamicProcedure(functionName: String, numberOfArguments: Int, frameRef: LLVMValueRef, name: String = ""): LLVMValueRef =
         buildCall(
             getNamedFunction("_from_dynamic_procedure", listOf(i8P, i32, structValueP), structValueP),

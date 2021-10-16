@@ -263,7 +263,7 @@ void _assert_callable_closure(char *file_name, int line_number, struct Value *cl
     }
     if (closure->native_closure.number_arguments != number_arguments)
     {
-        fprintf(stderr, "Error: call closure: %s: %d: Expected %d arguments but received %d\n", file_name, line_number, number_arguments, closure->native_closure.number_arguments);
+        fprintf(stderr, "Error: call closure: %s: %d: Expected %d argument(s) but received %d\n", file_name, line_number, number_arguments, closure->native_closure.number_arguments);
         exit(-1);
     }
 }
@@ -910,15 +910,16 @@ struct Value *_print(char *file_name, int line_number, int num, ...)
 struct ExceptionTryBlock _exception_try_blocks[100];
 int _exception_try_block_idx;
 
-void _exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler)
+struct Value *_exception_try(char *file_name, int line_number, struct Value *body, struct Value *handler)
 {
     _exception_try_block_idx += 1;
     _exception_try_blocks[_exception_try_block_idx].exception = _VNull;
     if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp)) {
-        _call_closure_1(file_name, line_number, body, _exception_try_blocks[_exception_try_block_idx].exception);
+        return _call_closure_1(file_name, line_number, handler, _exception_try_blocks[_exception_try_block_idx].exception);
     } else {
-        _call_closure_0(file_name, line_number, body);
+        struct Value * result = _call_closure_0(file_name, line_number, body);
         _exception_try_block_idx -= 1;
+        return result;
     }
 }
 
