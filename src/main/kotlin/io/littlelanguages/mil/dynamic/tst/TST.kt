@@ -78,7 +78,7 @@ data class IfExpression<S, T>(val e1: List<Expression<S, T>>, val e2: List<Expre
         )
 }
 
-data class SignalExpression<S, T>(val e: List<Expression<S, T>>) : Expression<S, T> {
+data class SignalExpression<S, T>(val e: List<Expression<S, T>>, val lineNumber: Int) : Expression<S, T> {
     override fun yaml(): Any =
         singletonMap(
             "signal", e.map { it.yaml() }

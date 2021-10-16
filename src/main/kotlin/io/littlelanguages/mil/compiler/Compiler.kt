@@ -368,6 +368,16 @@ private class CompileExpression(val compileState: CompileState) {
 
             }
 
+            is SignalExpression -> {
+                functionBuilder.buildExceptionSignal(
+                    getFileName(functionBuilder),
+                    e.lineNumber,
+                    compileScopedExpressionsForce(e.e)
+                )
+
+                null
+            }
+
             is TryExpression ->
                 functionBuilder.buildExceptionTry(
                     getFileName(functionBuilder),

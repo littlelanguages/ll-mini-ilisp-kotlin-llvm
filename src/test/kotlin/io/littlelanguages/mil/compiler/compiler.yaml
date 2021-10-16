@@ -61,7 +61,6 @@
                 (println ())
               output: |
                 ()
-
       - scenario:
           name: Operators
           tests:
@@ -772,13 +771,15 @@
       - name: "anonymous procedure without frame"
         input: |
           (const (range min max)
-            (if (< min max) (pair min (range (+ min 1) max))
+            (if (< min max)
+                  (pair min (range (+ min 1) max))
                 ()
             )
           )
 
           (const (map p lst)
-            (if (null? lst) ()
+            (if (null? lst)
+                  ()
                 (pair (p (car lst)) (map p (cdr lst)))
              )
           )
@@ -794,14 +795,17 @@
       - name: "anonymous procedure with frame"
         input: |
           (const (range min max)
-            (if (< min max) (pair min (range (+ min 1) max))
+            (if (< min max)
+                  (pair min (range (+ min 1) max))
                 ()
             )
           )
 
           (const (filter p lst)
-            (if (null? lst) ()
-                (p (car lst)) (pair (car lst) (filter p (cdr lst)))
+            (if (null? lst)
+                  ()
+                (p (car lst))
+                  (pair (car lst) (filter p (cdr lst)))
                 (filter p (cdr lst))
              )
           )
@@ -844,3 +848,26 @@
           6
           (./test.mlsp 4 DivideByZero)
           0
+      - name: signal
+        input: |
+          (const (something a)
+            (if (= a 0)
+                  (signal "Something")
+                (= a 1)
+                  (signal "SomethingElse")
+                (* a 2)
+            )
+          )
+
+          (println (something 10))
+          (try
+            (something 1)
+            (proc (c)
+              (println "Caught exception: " c)
+            )
+          )
+          (println (something 0))
+        output: |
+          20
+          Caught exception: (./test.mlsp 5 SomethingElse)
+          Unhandled Exception: (./test.mlsp 3 Something)

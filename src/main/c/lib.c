@@ -632,12 +632,7 @@ struct Value *_divide(char *file_name, int line_number, struct Value *op1, struc
     int v2 = op2->tag == INTEGER_VALUE ? op2->integer : 0;
 
     if (v2 == 0) {
-      _exception_throw(
-        _mk_pair(_from_literal_string(file_name),
-          _mk_pair(_from_literal_int(line_number),
-            _mk_pair(_from_literal_string("DivideByZero"),
-           _VNull)
-      )));
+      _exception_throw(file_name, line_number, _from_literal_string("DivideByZero"));
     }
 
     return _from_literal_int((int)(v1 / v2));
@@ -915,17 +910,31 @@ struct Value *_exception_try(char *file_name, int line_number, struct Value *bod
     _exception_try_block_idx += 1;
     _exception_try_blocks[_exception_try_block_idx].exception = _VNull;
     if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp)) {
-        return _call_closure_1(file_name, line_number, handler, _exception_try_blocks[_exception_try_block_idx].exception);
+        struct Value *result = _call_closure_1(file_name, line_number, handler, _exception_try_blocks[_exception_try_block_idx].exception);
+        _exception_try_block_idx -= 1;
+        return result;
     } else {
-        struct Value * result = _call_closure_0(file_name, line_number, body);
+        struct Value *result = _call_closure_0(file_name, line_number, body);
         _exception_try_block_idx -= 1;
         return result;
     }
 }
 
-void _exception_throw(struct Value *exception)
+void _exception_throw(char *file_name, int line_number, struct Value *exception)
 {
-    _exception_try_blocks[_exception_try_block_idx].exception = exception;
+   struct Value *exception_value =
+        _mk_pair(
+          _from_literal_string(file_name),
+          _mk_pair(
+            _from_literal_int(line_number),
+            _mk_pair(
+              exception,
+              _VNull
+            )
+          )
+        );
+
+    _exception_try_blocks[_exception_try_block_idx].exception = exception_value;
     longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
 }
 

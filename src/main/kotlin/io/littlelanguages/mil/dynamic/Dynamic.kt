@@ -135,7 +135,7 @@ private class Translator<S, T>(builtinBindings: List<Binding<S, T>>, val ast: io
                 listOf(LiteralUnit())
 
             is io.littlelanguages.mil.static.ast.SignalExpression ->
-                listOf(SignalExpression(expressionsToTST(e.expression)))
+                listOf(SignalExpression(expressionsToTST(e.expression), lineNumber(e.position)))
 
             is io.littlelanguages.mil.static.ast.TryExpression -> {
                 val body = procedureToTST(nextName(), emptyList(), e.body)
