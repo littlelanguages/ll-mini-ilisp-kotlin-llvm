@@ -86,20 +86,14 @@ void _print_value(char *file_name, int line_number, struct Value *value)
         printf("#DYNAMIC_CLOSURE/%d", value->dynamic_closure.number_arguments);
         break;
     default:
-    {
         _exception_throw(file_name, line_number,
-          _mk_pair(
-            _from_literal_string("InternalError"),
-            _mk_pair(
-              _mk_pair(_from_literal_string("reason"), _from_literal_string("UnknownTag")),
-              _mk_pair(
-                _mk_pair(_from_literal_string("tag"), _from_literal_int(value->tag)),
-                _VNull
-              )
-            )
-          )
-        );
-    }
+                         _mk_pair(
+                             _from_literal_string("InternalError"),
+                             _mk_pair(
+                                 _mk_pair(_from_literal_string("reason"), _from_literal_string("UnknownTag")),
+                                 _mk_pair(
+                                     _mk_pair(_from_literal_string("tag"), _from_literal_int(value->tag)),
+                                     _VNull))));
     }
 }
 
@@ -247,17 +241,13 @@ struct Value *_from_native_procedure(char *file_name, int line_number, void *pro
         break;
     default:
         _exception_throw(file_name, line_number,
-          _mk_pair(
-            _from_literal_string("InternalError"),
-            _mk_pair(
-              _mk_pair(_from_literal_string("reason"), _from_literal_string("UnableToWrapNative")),
-              _mk_pair(
-                _mk_pair(_from_literal_string("number-of-arguments"), _from_literal_int(number_arguments)),
-                _VNull
-              )
-            )
-          )
-        );
+                         _mk_pair(
+                             _from_literal_string("InternalError"),
+                             _mk_pair(
+                                 _mk_pair(_from_literal_string("reason"), _from_literal_string("UnableToWrapNative")),
+                                 _mk_pair(
+                                     _mk_pair(_from_literal_string("number-of-arguments"), _from_literal_int(number_arguments)),
+                                     _VNull))));
     }
 
     r->native_closure.number_arguments = number_arguments;
@@ -281,36 +271,27 @@ void _assert_callable_closure(char *file_name, int line_number, struct Value *cl
 {
     if (closure->tag != NATIVE_CLOSURE_VALUE && closure->tag != DYNAMIC_CLOSURE_VALUE)
     {
-      _exception_throw(file_name, line_number,
-        _mk_pair(
-          _from_literal_string("NotClosure"),
-          _mk_pair(
-            _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call value as if a closure")),
-            _mk_pair(
-              _mk_pair(_from_literal_string("tag"), _from_literal_int(closure->tag)),
-              _VNull
-            )
-          )
-        )
-      );
+        _exception_throw(file_name, line_number,
+                         _mk_pair(
+                             _from_literal_string("NotClosure"),
+                             _mk_pair(
+                                 _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call value as if a closure")),
+                                 _mk_pair(
+                                     _mk_pair(_from_literal_string("tag"), _from_literal_int(closure->tag)),
+                                     _VNull))));
     }
     if (closure->native_closure.number_arguments != number_arguments)
     {
-      _exception_throw(file_name, line_number,
-        _mk_pair(
-          _from_literal_string("ArgumentCountMismatch"),
-          _mk_pair(
-            _mk_pair(_from_literal_string("reason"), _from_literal_string("Argument mismatch")),
-            _mk_pair(
-              _mk_pair(_from_literal_string("received"), _from_literal_int(number_arguments)),
-              _mk_pair(
-                _mk_pair(_from_literal_string("expected"), _from_literal_int(closure->native_closure.number_arguments)),
-                _VNull
-              )
-            )
-          )
-        )
-      );
+        _exception_throw(file_name, line_number,
+                         _mk_pair(
+                             _from_literal_string("ArgumentCountMismatch"),
+                             _mk_pair(
+                                 _mk_pair(_from_literal_string("reason"), _from_literal_string("Argument mismatch")),
+                                 _mk_pair(
+                                     _mk_pair(_from_literal_string("received"), _from_literal_int(number_arguments)),
+                                     _mk_pair(
+                                         _mk_pair(_from_literal_string("expected"), _from_literal_int(closure->native_closure.number_arguments)),
+                                         _VNull)))));
     }
 }
 
@@ -661,8 +642,9 @@ struct Value *_divide(char *file_name, int line_number, struct Value *op1, struc
     int v1 = op1->tag == INTEGER_VALUE ? op1->integer : 0;
     int v2 = op2->tag == INTEGER_VALUE ? op2->integer : 0;
 
-    if (v2 == 0) {
-      _exception_throw(file_name, line_number, _from_literal_string("DivideByZero"));
+    if (v2 == 0)
+    {
+        _exception_throw(file_name, line_number, _from_literal_string("DivideByZero"));
     }
 
     return _from_literal_int((int)(v1 / v2));
@@ -751,14 +733,11 @@ struct Value *_pair_car(char *file_name, int line_number, struct Value *pair)
         return pair->pair.car;
 
     _exception_throw(file_name, line_number,
-      _mk_pair(
-        _from_literal_string("EmptyList"),
-        _mk_pair(
-          _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call car on empty list")),
-          _VNull
-        )
-      )
-    );
+                     _mk_pair(
+                         _from_literal_string("EmptyList"),
+                         _mk_pair(
+                             _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call car on empty list")),
+                             _VNull)));
 
     return _VNull;
 }
@@ -769,14 +748,11 @@ struct Value *_pair_cdr(char *file_name, int line_number, struct Value *pair)
         return pair->pair.cdr;
 
     _exception_throw(file_name, line_number,
-      _mk_pair(
-        _from_literal_string("EmptyList"),
-        _mk_pair(
-          _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call cdr on empty list")),
-          _VNull
-        )
-      )
-    );
+                     _mk_pair(
+                         _from_literal_string("EmptyList"),
+                         _mk_pair(
+                             _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call cdr on empty list")),
+                             _VNull)));
 
     return _VNull;
 }
@@ -808,15 +784,12 @@ struct Value *_pairp(struct Value *v)
 
 void _fail(char *file_name, int line_number, struct Value *msg)
 {
-      _exception_throw(file_name, line_number,
-        _mk_pair(
-          _from_literal_string("Exit"),
-          _mk_pair(
-            _mk_pair(_from_literal_string("message"), msg),
-            _VNull
-          )
-        )
-      );
+    _exception_throw(file_name, line_number,
+                     _mk_pair(
+                         _from_literal_string("Exit"),
+                         _mk_pair(
+                             _mk_pair(_from_literal_string("message"), msg),
+                             _VNull)));
 }
 
 struct Value *_plus_variable(int num, ...)
@@ -963,11 +936,14 @@ struct Value *_exception_try(char *file_name, int line_number, struct Value *bod
 {
     _exception_try_block_idx += 1;
     _exception_try_blocks[_exception_try_block_idx].exception = _VNull;
-    if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp)) {
+    if (setjmp(_exception_try_blocks[_exception_try_block_idx].jmp))
+    {
         struct Value *exception = _exception_try_blocks[_exception_try_block_idx].exception;
         _exception_try_block_idx -= 1;
         return _call_closure_1(file_name, line_number, handler, exception);
-    } else {
+    }
+    else
+    {
         struct Value *result = _call_closure_0(file_name, line_number, body);
         _exception_try_block_idx -= 1;
         return result;
@@ -980,13 +956,10 @@ void _exception_throw(char *file_name, int line_number, struct Value *exception)
         _mk_pair(
             exception,
             _mk_pair(
-              _from_literal_string(file_name),
-              _mk_pair(
-                _from_literal_int(line_number),
-                _VNull
-              )
-            )
-        );
+                _from_literal_string(file_name),
+                _mk_pair(
+                    _from_literal_int(line_number),
+                    _VNull)));
 
     _exception_try_blocks[_exception_try_block_idx].exception = exception_value;
     longjmp(_exception_try_blocks[_exception_try_block_idx].jmp, 0);
