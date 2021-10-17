@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "./lib.h"
-//#include "../../../bdwgc/include/gc.h"
+#include "../../../bdwgc/include/gc.h"
 
 struct Value *_VNull;
 struct Value *_VTrue;
@@ -15,14 +15,14 @@ struct Value *_VFalse;
 
 void _initialise_lib()
 {
-    _VNull = (struct Value *)malloc(sizeof(struct Value));
+    _VNull = (struct Value *)GC_MALLOC(sizeof(struct Value));
     _VNull->tag = NULL_VALUE;
 
-    _VTrue = (struct Value *)malloc(sizeof(struct Value));
+    _VTrue = (struct Value *)GC_MALLOC(sizeof(struct Value));
     _VTrue->tag = BOOLEAN_VALUE;
     _VTrue->boolean = (1 == 1);
 
-    _VFalse = (struct Value *)malloc(sizeof(struct Value));
+    _VFalse = (struct Value *)GC_MALLOC(sizeof(struct Value));
     _VFalse->tag = BOOLEAN_VALUE;
     _VFalse->boolean = (1 == 0);
 }
@@ -99,7 +99,7 @@ void _print_value(char *file_name, int line_number, struct Value *value)
 
 struct Value *_from_literal_int(int v)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = INTEGER_VALUE;
     r->integer = v;
     return r;
@@ -107,7 +107,7 @@ struct Value *_from_literal_int(int v)
 
 struct Value *_from_literal_string(char *s)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = STRING_VALUE;
     r->string = strdup(s);
     return r;
@@ -181,7 +181,7 @@ struct Value *_wrap_native_10(void *native_procedure, struct Value *a1, struct V
 
 struct Value *_from_native_var_arg_procedure(void *procedure)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = NATIVE_VAR_ARG_CLOSURE_VALUE;
     r->native_var_arg_closure.native_procedure = procedure;
 
@@ -190,7 +190,7 @@ struct Value *_from_native_var_arg_procedure(void *procedure)
 
 struct Value *_from_native_var_arg_position_procedure(char *file_name, int line_number, void *procedure)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = NATIVE_VAR_ARG_CLOSURE_POSITION_VALUE;
     r->native_var_arg_closure_position.native_procedure = procedure;
     r->native_var_arg_closure_position.file_name = file_name;
@@ -201,7 +201,7 @@ struct Value *_from_native_var_arg_position_procedure(char *file_name, int line_
 
 struct Value *_from_native_procedure(char *file_name, int line_number, void *procedure, int number_arguments)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = NATIVE_CLOSURE_VALUE;
 
     switch (number_arguments)
@@ -258,7 +258,7 @@ struct Value *_from_native_procedure(char *file_name, int line_number, void *pro
 
 struct Value *_from_dynamic_procedure(void *procedure, int number_arguments, struct Value *frame)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = DYNAMIC_CLOSURE_VALUE;
     r->dynamic_closure.procedure = procedure;
     r->dynamic_closure.number_arguments = number_arguments;
@@ -297,10 +297,10 @@ void _assert_callable_closure(char *file_name, int line_number, struct Value *cl
 
 struct Value *_mk_frame(struct Value *parent, int size)
 {
-    struct Value *frame = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *frame = (struct Value *)GC_MALLOC(sizeof(struct Value));
     frame->tag = VECTOR_VALUE;
     frame->vector.length = 1;
-    frame->vector.items = (struct Value **)malloc(sizeof(struct Value *) * (1 + size));
+    frame->vector.items = (struct Value **)GC_MALLOC(sizeof(struct Value *) * (1 + size));
     frame->vector.items[0] = parent;
 
     while (size > 0)
@@ -581,7 +581,7 @@ struct Value *_call_closure_10(char *file_name, int line_number, struct Value *c
 
 struct Value *_mk_pair(struct Value *car, struct Value *cdr)
 {
-    struct Value *r = (struct Value *)malloc(sizeof(struct Value));
+    struct Value *r = (struct Value *)GC_MALLOC(sizeof(struct Value));
     r->tag = PAIR_VALUE;
     r->pair.car = car;
     r->pair.cdr = cdr;

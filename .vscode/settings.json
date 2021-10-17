@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.llt": "plaintext",
+        "gc.h": "c"
+    }
+}
