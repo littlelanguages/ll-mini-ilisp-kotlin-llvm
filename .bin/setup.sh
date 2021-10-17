@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "`uname`" == "Darwin" ]
+if [ "$(uname)" == "Darwin" ]
 then
     echo Setting up Mac
 
@@ -15,7 +15,7 @@ then
         echo "Getting bdwgc and building"
         (
             git clone git://github.com/ivmai/bdwgc.git
-            cd bdwgc
+            cd bdwgc || exit
             git clone git://github.com/ivmai/libatomic_ops.git
             ./autogen.sh
             ./configure
@@ -24,13 +24,11 @@ then
             make -f Makefile.direct
         )
     fi
-else
-    echo "Exiting: uname == `uname`: Unable to setup"
-    echo "Winging it..."
-
+elif [ "$(uname)" == "Linux" ]
+then
     (
         git clone git://github.com/ivmai/bdwgc.git
-        cd bdwgc
+        cd bdwgc || exit
         git clone git://github.com/ivmai/libatomic_ops.git
         ./autogen.sh
         ./configure
@@ -38,5 +36,7 @@ else
         make check
         make -f Makefile.direct
     )
-    # exit 1
+else
+    echo "Exiting: uname == $(uname): Unable to setup"
+     exit 1
 fi
