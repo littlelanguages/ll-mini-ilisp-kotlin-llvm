@@ -27,3 +27,5 @@ ll-mini-ilisp-kotlin-llvm/
 /samples/euler-001
 /samples/primes
 /samples/divide-by-zero
+
+/bdwgc/

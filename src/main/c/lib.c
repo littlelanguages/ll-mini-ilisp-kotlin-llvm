@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "./lib.h"
+//#include "../../../bdwgc/include/gc.h"
 
 struct Value *_VNull;
 struct Value *_VTrue;
@@ -85,8 +86,20 @@ void _print_value(char *file_name, int line_number, struct Value *value)
         printf("#DYNAMIC_CLOSURE/%d", value->dynamic_closure.number_arguments);
         break;
     default:
-        fprintf(stderr, "Error: %s: %d: _print_value: Unknown Tag: %d\n", file_name, line_number, value->tag);
-        exit(-1);
+    {
+        _exception_throw(file_name, line_number,
+          _mk_pair(
+            _from_literal_string("InternalError"),
+            _mk_pair(
+              _mk_pair(_from_literal_string("reason"), _from_literal_string("UnknownTag")),
+              _mk_pair(
+                _mk_pair(_from_literal_string("tag"), _from_literal_int(value->tag)),
+                _VNull
+              )
+            )
+          )
+        );
+    }
     }
 }
 
@@ -233,8 +246,18 @@ struct Value *_from_native_procedure(char *file_name, int line_number, void *pro
         r->native_closure.procedure = &_wrap_native_10;
         break;
     default:
-        fprintf(stderr, "Error: %s: %d: _from_native_procedure: Unable to wrap native with %d arguments\n", file_name, line_number, number_arguments);
-        exit(-1);
+        _exception_throw(file_name, line_number,
+          _mk_pair(
+            _from_literal_string("InternalError"),
+            _mk_pair(
+              _mk_pair(_from_literal_string("reason"), _from_literal_string("UnableToWrapNative")),
+              _mk_pair(
+                _mk_pair(_from_literal_string("number-of-arguments"), _from_literal_int(number_arguments)),
+                _VNull
+              )
+            )
+          )
+        );
     }
 
     r->native_closure.number_arguments = number_arguments;
@@ -258,13 +281,36 @@ void _assert_callable_closure(char *file_name, int line_number, struct Value *cl
 {
     if (closure->tag != NATIVE_CLOSURE_VALUE && closure->tag != DYNAMIC_CLOSURE_VALUE)
     {
-        fprintf(stderr, "Error: call closure: %s: %d: Attempt to call value as if a closure: %d\n", file_name, line_number, closure->tag);
-        exit(-1);
+      _exception_throw(file_name, line_number,
+        _mk_pair(
+          _from_literal_string("NotClosure"),
+          _mk_pair(
+            _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call value as if a closure")),
+            _mk_pair(
+              _mk_pair(_from_literal_string("tag"), _from_literal_int(closure->tag)),
+              _VNull
+            )
+          )
+        )
+      );
     }
     if (closure->native_closure.number_arguments != number_arguments)
     {
-        fprintf(stderr, "Error: call closure: %s: %d: Expected %d argument(s) but received %d\n", file_name, line_number, number_arguments, closure->native_closure.number_arguments);
-        exit(-1);
+      _exception_throw(file_name, line_number,
+        _mk_pair(
+          _from_literal_string("ArgumentCountMismatch"),
+          _mk_pair(
+            _mk_pair(_from_literal_string("reason"), _from_literal_string("Argument mismatch")),
+            _mk_pair(
+              _mk_pair(_from_literal_string("received"), _from_literal_int(number_arguments)),
+              _mk_pair(
+                _mk_pair(_from_literal_string("expected"), _from_literal_int(closure->native_closure.number_arguments)),
+                _VNull
+              )
+            )
+          )
+        )
+      );
     }
 }
 
@@ -370,25 +416,9 @@ struct Value *_call_closure_2(char *file_name, int line_number, struct Value *cl
     {
         _assert_callable_closure(file_name, line_number, closure, 2);
 
-        //    printf("_call_closure_2:\n");
-        //    printf("  v1: ");
-        //    _print_value(a1);
-        //    printf("\n");
-        //    printf("  v2: ");
-        //    _print_value(a2);
-        //    printf("\n");
-
         struct Value *(*f)(struct Value *, struct Value *, struct Value *) = closure->dynamic_closure.procedure;
 
-        //    struct Value *result = f(closure->dynamic_closure.frame, a1, a2);
-
         return f(closure->dynamic_closure.frame, a1, a2);
-
-        //    printf("  result: ");
-        //    _print_value(result);
-        //    printf("\n");
-        //
-        //    return result;
     }
 }
 
@@ -720,8 +750,17 @@ struct Value *_pair_car(char *file_name, int line_number, struct Value *pair)
     if (pair->tag == PAIR_VALUE)
         return pair->pair.car;
 
-    fprintf(stderr, "Error: %s: %d: car: Unable to get car of %s value.\n", file_name, line_number, _value_type_name(pair->tag));
-    exit(-1);
+    _exception_throw(file_name, line_number,
+      _mk_pair(
+        _from_literal_string("EmptyList"),
+        _mk_pair(
+          _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call car on empty list")),
+          _VNull
+        )
+      )
+    );
+
+    return _VNull;
 }
 
 struct Value *_pair_cdr(char *file_name, int line_number, struct Value *pair)
@@ -729,8 +768,17 @@ struct Value *_pair_cdr(char *file_name, int line_number, struct Value *pair)
     if (pair->tag == PAIR_VALUE)
         return pair->pair.cdr;
 
-    fprintf(stderr, "Error: %s: %d: cdr: Unable to get cdr of %s value.\n", file_name, line_number, _value_type_name(pair->tag));
-    exit(-1);
+    _exception_throw(file_name, line_number,
+      _mk_pair(
+        _from_literal_string("EmptyList"),
+        _mk_pair(
+          _mk_pair(_from_literal_string("reason"), _from_literal_string("Attempt to call cdr on empty list")),
+          _VNull
+        )
+      )
+    );
+
+    return _VNull;
 }
 
 struct Value *_nullp(struct Value *v)
@@ -760,9 +808,15 @@ struct Value *_pairp(struct Value *v)
 
 void _fail(char *file_name, int line_number, struct Value *msg)
 {
-    printf("Error: Fail: %s: %d: ", file_name, line_number);
-    _print_value(file_name, line_number,  msg);
-    exit(1);
+      _exception_throw(file_name, line_number,
+        _mk_pair(
+          _from_literal_string("Exit"),
+          _mk_pair(
+            _mk_pair(_from_literal_string("message"), msg),
+            _VNull
+          )
+        )
+      );
 }
 
 struct Value *_plus_variable(int num, ...)

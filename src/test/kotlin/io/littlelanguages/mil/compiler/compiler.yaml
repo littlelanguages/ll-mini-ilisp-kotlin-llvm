@@ -271,7 +271,7 @@
               input: |
                 (println (car ()))
               output: |
-                Error: ./test.mlsp: 1: car: Unable to get car of () value.
+                Unhandled Exception: ((EmptyList (reason . Attempt to call car on empty list)) ./test.mlsp 1)
             - name: cdr
               input: |
                 (println (cdr (pair 1 2)))
@@ -285,7 +285,7 @@
               input: |
                 (println (cdr ()))
               output: |
-                Error: ./test.mlsp: 1: cdr: Unable to get cdr of () value.
+                Unhandled Exception: ((EmptyList (reason . Attempt to call cdr on empty list)) ./test.mlsp 1)
             - name: null?
               input: |
                 (println (null? ()))
@@ -357,7 +357,7 @@
 
                 (exit some-message)
               output: |
-                Error: Fail: ./test.mlsp: 3: This is my message
+                Unhandled Exception: ((Exit (message . This is my message)) ./test.mlsp 3)
 - scenario:
     name: "Forms"
     tests:
@@ -822,7 +822,6 @@
         output: |
           (1 2 3 4)
           (1 2 3 4)
-
 - scenario:
     name: "Exceptions"
     tests:
@@ -906,4 +905,34 @@
           20
           Caught exception: ((SomethingElse ./test.mlsp 5) ./test.mlsp 16)
           0
+      - scenario:
+          name: "Internal signals"
+          tests:
+            - name: "car on empty list"
+              input: |
+                (car ())
+              output: |
+                Unhandled Exception: ((EmptyList (reason . Attempt to call car on empty list)) ./test.mlsp 1)
+            - name: "cdr on empty list"
+              input: |
+                (cdr ())
+              output: |
+                Unhandled Exception: ((EmptyList (reason . Attempt to call cdr on empty list)) ./test.mlsp 1)
+            - name: "too many arguments on native procedure"
+              input: |
+                (const (p a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20)
+                  "cool"
+                )
 
+                (const v p)
+              output: |
+                Unhandled Exception: ((InternalError (reason . UnableToWrapNative) (number-of-arguments . 20)) ./test.mlsp 5)
+            - name: "argument count mismatch"
+              input: |
+                (const (add m n) (+ m n))
+
+                (const v add)
+
+                (v 1 2 3)
+              output: |
+                Unhandled Exception: ((ArgumentCountMismatch (reason . Argument mismatch) (received . 3) (expected . 2)) ./test.mlsp 5)
