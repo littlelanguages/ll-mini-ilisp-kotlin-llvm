@@ -6,28 +6,33 @@
     (= remainder 0)
 )
 
-    (const (divisible-by? n lst)
-        (if (null? lst)
-                #f
-            (multiple? n (car lst))
-                #t
-            (divisible-by? n (cdr lst))
-        )
+(const (append e lst)
+    (if (null? lst)
+            (pair e ())
+        (pair (car lst) (append e (cdr lst)))
     )
+)
+
+(const (divisible-by? n lst)
+    (if (null? lst)
+            #f
+        (multiple? n (car lst))
+            #t
+        (divisible-by? n (cdr lst))
+    )
+)
 
 (const (primes min max)
-
     (const (sieve n p')
         (if (< max n)
                 p'
             (divisible-by? n p')
                 (sieve (+ n 1) p')
-            (sieve (+ n 1) (pair n p'))
+            (sieve (+ n 1) (append n p'))
         )
     )
 
     (sieve min ())
 )
-
 
 (println (primes 2 10000))
