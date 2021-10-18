@@ -7,9 +7,10 @@ all: $(TARGETS)
 
 %.bc: %.mlsp
 	../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm $<
-	opt -O3 $@ > tmp
-	mv tmp $@
-	llvm-dis $@
+
+#	opt -O3 $@ > tmp
+#	mv tmp $@
+#	llvm-dis $@
 
 clean:
 	rm -f *.bc *.ll $(TARGETS)
