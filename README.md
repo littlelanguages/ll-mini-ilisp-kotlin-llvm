@@ -93,6 +93,8 @@ The following is not part of `mini-iLisp`:
 
 Each of these can be added without too much complexity however they would distract from the simplicity of the implementation.
 
+To get a feel for the language it is helpful to look at the [compiler test cases](./src/test/kotlin/io/littlelanguages/mil/compiler/compiler.yaml) all wrapped up in a single YAML file.  During testing the source for each test is compiled into LLVM, linked to form a binary and then run in a shell with the output captured and validated against the expected output.  This is rather a crude style of testing but it does give me the confidence that, on every run, the entire solution is checked. 
+
 ## Syntax
 
 The following EBNF grammar defines the syntax of a `mini-iLisp` programme using [`parspiler`](https://github.com/littlelanguages/parspiler):
