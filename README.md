@@ -1,8 +1,8 @@
 # ll-mini-ilisp-kotlin-llvm
 
-In my efforts to understand compilers and LLVM code generation I have found Lisp has been a wonderful learning ground in that it is a simple yet powerful language with a minimal collection of constructs.
+In my efforts to understand compilers and LLVM code generation I have found Lisp to be a wonderful learning ground in that it is a simple yet powerful language with a minimal collection of constructs.
 
-`mini-iLisp` is a dialect that I have been kicking around and would like to now produce a compiler for this language producing a binary executable.  This language has the following features:
+`mini-iLisp` is a Lisp dialect with the following features:
 
 - tagged values
 - closures
