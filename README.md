@@ -221,6 +221,9 @@ clang divide-by-zero.bc ../src/main/c/lib.o ../bdwgc/gc.a ../src/main/c/main.o -
 rm primes.bc euler-001.bc hello.bc divide-by-zero.bc
 graemelockley@Graemes-iMac-2 samples % ./hello 
 Hello worlds!
+graemelockley@Graemes-iMac-2 samples % ./divide-by-zero 
+Hello worlds!
+Unhandled Exception: (DivideByZero divide-by-zero.mlsp 4)
 graemelockley@Graemes-iMac-2 samples % ./euler-001 
 233168
 ```
