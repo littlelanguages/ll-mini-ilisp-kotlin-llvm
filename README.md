@@ -11,6 +11,53 @@ In my efforts to understand compilers and LLVM code generation I have found Lisp
 
 As I have learnt, other than tagged values, each one of these, from a code generation and runtime system, are complicated.
 
+This project is an implementation of a `mini-iLisp` compiler written into Kotlin that produces LLVM code.
+
+## Calculate Primes
+
+The following `mini-iLisp` program calculates and displays the list of primes in the range 0 to 10000.
+
+```scm
+(const (multiple? m n)
+    (const remainder
+        (- m (* (/ m n) n))
+    )
+
+    (= remainder 0)
+)
+
+(const (append e lst)
+    (if (null? lst)
+            (pair e ())
+        (pair (car lst) (append e (cdr lst)))
+    )
+)
+
+(const (divisible-by? n lst)
+    (if (null? lst)
+            #f
+        (multiple? n (car lst))
+            #t
+        (divisible-by? n (cdr lst))
+    )
+)
+
+(const (primes min max)
+    (const (sieve n p')
+        (if (< max n)
+                p'
+            (divisible-by? n p')
+                (sieve (+ n 1) p')
+            (sieve (+ n 1) (append n p'))
+        )
+    )
+
+    (sieve min ())
+)
+
+(println (primes 2 10000))
+```
+
 ## Language Description
 
 `mini-iLisp` supports the following data types:
@@ -54,12 +101,25 @@ The following EBNF grammar defines the syntax of a `mini-iLisp` programme using 
 Program: {Expression};
 
 Expression
-  : "(" {Expression} ")"
+  : "(" [ExpressionBody] ")"
   | Symbol
   | LiteralInt
   | LiteralString
-  | "#t"
-  | "#f"
+  ;
+
+ExpressionBody
+  : "if" {Expression}
+  | "do" {Expression}
+  | "const" ConstBody
+  | "proc" "(" {Symbol} ")" {Expression}
+  | "try" Expression Expression
+  | "signal" Expression
+  | Expression {Expression}
+  ;
+
+ConstBody
+  : Symbol Expression
+  | "(" Symbol {Symbol} ")" {Expression}
   ;
 ```
 
@@ -106,3 +166,61 @@ fragments
 | `(print v1 ... vn)` | Writes the values `v1` to `vn` out to the console.  This procedure does not place a space between the printed values and does not terminate with a newline. |
 | `(println v1 ... vn)` | Writes the values `v1` to `vn` out to the console followed by a newline.  This procedure does not place a space between the printed values. |
 | `(string? v)` | Should `v` refer to a string value then returns `#t` otherwise returns `#f`. |
+
+## Building the Compiler
+
+The following dependencies are needed in order to build this compiler
+
+| Name | Reason |
+|------|--------|
+| [Java JDK](https://openjdk.java.net) | Currently I have OpenJDK 17 installed on my Mac | 
+| [gradle](https://gradle.org) | JVM based build tool |
+| [Deno](https://deno.land) | The compiler tools [`parspiler`](https://github.com/littlelanguages/parspiler) and [`scanpiler`](https://github.com/littlelanguages/scanpiler) are both implemented in Deno.  The beauty of Deno is application code is downloaded on demand so there is no need to perform installs other than the Deno runtime itself. |
+| [LLVM](https://llvm.org) | Currently I have LLVM 13.0.0 installed. Libraries and tooling are required. |
+| [autoconf](https://www.gnu.org/software/autoconf/), [automake](https://www.gnu.org/software/automake/) | These tools are needed to compile the [Boehm-Demers-Weiser Garbage Collector](https://github.com/ivmai/bdwgc) |
+
+The following scripts are located in `.bin` off of the project root.  These scripts are really helpful in capturing the build steps.
+
+| Name | Purpose |
+|------|---------|
+| `build.sh` | Builds the entire code base by running `parspiler`, compiling C [./src/main/c](./src/main/c) code that needs to be linked into the generated `mini-iLisp` code and then build and testing the Kotlin source code. If all the previous steps are successful then creates the distribution file `build/distributions/ll-mini-ilisp-kotlin-llvm.tar` containing all of the dependent jar files as shell script to run the compiler with the correct CLASSPATH settings. |
+| `dist.sh` | Runs `build.sh` and then expands the `tar` in the project root.  This is necessary in order to compile the sample code [samples](./samples) |
+| `setup.sh` | Downloads the source and builds the [Boehm-Demers-Weiser Garbage Collector](https://github.com/ivmai/bdwgc).  It is only necessary to run this script once. |
+| `test.sh` | Does the minimal amount of work to run the test scripts.  |
+
+On a clean checkout these are the steps that I would follow to be able to run the samples.
+
+```
+graemelockley@Graemes-iMac-2 ll-mini-ilisp-kotlin-llvm % .bin/setup.sh 
+Setting up Darwin
+Using brew to install autoconf and automake
+Getting bdwgc and building
+Cloning into 'bdwgc'...
+remote: Enumerating objects: 35917, done.
+remote: Counting objects: 100% (1691/1691), done.
+remote: Compressing objects: 100% (528/528), done.
+...
+
+graemelockley@Graemes-iMac-2 ll-mini-ilisp-kotlin-llvm % .bin/dist.sh 
+clang -c lib.c
+clang -c main.c
+
+> Task :compileKotlin
+...
+
+graemelockley@Graemes-iMac-2 ll-mini-ilisp-kotlin-llvm % cd samples 
+graemelockley@Graemes-iMac-2 samples % make
+../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm hello.mlsp
+clang hello.bc ../src/main/c/lib.o ../bdwgc/gc.a ../src/main/c/main.o -o hello
+../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm primes.mlsp
+clang primes.bc ../src/main/c/lib.o ../bdwgc/gc.a ../src/main/c/main.o -o primes
+../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm euler-001.mlsp
+clang euler-001.bc ../src/main/c/lib.o ../bdwgc/gc.a ../src/main/c/main.o -o euler-001
+../ll-mini-ilisp-kotlin-llvm/bin/ll-mini-ilisp-kotlin-llvm divide-by-zero.mlsp
+clang divide-by-zero.bc ../src/main/c/lib.o ../bdwgc/gc.a ../src/main/c/main.o -o divide-by-zero
+rm primes.bc euler-001.bc hello.bc divide-by-zero.bc
+graemelockley@Graemes-iMac-2 samples % ./hello 
+Hello worlds!
+graemelockley@Graemes-iMac-2 samples % ./euler-001 
+233168
+```
